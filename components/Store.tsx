@@ -423,11 +423,6 @@ export const Store: React.FC<Props> = ({ user, settings }) => {
                       price = Math.round(price * (1 - discountPercentVal / 100));
                   }
 
-                  // 4. CREDIT FREE EVENT (Override)
-                  if (settings?.creditFreeEvent?.enabled) {
-                      price = 0;
-                  }
-
                   const isYearly = plan.name.includes('Yearly');
 
                   // Check if renewal bonus is active for this user (Used for UI Badge only)
@@ -550,10 +545,6 @@ export const Store: React.FC<Props> = ({ user, settings }) => {
                       if (creditDiscount > 0) {
                           if (creditDiscount > 100) creditDiscount = 100;
                           finalPrice = Math.round(pkg.price * (1 - creditDiscount / 100));
-                      }
-
-                      if (settings?.creditFreeEvent?.enabled) {
-                          finalPrice = 0;
                       }
 
                       // --- EXTRA CREDIT BONUS LOGIC ---

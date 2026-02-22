@@ -24,6 +24,7 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
     const [topicScore, setTopicScore] = useState(0);
     const [showSidebar, setShowSidebar] = useState(false);
 
+    const [topicSummary, setTopicSummary] = useState<{name: string, score: number, total: number} | null>(null);
     const [sessionResults, setSessionResults] = useState<MCQResult[]>([]);
 
     // Timers
@@ -95,6 +96,12 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
 
                 setCurrentIndex(prev => prev + 1); // Automatically move to next
                 return; // Early exit, let effect re-trigger
+            }
+
+            // FISHER-YATES SHUFFLE (Randomization)
+            for (let i = mcqs.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [mcqs[i], mcqs[j]] = [mcqs[j], mcqs[i]];
             }
 
             // LIMIT QUESTIONS (User Request: Don't show 200-400 questions)
@@ -190,7 +197,18 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
         saveUserHistory(user.id, result);
         saveTestResult(user.id, result);
 
-        setCurrentIndex(prev => prev + 1);
+        // Show Micro Summary Overlay
+        setTopicSummary({
+            name: topic.name,
+            score: score,
+            total: total
+        });
+
+        // Auto Advance after 1.5s
+        setTimeout(() => {
+            setTopicSummary(null);
+            setCurrentIndex(prev => prev + 1);
+        }, 1500);
     };
 
     if (loading) {
@@ -219,8 +237,25 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
         );
     }
 
-    // Intermediate Result Screen REMOVED as per user request
-    // "banane ke baad ek analysis page aaya hai jo na aaye to hi achha rahega"
+    // MICRO SUMMARY OVERLAY (Replaces Full Result Screen)
+    if (topicSummary) {
+        return (
+            <div className="fixed inset-0 z-[120] bg-black/80 flex flex-col items-center justify-center animate-in fade-in p-6 text-center">
+                <div className="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl scale-in-center">
+                    <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-bounce" />
+                    <h3 className="text-xl font-black text-slate-800 mb-2">Topic Completed!</h3>
+                    <p className="text-sm text-slate-500 mb-4">{topicSummary.name}</p>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <p className="text-xs font-bold text-slate-400 uppercase">Your Score</p>
+                        <p className="text-4xl font-black text-indigo-600">
+                            {topicSummary.score} <span className="text-lg text-slate-300">/ {topicSummary.total}</span>
+                        </p>
+                    </div>
+                    <p className="text-xs font-bold text-slate-400 mt-4 animate-pulse">Saving & Moving Next...</p>
+                </div>
+            </div>
+        );
+    }
 
     // MCQ Question View
     const question = currentMcqData[qIndex];

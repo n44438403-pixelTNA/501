@@ -1144,6 +1144,9 @@ export const LessonView: React.FC<Props> = ({
                                const total = group.questions.length;
                                const percentage = Math.round((score / total) * 100);
 
+                               // Find Topic Note (if any)
+                               const topicNote = universalNotes.find(n => n.topic === topic && (n.chapterId === chapter.id || n.type === 'HTML')); // Loose match for demo
+
                                // Calculate Past Average for this Topic (if available)
                                let pastAvg = 0;
                                let hasPastData = false;
@@ -1153,7 +1156,6 @@ export const LessonView: React.FC<Props> = ({
                                    hasPastData = true;
                                } else if (user?.mcqHistory) {
                                    // Try to fallback to approximate history if topicStrength is missing
-                                   // Note: Accurate per-topic history requires aggregated data.
                                }
 
                                return (
@@ -1235,6 +1237,16 @@ export const LessonView: React.FC<Props> = ({
                                                );
                                            })}
                                        </div>
+
+                                       {/* TOPIC NOTE INJECTION */}
+                                       {topicNote && (
+                                           <div className="mt-6 bg-amber-50 p-4 rounded-xl border border-amber-200">
+                                               <h4 className="font-bold text-amber-900 flex items-center gap-2 mb-2">
+                                                   <Lightbulb size={18} /> {topic} Revision Note
+                                               </h4>
+                                               <div className="prose prose-sm max-w-none text-amber-800" dangerouslySetInnerHTML={{ __html: decodeHtml(topicNote.content || topicNote.html || '') }} />
+                                           </div>
+                                       )}
                                    </div>
                                );
                            });

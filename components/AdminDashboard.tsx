@@ -1275,20 +1275,20 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                         .then(() => console.log("✅ Keys secured in Global Recovery Path"))
                         .catch(e => console.error("Key Backup Error:", e));
 
-                     alert("✅ Settings Saved to Cloud Successfully!");
+                     setAlertConfig({isOpen: true, message: "✅ Settings Saved to Cloud Successfully!"});
                  } catch (cloudError: any) {
                      console.error("Cloud Save Error:", cloudError);
-                     alert("⚠️ Saved Locally Only. Cloud Sync Failed: " + cloudError.message);
+                     setAlertConfig({isOpen: true, message: "⚠️ Saved Locally Only. Cloud Sync Failed: " + cloudError.message});
                  }
               } else {
-                 alert("⚠️ Saved Locally Only (Offline). Changes will not sync to students until online.");
+                 setAlertConfig({isOpen: true, message: "⚠️ Saved Locally Only (Offline). Changes will not sync to students until online."});
               }
 
               logActivity("SETTINGS_UPDATE", "Updated system settings");
           }
       } catch (error: any) {
           console.error("Save Failed:", error);
-          alert("❌ FAILED TO SAVE SETTINGS: " + error.message);
+          setAlertConfig({isOpen: true, message: "❌ FAILED TO SAVE SETTINGS: " + error.message});
       } finally {
           setIsSettingsSaving(false);
       }

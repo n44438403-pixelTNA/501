@@ -544,6 +544,34 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   };
 
   const renderRecommendationsSection = () => {
+      if (recLoading) {
+          return (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                  <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+                  <p className="font-bold text-xs uppercase tracking-widest">Finding best notes...</p>
+              </div>
+          );
+      }
+
+      if (recommendations.length === 0) {
+          return (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                  <FileSearch size={48} className="mb-4 opacity-50" />
+                  <h4 className="font-bold text-slate-600 mb-2">No Recommendations Found</h4>
+                  <p className="text-xs text-center max-w-xs mb-6">
+                      We couldn't find specific notes for your weak topics in this chapter.
+                      Try searching the main library or ask AI for help.
+                  </p>
+                  <button
+                      onClick={() => handleRecommend(false)}
+                      className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 flex items-center gap-2"
+                  >
+                      <RefreshCw size={14} /> Retry
+                  </button>
+              </div>
+          );
+      }
+
       const groupedRecs: Record<string, any[]> = {};
       recommendations.forEach(rec => {
           const topic = rec.topic || 'General';
@@ -554,7 +582,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
       return (
           <div className="bg-slate-50 min-h-full">
-              <div className="px-4 space-y-8 pb-20">
+              <div className="px-4 space-y-8 pb-20 pt-4">
                   {displayTopics.map((topicName, idx) => {
                       const relevantRecs = groupedRecs[topicName] || [];
                       if (relevantRecs.length === 0) {

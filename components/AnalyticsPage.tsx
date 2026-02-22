@@ -57,8 +57,21 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
   const totalTime = history.reduce((acc, curr) => acc + curr.totalTimeSeconds, 0);
   const avgTimePerQ = totalQuestions > 0 ? (totalTime / totalQuestions).toFixed(1) : '0';
 
-  // Topic Analysis
-  const topicStats: Record<string, { total: number, correct: number }> = user.topicStrength || {};
+  // Topic Analysis (Premium)
+  const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
+
+  // Group History by Topic -> SubTopic
+  const topicTree: Record<string, Record<string, MCQResult[]>> = {};
+  history.forEach(h => {
+      const topic = h.subjectName || 'General';
+      // Subtopic is chapterTitle in this context
+      const subtopic = h.chapterTitle || 'Miscellaneous';
+
+      if (!topicTree[topic]) topicTree[topic] = {};
+      if (!topicTree[topic][subtopic]) topicTree[topic][subtopic] = [];
+
+      topicTree[topic][subtopic].push(h);
+  });
 
   // --- REVISION LOGIC CONFIG (DYNAMIC THRESHOLDS) ---
   const revisionConfig = settings?.revisionConfig;
@@ -184,81 +197,77 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                 )}
             </div>
 
-            {/* CATEGORIZED PERFORMANCE (Topic Strength by Lessons) */}
-            <div className="space-y-4">
-                {/* STRONG - GREEN */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 className="font-bold text-green-600 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
-                        <CheckCircle size={18} /> Strong Areas ({thresholds.strong}%+)
+            {/* PREMIUM ANALYSIS TREE (Topic -> Subtopic -> Questions) */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <BrainCircuit size={18} className="text-purple-600" /> Premium Analysis
                     </h3>
-                    {categorizedHistory.strong.length === 0 ? (
-                        <p className="text-slate-400 text-[10px] italic">No high-performing lessons yet.</p>
-                    ) : (
-                        <div className="space-y-2">
-                            {categorizedHistory.strong.slice(0, 5).map((h, i) => (
-                            <div 
-                                key={i} 
-                                onClick={() => handleOpenMarksheet(h, 'ANALYSIS')}
-                                className="flex justify-between items-center bg-green-50/50 p-2 rounded-lg border border-green-100 cursor-pointer hover:bg-green-100 transition-colors"
-                            >
-                                <span className="text-[11px] font-bold text-slate-700 truncate flex-1 mr-2">{h.chapterTitle}</span>
-                                <span className="text-[10px] font-black text-green-600 bg-white px-2 py-0.5 rounded border border-green-200">
-                                    {Math.round((h.correctCount / h.totalQuestions) * 100)}%
-                                </span>
-                            </div>
-                            ))}
-                        </div>
-                    )}
+                    <span className="text-[9px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded">
+                        DEEP DIVE
+                    </span>
                 </div>
 
-                {/* AVERAGE - YELLOW */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 className="font-bold text-yellow-600 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
-                        <TrendingUp size={18} /> Improving ({thresholds.average}% - {thresholds.strong - 1}%)
-                    </h3>
-                    {categorizedHistory.average.length === 0 ? (
-                        <p className="text-slate-400 text-[10px] italic">Keep practicing to improve your scores.</p>
-                    ) : (
-                        <div className="space-y-2">
-                            {categorizedHistory.average.slice(0, 5).map((h, i) => (
-                            <div 
-                                key={i} 
-                                onClick={() => handleOpenMarksheet(h, 'ANALYSIS')}
-                                className="flex justify-between items-center bg-yellow-50/50 p-2 rounded-lg border border-yellow-100 cursor-pointer hover:bg-yellow-100 transition-colors"
+                <div className="space-y-2">
+                    {Object.keys(topicTree).map(topic => (
+                        <div key={topic} className="border border-slate-100 rounded-xl overflow-hidden">
+                            <button
+                                onClick={() => setExpandedTopic(expandedTopic === topic ? null : topic)}
+                                className="w-full flex justify-between items-center p-3 bg-slate-50 hover:bg-slate-100 transition-colors"
                             >
-                                <span className="text-[11px] font-bold text-slate-700 truncate flex-1 mr-2">{h.chapterTitle}</span>
-                                <span className="text-[10px] font-black text-yellow-600 bg-white px-2 py-0.5 rounded border border-yellow-200">
-                                    {Math.round((h.correctCount / h.totalQuestions) * 100)}%
-                                </span>
-                            </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                <span className="font-bold text-sm text-slate-700">{topic}</span>
+                                <span className="text-slate-400 text-xs">{expandedTopic === topic ? '▲' : '▼'}</span>
+                            </button>
 
-                {/* WEAK - RED */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 className="font-bold text-red-600 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
-                        <AlertTriangle size={18} /> Focus Needed (Below {thresholds.average}%)
-                    </h3>
-                    {categorizedHistory.weak.length === 0 ? (
-                        <p className="text-slate-400 text-[10px] italic">Great job! No weak areas detected recently.</p>
-                    ) : (
-                        <div className="space-y-2">
-                            {categorizedHistory.weak.slice(0, 5).map((h, i) => (
-                            <div 
-                                key={i} 
-                                onClick={() => handleOpenMarksheet(h, 'ANALYSIS')}
-                                className="flex justify-between items-center bg-red-50/50 p-2 rounded-lg border border-red-100 cursor-pointer hover:bg-red-100 transition-colors"
-                            >
-                                <span className="text-[11px] font-bold text-slate-700 truncate flex-1 mr-2">{h.chapterTitle}</span>
-                                <span className="text-[10px] font-black text-red-600 bg-white px-2 py-0.5 rounded border border-red-200">
-                                    {Math.round((h.correctCount / h.totalQuestions) * 100)}%
-                                </span>
-                            </div>
-                            ))}
+                            {expandedTopic === topic && (
+                                <div className="p-3 bg-white space-y-3 animate-in slide-in-from-top-2">
+                                    {Object.keys(topicTree[topic]).map(subtopic => {
+                                        const results = topicTree[topic][subtopic];
+                                        // Compare oldest vs newest for this subtopic
+                                        const sorted = results.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                                        const oldest = sorted[0];
+                                        const newest = sorted[sorted.length - 1];
+                                        const improvement = newest.score - oldest.score; // Raw score diff (simplified)
+                                        const improvePercent = newest.totalQuestions > 0 && oldest.totalQuestions > 0
+                                            ? Math.round((newest.score/newest.totalQuestions*100) - (oldest.score/oldest.totalQuestions*100))
+                                            : 0;
+
+                                        return (
+                                            <div key={subtopic} className="border-l-2 border-purple-200 pl-3">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <div>
+                                                        <p className="text-xs font-bold text-slate-800">{subtopic}</p>
+                                                        <p className="text-[10px] text-slate-400">{results.length} Attempts</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className={`text-[10px] font-black ${improvePercent >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                                            {improvePercent > 0 ? '+' : ''}{improvePercent}%
+                                                        </span>
+                                                        <p className="text-[9px] text-slate-400">Improvement</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* LIST QUESTIONS (Aggregated from latest attempt) */}
+                                                <div className="mt-2 space-y-1">
+                                                    {getQuestionsForAttempt(newest.id).slice(0, 3).map((q: any, qi: number) => (
+                                                        <div key={qi} className="flex gap-2 items-start bg-slate-50 p-1.5 rounded">
+                                                            <div className={`mt-0.5 w-1.5 h-1.5 rounded-full shrink-0 ${q.userAnswer === q.correctAnswer ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                                            <p className="text-[10px] text-slate-600 line-clamp-1">{q.question}</p>
+                                                        </div>
+                                                    ))}
+                                                    {getQuestionsForAttempt(newest.id).length > 3 && (
+                                                        <p className="text-[9px] text-purple-600 font-bold cursor-pointer mt-1" onClick={() => handleOpenMarksheet(newest)}>
+                                                            View all {getQuestionsForAttempt(newest.id).length} questions...
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
-                    )}
+                    ))}
                 </div>
             </div>
 

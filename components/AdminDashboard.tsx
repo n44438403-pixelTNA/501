@@ -116,7 +116,8 @@ type AdminTab =
   | 'WHATSAPP_CONNECT'
   | 'POWER_MANAGER'
   | 'REVISION_LOGIC' // NEW
-  | 'PLAN_MATRIX';
+  | 'PLAN_MATRIX'
+  | 'EVENT_MANAGER'; // NEW
 
 interface ContentConfig {
     freeLink?: string;
@@ -2675,6 +2676,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
 
                   {(hasPermission('MANAGE_SETTINGS') || currentUser?.role === 'ADMIN') && (
                       <>
+                          <DashboardCard icon={Calendar} label="Event Manager" onClick={() => setActiveTab('EVENT_MANAGER')} color="rose" />
                           <DashboardCard icon={Monitor} label="General" onClick={() => setActiveTab('CONFIG_GENERAL')} color="blue" />
                           <DashboardCard icon={ShieldCheck} label="Security" onClick={() => setActiveTab('CONFIG_SECURITY')} color="red" />
                           {/* <DashboardCard icon={Zap} label="App Power Manager" onClick={() => setActiveTab('POWER_MANAGER')} color="amber" />  REMOVED "Mistry Button" (Power Manager) as primary entry */}
@@ -2705,6 +2707,126 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       )}
 
       {/* --- MAINTENANCE CODE GENERATOR (SECURITY TAB) --- */}
+      {activeTab === 'EVENT_MANAGER' && (
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 animate-in slide-in-from-right">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                  <button onClick={() => setActiveTab('DASHBOARD')} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200"><ArrowLeft size={20} /></button>
+                  <h3 className="text-xl font-black text-slate-800">Event Manager</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* DISCOUNT EVENT */}
+                  <div className={`p-6 rounded-2xl border-2 transition-all ${localSettings.specialDiscountEvent?.enabled ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-black text-lg text-slate-800 flex items-center gap-2">
+                              <Ticket size={20} className="text-pink-600"/> Discount Sale
+                          </h4>
+                          {localSettings.specialDiscountEvent?.enabled && (
+                              <button
+                                  onClick={() => {
+                                      if(confirm("Stop this event immediately?")) {
+                                          setLocalSettings({
+                                              ...localSettings,
+                                              specialDiscountEvent: { ...localSettings.specialDiscountEvent, enabled: false }
+                                          });
+                                          handleSaveSettings({
+                                              ...localSettings,
+                                              specialDiscountEvent: { ...localSettings.specialDiscountEvent, enabled: false }
+                                          });
+                                      }
+                                  }}
+                                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-700 shadow"
+                              >
+                                  STOP EVENT
+                              </button>
+                          )}
+                      </div>
+                      <p className="text-xs text-slate-500 mb-4">
+                          Status: <span className={`font-bold ${localSettings.specialDiscountEvent?.enabled ? 'text-green-600' : 'text-slate-400'}`}>
+                              {localSettings.specialDiscountEvent?.enabled ? 'ACTIVE' : 'INACTIVE'}
+                          </span>
+                      </p>
+                      {localSettings.specialDiscountEvent?.enabled && (
+                          <div className="bg-white p-3 rounded-lg border text-xs">
+                              <p><b>Discount:</b> {localSettings.specialDiscountEvent.discountPercent}%</p>
+                              <p><b>Ends:</b> {new Date(localSettings.specialDiscountEvent.endsAt || '').toLocaleString()}</p>
+                          </div>
+                      )}
+                      {!localSettings.specialDiscountEvent?.enabled && (
+                          <button onClick={() => setActiveTab('CONFIG_REWARDS')} className="w-full mt-2 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-300">
+                              Configure & Start
+                          </button>
+                      )}
+                  </div>
+
+                  {/* GLOBAL FREE MODE */}
+                  <div className={`p-6 rounded-2xl border-2 transition-all ${localSettings.isGlobalFreeMode ? 'bg-purple-50 border-purple-200' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-black text-lg text-slate-800 flex items-center gap-2">
+                              <Gift size={20} className="text-purple-600"/> Global Free Mode
+                          </h4>
+                          {localSettings.isGlobalFreeMode && (
+                              <button
+                                  onClick={() => {
+                                      if(confirm("Disable Free Mode? Content will be locked again.")) {
+                                          toggleSetting('isGlobalFreeMode');
+                                      }
+                                  }}
+                                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-700 shadow"
+                              >
+                                  STOP FREE MODE
+                              </button>
+                          )}
+                      </div>
+                      <p className="text-xs text-slate-500 mb-4">
+                          Status: <span className={`font-bold ${localSettings.isGlobalFreeMode ? 'text-purple-600' : 'text-slate-400'}`}>
+                              {localSettings.isGlobalFreeMode ? 'ACTIVE' : 'INACTIVE'}
+                          </span>
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                          When active, all premium content is unlocked for everyone.
+                      </p>
+                      {!localSettings.isGlobalFreeMode && (
+                          <button onClick={() => toggleSetting('isGlobalFreeMode')} className="w-full mt-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 shadow">
+                              Start Free Mode
+                          </button>
+                      )}
+                  </div>
+
+                  {/* CREDIT FREE EVENT */}
+                  <div className={`p-6 rounded-2xl border-2 transition-all ${localSettings.creditFreeEvent?.enabled ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-black text-lg text-slate-800 flex items-center gap-2">
+                              <Zap size={20} className="text-blue-600"/> Credit Free Event
+                          </h4>
+                          {localSettings.creditFreeEvent?.enabled && (
+                              <button
+                                  onClick={() => {
+                                      const updated = { ...localSettings, creditFreeEvent: { ...localSettings.creditFreeEvent, enabled: false } };
+                                      setLocalSettings(updated);
+                                      handleSaveSettings(updated);
+                                  }}
+                                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-700 shadow"
+                              >
+                                  STOP EVENT
+                              </button>
+                          )}
+                      </div>
+                      <p className="text-xs text-slate-500 mb-4">
+                          Status: <span className={`font-bold ${localSettings.creditFreeEvent?.enabled ? 'text-blue-600' : 'text-slate-400'}`}>
+                              {localSettings.creditFreeEvent?.enabled ? 'ACTIVE' : 'INACTIVE'}
+                          </span>
+                      </p>
+                      {!localSettings.creditFreeEvent?.enabled && (
+                          <button onClick={() => setActiveTab('CONFIG_PAYMENT')} className="w-full mt-2 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-300">
+                              Configure in Payment
+                          </button>
+                      )}
+                  </div>
+              </div>
+          </div>
+      )}
+
       {activeTab === 'CONFIG_SECURITY' && (
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 animate-in slide-in-from-right">
               <div className="flex items-center gap-4 mb-6 border-b pb-4">

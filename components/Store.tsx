@@ -55,7 +55,7 @@ export const Store: React.FC<Props> = ({ user, settings }) => {
   };
 
   const activeEvent = isEventActive();
-  const showEventBanner = event?.enabled && ((isSubscribed && event.showToPremiumUsers) || (!isSubscribed && event.showToFreeUsers));
+  const showEventBanner = event?.enabled && ((isSubscribed && event.showToPremiumUsers) || (!isSubscribed && event.showToFreeUsers)) && (event.endsAt ? new Date(event.endsAt).getTime() > Date.now() : true);
 
   // Countdown Timer Logic
   const [timeLeft, setTimeLeft] = useState<{days: number, hours: number, minutes: number, seconds: number} | null>(null);
@@ -419,6 +419,7 @@ export const Store: React.FC<Props> = ({ user, settings }) => {
 
                   // Apply Total Discount
                   if (discountPercentVal > 0) {
+                      if (discountPercentVal > 100) discountPercentVal = 100;
                       price = Math.round(price * (1 - discountPercentVal / 100));
                   }
 
@@ -499,6 +500,7 @@ export const Store: React.FC<Props> = ({ user, settings }) => {
                          discountPercentVal += user.storeDiscount;
                      }
                      if (discountPercentVal > 0) {
+                         if (discountPercentVal > 100) discountPercentVal = 100;
                          finalPrice = Math.round(finalPrice * (1 - discountPercentVal / 100));
                      }
 
@@ -546,6 +548,7 @@ export const Store: React.FC<Props> = ({ user, settings }) => {
                       }
 
                       if (creditDiscount > 0) {
+                          if (creditDiscount > 100) creditDiscount = 100;
                           finalPrice = Math.round(pkg.price * (1 - creditDiscount / 100));
                       }
 

@@ -41,7 +41,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const [viewingNote, setViewingNote] = useState<any>(null); // New state for HTML Note Modal
-  const [showAnalysisSelection, setShowAnalysisSelection] = useState(false); // Modal for Free vs Premium
   const [comparisonMessage, setComparisonMessage] = useState<string | null>(null);
 
   // Comparison Logic (User Req)
@@ -62,22 +61,14 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               const prevPct = Math.round((previousAttempt.score / previousAttempt.totalQuestions) * 100);
               const currPct = Math.round((result.score / result.totalQuestions) * 100);
 
-              // Status Logic (Weak < 50, Avg 50-79, Strong >= 80) - Approximate
-              const getStatus = (p: number) => p >= 80 ? 'STRONG' : p >= 50 ? 'AVERAGE' : 'WEAK';
-
-              const prevStatus = getStatus(prevPct);
-              const currStatus = getStatus(currPct);
-
               let msg = '';
               // Improvement or Same
               if (currPct >= prevPct) {
-                  // "welcome aapne achhi meant ki pichhi test me ...% aapka marks tha ish baar apne itna kiye phir vatayega kitna %improve hua"
                   const improvement = currPct - prevPct;
                   msg = `Welcome ${user.name}, aapne achhi mehnat ki! Pichhli test me ${prevPct}% aapka marks tha, ish baar aapne ${currPct}% kiya. ${improvement > 0 ? `Improvement: ${improvement}%!` : 'Consistent performance!'}`;
               }
               // Decline (Strong -> Weak/Avg)
               else if (currPct < prevPct) {
-                  // "appka result pahle se achha hai ...% aapne achha kiya pahle se kharab hài ..... aap revision ķijiye aapka score kam ho gaya hai"
                   msg = `Pahle se kharab hai... Pichhli baar ${prevPct}% tha, abhi ${currPct}% hai. Aapka score kam ho gaya hai. Aap revision kijiye.`;
               } else if (currPct > prevPct) {
                   msg = `Appka result pahle se achha hai! ${currPct - prevPct}% aapne achha kiya. Keep it up ${user.name}!`;
@@ -89,69 +80,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
           }
       }
   }, [result.id, user.mcqHistory]);
-
-  const handleDownloadHtml = () => {
-      // 10 Credit Check
-      if (user.credits < 10) {
-          alert("Insufficient Credits! Download costs 10 Coins.");
-          return;
-      }
-
-      if(onUpdateUser) onUpdateUser({...user, credits: user.credits - 10});
-
-      const htmlContent = `
-        <html>
-        <head>
-            <title>Analysis Report - ${result.chapterTitle}</title>
-            <style>
-                body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
-                .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
-                .score { font-size: 24px; font-weight: bold; color: #2563eb; }
-                .question { margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
-                .correct { color: green; font-weight: bold; }
-                .wrong { color: red; font-weight: bold; }
-                .skipped { color: orange; font-weight: bold; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>${settings?.appName || 'Analysis Report'}</h1>
-                <h2>${result.chapterTitle} (${result.subjectName})</h2>
-                <p>Candidate: ${user.name} | Date: ${new Date(result.date).toLocaleString()}</p>
-                <p class="score">Score: ${result.score}/${result.totalQuestions} (${percentage}%)</p>
-                ${comparisonMessage ? `<p style="color: #666; font-style: italic;">"${comparisonMessage}"</p>` : ''}
-            </div>
-
-            ${questions?.map((q, i) => {
-                const omr = result.omrData?.find(o => o.qIndex === i);
-                const selected = omr ? omr.selected : -1;
-                const isCorrect = selected === q.correctAnswer;
-                const isSkipped = selected === -1;
-                const status = isCorrect ? '<span class="correct">CORRECT</span>' : isSkipped ? '<span class="skipped">SKIPPED</span>' : '<span class="wrong">WRONG</span>';
-
-                return `
-                <div class="question">
-                    <p><strong>Q${i+1}:</strong> ${q.question} ${status}</p>
-                    <p><strong>Your Answer:</strong> ${isSkipped ? 'None' : q.options[selected]}</p>
-                    <p><strong>Correct Answer:</strong> ${q.options[q.correctAnswer]}</p>
-                    <p><i>Explanation: ${q.explanation || 'No explanation.'}</i></p>
-                </div>
-                `;
-            }).join('') || '<p>No question data available.</p>'}
-
-            <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #888;">
-                Generated by NST AI Assistant
-            </div>
-        </body>
-        </html>
-      `;
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Analysis_${user.name}_${result.chapterTitle}.html`;
-      a.click();
-  };
 
   const generateLocalAnalysis = () => {
       // Calculate weak/strong based on topicStats
@@ -171,8 +99,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               studyMode: status === 'WEAK' ? 'DEEP_STUDY' : 'QUICK_REVISION'
           };
       });
-
-      // const weakTopics = topics.filter(t => t.status === 'WEAK').map(t => t.name);
 
       return JSON.stringify({
           motivation: percentage > 80 ? "Excellent Performance! You are on track." : "Keep working hard. You can improve!",
@@ -224,34 +150,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   // Dialog State
   const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void}>({isOpen: false, title: '', message: '', onConfirm: () => {}});
 
-  const handleRetryMistakes = () => {
-      // Logic Update: Use result.wrongQuestions directly if available, otherwise filter from 'questions'
-      let wrongQs = result.wrongQuestions || [];
-
-      // Fallback if wrongQuestions is empty but OMR data exists (Legacy compatibility)
-      if (wrongQs.length === 0 && questions) {
-          wrongQs = questions.filter((q, i) => {
-              const omr = result.omrData?.find(d => d.qIndex === i);
-              return omr && omr.selected !== -1 && omr.selected !== q.correctAnswer;
-          });
-      }
-
-      if (!wrongQs || wrongQs.length === 0) {
-          alert("No mistakes to retry! Great job.");
-          return;
-      }
-
-      if (onLaunchContent) {
-          onLaunchContent({
-              id: `RETRY_${result.id}`,
-              title: `Retry Mistakes: ${result.chapterTitle}`,
-              type: 'MCQ_SIMPLE',
-              mcqData: wrongQs,
-              subtitle: 'Mistake Review Session'
-          });
-      }
-  };
-
   // RECOMMENDATION STATE
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [recLoading, setRecLoading] = useState(false);
@@ -300,28 +198,17 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       if (!isAnalysisUnlocked) return;
       setRecLoading(true);
 
-      // Identify topics (Fetch for ALL topics to support Review Hub requirements)
-      // Previously filtered by < 70, now we fetch all and let renderer decide or show all
       const allTopics = Object.keys(topicStats);
-
       const streamKey = (result.classLevel === '11' || result.classLevel === '12') && user.stream ? `-${user.stream}` : '';
       const key = `nst_content_${user.board || 'CBSE'}_${result.classLevel || '10'}${streamKey}_${result.subjectName}_${result.chapterId}`;
 
-      // 1. Fetch Chapter Content (For Free/Premium Notes)
       let chapterData: any = {};
-      try {
-          chapterData = await getChapterData(key);
-      } catch (e) { console.error(e); }
+      try { chapterData = await getChapterData(key); } catch (e) { console.error(e); }
 
-      // 2. Fetch Universal Notes (Recommended List)
       let universalData: any = {};
-      try {
-          universalData = await getChapterData('nst_universal_notes');
-      } catch (e) { console.error(e); }
+      try { universalData = await getChapterData('nst_universal_notes'); } catch (e) { console.error(e); }
 
       const recs: any[] = [];
-
-      // A) Free Recommendations (From Chapter HTML)
       const freeHtml = chapterData?.freeNotesHtml || chapterData?.schoolFreeNotesHtml;
       const extractedTopics: string[] = [];
       if (freeHtml) {
@@ -334,19 +221,14 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
            } catch(e) {}
       }
 
-      // Iterate All Topics to find matches for EACH
       allTopics.forEach(wt => {
           const wtLower = wt.trim().toLowerCase();
-
-          // 1. Check Free Notes HTML Headers
           if (extractedTopics.length > 0) {
-              const matchedHeader = extractedTopics.find(et =>
-                  et.toLowerCase().includes(wtLower) || wtLower.includes(et.toLowerCase())
-              );
+              const matchedHeader = extractedTopics.find(et => et.toLowerCase().includes(wtLower) || wtLower.includes(et.toLowerCase()));
               if (matchedHeader) {
                   recs.push({
                        title: matchedHeader,
-                       topic: wt, // Map strictly to Weak Topic Name
+                       topic: wt,
                        type: 'FREE_NOTES_LINK',
                        isPremium: false,
                        url: 'FREE_CHAPTER_NOTES',
@@ -354,8 +236,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   });
               }
           }
-
-          // 2. Check Universal Notes
           if (universalData && universalData.notesPlaylist) {
               const matches = universalData.notesPlaylist.filter((n: any) =>
                   n.title.toLowerCase().includes(wtLower) ||
@@ -364,13 +244,11 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               );
               recs.push(...matches.map((n: any) => ({
                   ...n,
-                  topic: wt, // Map strictly
+                  topic: wt,
                   type: 'UNIVERSAL_NOTE',
                   isPremium: n.access === 'PREMIUM' || n.type === 'PDF'
               })));
           }
-
-          // 3. Check Chapter Topic Notes
           if (chapterData && chapterData.topicNotes) {
               const matches = chapterData.topicNotes.filter((n: any) =>
                   (n.topic && n.topic.toLowerCase().trim() === wtLower) ||
@@ -379,7 +257,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               );
               recs.push(...matches.map((n: any) => ({
                   ...n,
-                  topic: wt, // Map strictly
+                  topic: wt,
                   type: 'TOPIC_NOTE',
                   access: n.isPremium ? 'PREMIUM' : 'FREE',
                   isPremium: n.isPremium
@@ -387,29 +265,19 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
           }
       });
 
-      // Deduplicate by title
       const uniqueRecs = recs.filter((v,i,a)=>a.findIndex(v2=>(v2.title===v.title && v2.topic === v.topic))===i);
-
       setRecommendations(uniqueRecs);
       setRecLoading(false);
   };
 
   const ITEMS_PER_PAGE = 50;
-
   const percentage = Math.round((result.score / result.totalQuestions) * 100);
-  
   const omrData = result.omrData || [];
   const hasOMR = omrData.length > 0;
   const totalPages = Math.ceil(omrData.length / ITEMS_PER_PAGE);
   const currentData = omrData.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.round(seconds % 60);
-    return `${mins}m ${secs}s`;
-  };
-
-  const devName = settings?.footerText || 'Nadim Anwar'; // Configurable via Admin
+  const devName = settings?.footerText || 'Nadim Anwar';
 
   useEffect(() => {
     if (initialView === 'ANALYSIS' || result.ultraAnalysisReport) {
@@ -427,11 +295,8 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       });
   }, []);
 
-  const handleDownload = async () => {
-      let elementId = 'marksheet-content'; 
-      if (activeTab === 'OFFICIAL_MARKSHEET') elementId = 'marksheet-style-1';
-      
-      const element = document.getElementById(elementId);
+  const handleDownloadMarksheet = async () => {
+      const element = document.getElementById('marksheet-style-1');
       if (!element) return;
       try {
           const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
@@ -449,38 +314,23 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       }
   };
 
-  const handleDownloadAll = async () => {
+  const handleDownloadFullReport = async () => {
       setIsDownloadingAll(true);
-      // Wait for UI to update (spinner etc)
       setTimeout(async () => {
-          const element = document.getElementById('marksheet-content'); // Capture FULL content
+          const element = document.getElementById('full-report-print-container');
           if (element) {
               try {
-                  // Create a clone to render full height without scrollbars
-                  const clone = element.cloneNode(true) as HTMLElement;
-                  clone.style.height = 'auto';
-                  clone.style.overflow = 'visible';
-                  clone.style.position = 'absolute';
-                  clone.style.top = '-10000px';
-                  clone.style.left = '0';
-                  clone.style.width = `${element.offsetWidth}px`; // Maintain width
-                  document.body.appendChild(clone);
-
-                  const canvas = await html2canvas(clone, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
-                  document.body.removeChild(clone);
-
+                  const canvas = await html2canvas(element, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
                   const imgData = canvas.toDataURL('image/png');
 
                   const pdf = new jsPDF('p', 'mm', 'a4');
                   const pdfWidth = pdf.internal.pageSize.getWidth();
                   const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-                  // Split into pages if too long
                   let heightLeft = pdfHeight;
                   let position = 0;
                   const pageHeight = pdf.internal.pageSize.getHeight();
 
-                  // First page
                   pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
                   heightLeft -= pageHeight;
 
@@ -491,7 +341,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                       heightLeft -= pageHeight;
                   }
 
-                  pdf.save(`Full_Analysis_${user.name}.pdf`);
+                  pdf.save(`Full_Report_${user.name}.pdf`);
               } catch (e) {
                   console.error('Full PDF Download Failed', e);
                   alert("Could not generate PDF. Please try again.");
@@ -505,10 +355,9 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       const appLink = settings?.officialAppUrl || "https://play.google.com/store/apps/details?id=com.nsta.app"; 
       const text = `*${settings?.appName || 'IDEAL INSPIRATION CLASSES'} RESULT*\n\nName: ${user.name}\nScore: ${result.score}/${result.totalQuestions}\nAccuracy: ${percentage}%\nCheck attached PDF for details.\n\nDownload App: ${appLink}`;
 
-      // Generate PDF for sharing
       if (navigator.share) {
           try {
-              const element = document.getElementById('marksheet-content');
+              const element = document.getElementById('marksheet-style-1');
               if (element) {
                   const canvas = await html2canvas(element, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
                   const imgData = canvas.toDataURL('image/png');
@@ -529,15 +378,10 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                       return;
                   }
               }
-          } catch(e) {
-              console.error("Share File Failed", e);
-          }
-
-          // Fallback to text share
+          } catch(e) { console.error("Share File Failed", e); }
           try { await navigator.share({ title: 'Result', text }); } catch(e) {}
       } else {
-          // Fallback for desktop/unsupported
-          handleDownloadAll(); // Download file
+          handleDownloadMarksheet();
           window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
       }
   };
@@ -565,40 +409,24 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
           setUltraAnalysisResult(result.ultraAnalysisReport);
           return;
       }
-
-      if (!questions || questions.length === 0) {
-          return;
-      }
+      if (!questions || questions.length === 0) return;
 
       const cost = settings?.mcqAnalysisCostUltra ?? 20;
-
       if (!skipCost) {
           if (user.credits < cost) {
               alert(`Insufficient Credits! You need ${cost} coins for Analysis Ultra.`);
               return;
           }
-
-          if (!confirm(`Unlock AI Analysis Ultra for ${cost} Coins?\n\nThis will identify your weak topics and suggest a study plan.`)) {
-              return;
-          }
+          if (!confirm(`Unlock AI Analysis Ultra for ${cost} Coins?`)) return;
       }
 
       setIsLoadingUltra(true);
-      
       try {
-          const userAnswers: Record<number, number> = {};
-          if (result.omrData) {
-              result.omrData.forEach(d => {
-                  userAnswers[d.qIndex] = d.selected;
-              });
-          }
-
           await new Promise(resolve => setTimeout(resolve, 1500));
           const analysisText = generateLocalAnalysis();
           setUltraAnalysisResult(analysisText);
 
           const updatedResult = { ...result, ultraAnalysisReport: analysisText };
-          
           const updatedHistory = (user.mcqHistory || []).map(r => r.id === result.id ? updatedResult : r);
           
           const updatedUser = { 
@@ -606,7 +434,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               credits: skipCost ? user.credits : user.credits - cost,
               mcqHistory: updatedHistory
           };
-
           localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
           await saveUserToLive(updatedUser);
           if (onUpdateUser) onUpdateUser(updatedUser);
@@ -620,26 +447,37 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               chapter: result.chapterTitle,
               score: result.score,
               totalQuestions: result.totalQuestions,
-              userPrompt: `Analysis for ${result.totalQuestions} Questions. Score: ${result.score}`, 
+              userPrompt: `Analysis`,
               aiResponse: analysisText,
               cost: skipCost ? 0 : cost
           });
-          
-          await saveAiInteraction({
-              id: `ai-ultra-${Date.now()}`,
-              userId: user.id,
-              userName: user.name,
-              type: 'ULTRA_ANALYSIS',
-              query: `Ultra Analysis for ${result.chapterTitle}`,
-              response: analysisText,
-              timestamp: new Date().toISOString()
-          });
-
       } catch (error: any) {
           console.error("Ultra Analysis Error:", error);
-          setUltraAnalysisResult(JSON.stringify({ error: "Failed to generate analysis. Please try again or contact support." }));
       } finally {
           setIsLoadingUltra(false);
+      }
+  };
+
+  const handleRetryMistakes = () => {
+      let wrongQs = result.wrongQuestions || [];
+      if (wrongQs.length === 0 && questions) {
+          wrongQs = questions.filter((q, i) => {
+              const omr = result.omrData?.find(d => d.qIndex === i);
+              return omr && omr.selected !== -1 && omr.selected !== q.correctAnswer;
+          });
+      }
+      if (!wrongQs || wrongQs.length === 0) {
+          alert("No mistakes to retry! Great job.");
+          return;
+      }
+      if (onLaunchContent) {
+          onLaunchContent({
+              id: `RETRY_${result.id}`,
+              title: `Retry Mistakes: ${result.chapterTitle}`,
+              type: 'MCQ_SIMPLE',
+              mcqData: wrongQs,
+              subtitle: 'Mistake Review Session'
+          });
       }
   };
 
@@ -651,19 +489,14 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               <div className="flex gap-1.5">
                   {options.map((opt) => {
                       let bgClass = "bg-white border border-slate-300 text-slate-400";
-                      
-                      const isSelected = selected === opt;
-                      const isCorrect = correct === opt;
-                      
-                      if (isSelected) {
-                          if (isCorrect) bgClass = "bg-green-600 border-green-600 text-white shadow-sm";
+                      if (selected === opt) {
+                          if (correct === opt) bgClass = "bg-green-600 border-green-600 text-white shadow-sm";
                           else bgClass = "bg-red-500 border-red-500 text-white shadow-sm";
-                      } else if (isCorrect && selected !== -1) {
+                      } else if (correct === opt && selected !== -1) {
                           bgClass = "bg-green-600 border-green-600 text-white opacity-80"; 
-                      } else if (isCorrect && selected === -1) {
+                      } else if (correct === opt && selected === -1) {
                           bgClass = "border-green-500 text-green-600 bg-green-50";
                       }
-
                       return (
                           <div key={opt} className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold transition-all ${bgClass}`}>
                               {String.fromCharCode(65 + opt)}
@@ -675,117 +508,34 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       );
   };
 
-  const toggleSpeech = (text: string) => {
-      if (isSpeaking) {
-          stopSpeech();
-          setIsSpeaking(false);
-      } else {
-          // COIN CHECK
-          const COST = 20;
-          if (user.credits < COST) {
-              alert(`Insufficient Coins! Voice costs ${COST} Coins.`);
-              return;
-          }
-          if (!user.isAutoDeductEnabled) {
-              setConfirmConfig({
-                  isOpen: true,
-                  title: "Listen to Analysis?",
-                  message: `This will cost ${COST} Coins.`,
-                  onConfirm: () => {
-                      if(onUpdateUser) onUpdateUser({...user, credits: user.credits - COST});
-                      setConfirmConfig(prev => ({...prev, isOpen: false}));
-                      startSpeaking(text);
-                  }
-              });
-              return;
-          }
-          
-          if(onUpdateUser) onUpdateUser({...user, credits: user.credits - COST});
-          startSpeaking(text);
-      }
-  };
-
   const startSpeaking = (text: string) => {
       speakText(text, selectedVoice, speechRate);
       setIsSpeaking(true);
-  };
-
-  const generateQuestionText = (q: any, includeExplanation: boolean, index: number) => {
-      let text = `Question ${index + 1}. ${stripHtml(q.question)}. `;
-
-      if (q.options && q.options.length > 0) {
-          text += "Options: ";
-          q.options.forEach((opt: string, i: number) => {
-              text += `${String.fromCharCode(65 + i)}. ${stripHtml(opt)}. `;
-          });
-      }
-
-      if (includeExplanation && q.explanation) {
-          text += `Correct Answer: Option ${String.fromCharCode(65 + q.correctAnswer)}. `;
-          text += `Explanation: ${stripHtml(q.explanation)}.`;
-      }
-
-      return text;
-  };
-
-  const handlePlayAll = (questionsToPlay: any[], includeExplanation: boolean, customPlaylist?: string[]) => {
-      if (isPlayingAll) {
-          stopPlaylist();
-          return;
-      }
-
-      const newPlaylist = customPlaylist || questionsToPlay.map((q, i) => generateQuestionText(q, includeExplanation, i));
-      setPlaylist(newPlaylist);
-      setCurrentTrack(0);
-      setIsPlayingAll(true);
   };
 
   // --- SECTION RENDERERS ---
 
   const renderAnalysisContent = () => {
     let data;
-    try {
-        data = JSON.parse(ultraAnalysisResult);
-    } catch (e) {
-        // Fallback if not JSON
-        return (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-sm text-slate-700 whitespace-pre-wrap">
-                <ReactMarkdown>{ultraAnalysisResult}</ReactMarkdown>
-            </div>
-        );
+    try { data = JSON.parse(ultraAnalysisResult); } catch (e) {
+        return <div className="p-4 bg-white rounded border border-slate-200 whitespace-pre-wrap text-sm"><ReactMarkdown>{ultraAnalysisResult}</ReactMarkdown></div>;
     }
-
     return (
-        <div className="space-y-6" id="full-analysis-report">
-            {/* Motivation Header */}
+        <div className="space-y-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <h3 className="font-bold text-lg uppercase text-slate-800 border-b pb-2">AI Performance Analysis</h3>
             {data.motivation && (
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
-                    <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                        <Sparkles size={20} /> AI Insights
-                    </h3>
-                    <p className="text-lg opacity-90 font-medium">{data.motivation}</p>
+                <div className="bg-white p-4 rounded border border-indigo-100 shadow-sm">
+                    <p className="text-sm font-medium text-slate-700 italic">"{data.motivation}"</p>
                 </div>
             )}
-
-            {/* Topics Grid */}
             <div className="grid gap-4">
                 {data.topics?.map((t: any, i: number) => (
-                    <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-bold text-slate-800 text-base">{t.name}</h4>
-                            <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${
-                                t.status === 'WEAK' ? 'bg-red-100 text-red-600' :
-                                t.status === 'STRONG' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'
-                            }`}>
-                                {t.status}
-                            </span>
+                    <div key={i} className="bg-white p-3 rounded border border-slate-200">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="font-bold text-sm text-slate-800">{t.name}</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${t.status === 'WEAK' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>{t.status}</span>
                         </div>
-                        <p className="text-xs text-slate-600 mb-3 font-medium leading-relaxed">{t.actionPlan}</p>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-2 py-1 rounded border border-slate-100">
-                                Recommended: {t.studyMode}
-                            </span>
-                        </div>
+                        <p className="text-xs text-slate-600">{t.actionPlan}</p>
                     </div>
                 ))}
             </div>
@@ -793,217 +543,98 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
     );
   };
 
-  // NEW: Recommended Notes Section (Premium Style)
   const renderRecommendationsSection = () => {
-      // Group recommendations by Topic
       const groupedRecs: Record<string, any[]> = {};
       recommendations.forEach(rec => {
           const topic = rec.topic || 'General';
           if(!groupedRecs[topic]) groupedRecs[topic] = [];
           groupedRecs[topic].push(rec);
       });
-
-      // Display ALL topics for which we have recommendations, sorted by Weakness (Lowest % first)
-      // User Requirement: Show notes for Weak, Average AND Strong topics.
       const displayTopics = Object.keys(topicStats).sort((a, b) => topicStats[a].percent - topicStats[b].percent);
 
       return (
           <div className="bg-slate-50 min-h-full">
-              {/* Branding Header - Only in standalone mode */}
-              {activeTab === 'RECOMMEND' && (
-                  <div className="bg-white p-6 rounded-b-3xl shadow-sm border-b border-slate-200 mb-6 text-center">
-                      {settings?.appLogo && <img src={settings.appLogo} className="w-12 h-12 mx-auto mb-2 object-contain" />}
-                      <h2 className="font-black text-slate-800 text-lg uppercase tracking-widest">{settings?.appName || 'INSTITUTE'}</h2>
-                      <p className="text-xs font-bold text-slate-400">Personalized Study Plan for <span className="text-slate-900">{user.name}</span></p>
-                  </div>
-              )}
-
               <div className="px-4 space-y-8 pb-20">
                   {displayTopics.map((topicName, idx) => {
                       const relevantRecs = groupedRecs[topicName] || [];
-
-                      // Also check case-insensitive match if direct match fails
                       if (relevantRecs.length === 0) {
                           const key = Object.keys(groupedRecs).find(k => k.toLowerCase() === topicName.toLowerCase());
                           if (key) relevantRecs.push(...groupedRecs[key]);
                       }
-
-                      // Find WRONG questions for this topic
                       const topicWrongQs = questions?.filter(q => {
-                           const isTopicMatch = (q.topic && q.topic.toLowerCase().trim() === topicName.toLowerCase().trim()) ||
-                                                (q.topic && topicName.toLowerCase().includes(q.topic.toLowerCase())) ||
-                                                (q.topic && q.topic.toLowerCase().includes(topicName.toLowerCase()));
-
+                           const isTopicMatch = (q.topic && q.topic.toLowerCase().includes(topicName.toLowerCase()));
                            if (!isTopicMatch) return false;
-
-                           // Check if it was answered wrong
                            const omr = result.omrData?.find((d: any) => questions && d.qIndex === questions.indexOf(q));
-                           // Strict: Attempted AND Wrong
                            return omr && omr.selected !== -1 && omr.selected !== q.correctAnswer;
                       }) || [];
-
-                      // If no notes AND no wrong questions, skip
                       if (relevantRecs.length === 0 && topicWrongQs.length === 0) return null;
-
-                      const stats = topicStats[topicName];
-                      // Use Admin Settings for thresholds if available
-                      const thresholds = settings?.revisionConfig?.thresholds || { strong: 80, average: 50 };
-                      const isWeak = stats.percent < thresholds.average;
-                      const isStrong = stats.percent >= thresholds.strong;
 
                       return (
                           <div key={idx} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                                  <div className="flex items-center gap-2">
-                                      <div>
-                                          <div className="flex items-center gap-2">
-                                              <h3 className="font-black text-slate-800 text-sm uppercase">{topicName}</h3>
-                                              <SpeakButton text={`${topicName}. ${stats ? `${stats.total - stats.correct} Wrong, ${stats.correct} Correct` : ''}`} className="p-1 hover:bg-slate-200" iconSize={14} />
-                                          </div>
-                                          {stats && (
-                                              <div className="flex gap-2 mt-1">
-                                                  <span className="text-[10px] font-bold text-slate-500">{stats.total} Total</span>
-                                                  <span className="text-[10px] font-bold text-red-500">{stats.total - stats.correct} Wrong</span>
-                                                  <span className="text-[10px] font-bold text-green-600">{stats.correct} Correct</span>
-                                              </div>
-                                          )}
-                                      </div>
-                                  </div>
-                                  <span className={`px-2 py-1 rounded text-[10px] font-bold ${isWeak ? 'bg-red-100 text-red-700' : isStrong ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                      {isWeak ? 'WEAK' : isStrong ? 'STRONG' : 'AVERAGE'}
-                                  </span>
-                              </div>
-
+                              <div className="p-4 border-b border-slate-100 bg-slate-50 font-bold text-sm uppercase">{topicName}</div>
                               <div className="p-4 space-y-4">
-                                  {/* 2. RECOMMENDED NOTES */}
-                                  {relevantRecs.length > 0 && (
-                                      <div className="space-y-2">
-                                          <p className="text-[10px] font-black text-blue-500 uppercase flex items-center gap-1">
-                                              <BookOpen size={12} /> Suggested Material
-                                          </p>
-                                          {relevantRecs.map((rec, rIdx) => (
-                                              <div key={rIdx} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50 transition-colors">
-                                                  <div className="flex items-center gap-3">
-                                                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${rec.isPremium ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-600'}`}>
-                                                          {rec.isPremium ? <FileText size={14} /> : <Lightbulb size={14} />}
-                                                      </div>
-                                                      <div className="flex-1 min-w-0">
-                                                          <div className="flex items-center gap-1">
-                                                              <p className="font-bold text-slate-700 text-xs line-clamp-1">{rec.title}</p>
-                                                              {/* Updated: Read Content if available */}
-                                                              <SpeakButton text={`${rec.title}. ${stripHtml(rec.content || rec.html || '')}`} className="p-1 shrink-0" iconSize={12} />
-                                                          </div>
-                                                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${rec.isPremium ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                              {rec.isPremium ? 'PREMIUM PDF' : 'FREE NOTE'}
-                                                          </span>
-                                                      </div>
-                                                  </div>
-
-                                                  <button
-                                                      onClick={() => {
-                                                          if (rec.isPremium) {
-                                                              if (onLaunchContent) {
-                                                                  onLaunchContent({
-                                                                      id: `REC_PREM_${idx}_${rIdx}`,
-                                                                      title: rec.title,
-                                                                      type: 'PDF',
-                                                                      directResource: { url: rec.url, access: rec.access }
-                                                                  });
-                                                              } else {
-                                                                  window.open(rec.url, '_blank');
-                                                              }
+                                  {relevantRecs.map((rec, rIdx) => (
+                                      <div key={rIdx} className="flex justify-between items-center p-3 border rounded-xl">
+                                          <div className="text-xs font-bold text-slate-700">{rec.title}</div>
+                                          <div className="flex gap-2">
+                                              <span className="text-[10px] bg-slate-100 px-2 py-1 rounded">{rec.isPremium ? 'Premium' : 'Free'}</span>
+                                              <button
+                                                  onClick={() => {
+                                                      if (rec.isPremium) {
+                                                          if (onLaunchContent) {
+                                                              onLaunchContent({
+                                                                  id: `REC_PREM_${idx}_${rIdx}`,
+                                                                  title: rec.title,
+                                                                  type: 'PDF',
+                                                                  directResource: { url: rec.url, access: rec.access }
+                                                              });
                                                           } else {
-                                                              if (rec.content) {
-                                                                  setViewingNote(rec);
-                                                              } else if (onLaunchContent) {
-                                                                  onLaunchContent({
-                                                                      id: `REC_FREE_${idx}_${rIdx}`,
-                                                                      title: rec.title,
-                                                                      type: 'PDF',
-                                                                      directResource: { url: rec.url, access: rec.access }
-                                                                  });
-                                                              }
+                                                              window.open(rec.url, '_blank');
                                                           }
-                                                      }}
-                                                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold text-white shadow-sm ${rec.isPremium ? 'bg-slate-900 hover:bg-slate-800' : 'bg-blue-600 hover:bg-blue-700'}`}
-                                                  >
-                                                      {rec.isPremium ? 'View PDF' : 'Read'}
-                                                  </button>
-                                              </div>
-                                          ))}
+                                                      } else {
+                                                          if (rec.content) {
+                                                              setViewingNote(rec);
+                                                          } else if (onLaunchContent) {
+                                                              onLaunchContent({
+                                                                  id: `REC_FREE_${idx}_${rIdx}`,
+                                                                  title: rec.title,
+                                                                  type: 'PDF',
+                                                                  directResource: { url: rec.url, access: rec.access }
+                                                              });
+                                                          }
+                                                      }
+                                                  }}
+                                                  className="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold"
+                                              >
+                                                  {rec.isPremium ? 'View PDF' : 'Read'}
+                                              </button>
+                                          </div>
                                       </div>
-                                  )}
+                                  ))}
                               </div>
                           </div>
                       );
                   })}
               </div>
-
-              {/* Developer Footer - Only in standalone mode */}
-              {activeTab === 'RECOMMEND' && (
-                  <div className="text-center py-6 text-slate-400 border-t border-slate-200">
-                      <p className="text-[10px] font-black uppercase tracking-widest">Developed by {devName}</p>
-                  </div>
-              )}
           </div>
       );
   };
 
   const renderProgressDelta = () => {
-      // Filter history for same chapter, excluding current result
       const pastTests = (user.mcqHistory || [])
           .filter(h => h.chapterId === result.chapterId && h.id !== result.id)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Newest first
-          .slice(0, 3); // Take last 3
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 3);
 
       if (pastTests.length === 0) return null;
-
       const lastTest = pastTests[0];
       const prevPercent = Math.round((lastTest.score / lastTest.totalQuestions) * 100);
-      const currPercent = percentage; // using existing 'percentage' variable
-      const diff = currPercent - prevPercent;
-      const sign = diff > 0 ? '+' : '';
+      const diff = percentage - prevPercent;
 
       return (
           <div className="bg-blue-50 rounded-2xl p-4 mb-6 border border-blue-100">
-              <h4 className="font-black text-blue-900 text-sm mb-2 flex items-center gap-2">
-                  <TrendingUp size={16} /> Progress Delta
-              </h4>
-              <p className="text-xs font-bold text-slate-700 mb-3">
-                  Last Test: {prevPercent}% → Now: {currPercent}% (<span className={diff >= 0 ? 'text-green-600' : 'text-red-600'}>{sign}{diff}%</span>)
-              </p>
-
-              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                  <table className="w-full text-[10px] text-left">
-                      <thead className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-100">
-                          <tr>
-                              <th className="p-2">Date</th>
-                              <th className="p-2">Time</th>
-                              <th className="p-2 text-center">Score</th>
-                              <th className="p-2 text-center text-red-500">Wrong</th>
-                          </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                          {[result, ...pastTests].map((test, idx) => (
-                              <tr key={test.id} className={test.id === result.id ? "bg-blue-50/50 font-bold" : ""}>
-                                  <td className="p-2 text-slate-700">
-                                      {new Date(test.date).toLocaleDateString(undefined, {day: 'numeric', month: 'short'})}
-                                      {test.id === result.id && <span className="ml-1 text-[8px] bg-blue-100 text-blue-700 px-1 rounded">NOW</span>}
-                                  </td>
-                                  <td className="p-2 text-slate-500">
-                                      {new Date(test.date).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'})}
-                                  </td>
-                                  <td className="p-2 text-center font-bold text-slate-800">
-                                      {test.score}/{test.totalQuestions}
-                                  </td>
-                                  <td className="p-2 text-center font-bold text-red-500">
-                                      {test.wrongCount}
-                                  </td>
-                              </tr>
-                          ))}
-                      </tbody>
-                  </table>
-              </div>
+              <h4 className="font-bold text-blue-900 text-sm mb-2 flex items-center gap-2">Progress Delta</h4>
+              <p className="text-xs font-bold text-slate-700">Last Test: {prevPercent}% → Now: {percentage}% ({diff >= 0 ? '+' : ''}{diff}%)</p>
           </div>
       );
   };
@@ -1011,93 +642,22 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   const renderTopicBreakdown = () => {
       const topics = Object.keys(topicStats);
       if (topics.length === 0) return null;
-
-      // Mistake Analysis (Weak Concepts)
-      const weakConcepts = topics.filter(t => topicStats[t].percent < 50);
-
-      // HISTORY ANALYSIS FOR MISTAKES
-      const last3Tests = (user.mcqHistory || [])
-          .filter(h => h.chapterId === result.chapterId)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, 3);
-
-      const totalInLast3 = last3Tests.reduce((sum, t) => sum + t.totalQuestions, 0);
-      const mistakesInLast3 = last3Tests.reduce((sum, t) => sum + t.wrongCount, 0);
-
       return (
           <div className="space-y-6">
                {renderProgressDelta()}
-
-               {/* MISTAKE PATTERN ANALYSIS (NEW) */}
-               {weakConcepts.length > 0 && (
-                  <div className="bg-red-50 rounded-2xl p-6 shadow-sm border border-red-200 mb-6 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-4 opacity-10 text-red-900">
-                          <Target size={60} />
-                      </div>
-                      <h3 className="font-black text-red-800 text-lg mb-4 flex items-center gap-2 relative z-10">
-                          <BrainCircuit size={18} /> Mistake Pattern Analysis
-                      </h3>
-                      <p className="text-xs text-red-700 font-medium mb-4 relative z-10">
-                          We analyzed your wrong answers. You are struggling with these specific concepts:
-                      </p>
-
-                      <p className="text-sm font-bold text-red-700 relative z-10 mb-4">
-                          {totalInLast3 > 0
-                              ? `In the last ${last3Tests.length} tests, you made ${mistakesInLast3}/${totalInLast3} mistakes.`
-                              : `Accuracy in this topic is ${topicStats[weakConcepts[0]].percent}% (Below 50%).`}
-                      </p>
-
-                      <div className="space-y-2 relative z-10">
-                          {weakConcepts.map(concept => {
-                              const topicTotalStats = user.topicStrength?.[concept] || { correct: 0, total: 0 };
-                              const topicWrongTotal = topicTotalStats.total - topicTotalStats.correct;
-
-                              return (
-                                  <div key={concept} className="bg-white/60 p-3 rounded-lg border border-red-100">
-                                      <div className="flex items-center justify-between">
-                                          <span className="text-xs font-bold text-red-900 uppercase">{concept}</span>
-                                          <span className="text-xs font-black text-red-600">
-                                              {topicStats[concept].total - topicStats[concept].correct} Mistakes
-                                          </span>
-                                      </div>
-                                      <div className="mt-1 text-[10px] text-red-600 font-medium border-t border-red-100/50 pt-1">
-                                          Why this is weak?
-                                          <br/>
-                                          "You made {topicWrongTotal}/{topicTotalStats.total} mistakes in this topic historically."
-                                      </div>
-                                  </div>
-                              );
-                          })}
-                      </div>
-                  </div>
-               )}
-
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                  <h3 className="font-black text-slate-800 text-lg mb-4 flex items-center gap-2">
-                      <BarChart3 size={18} /> Topic Breakdown
-                  </h3>
+                  <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2"><BarChart3 size={18} /> Topic Breakdown</h3>
                   <div className="space-y-4">
                       {topics.map((topic, i) => {
                           const stats = topicStats[topic];
-                          const percent = stats.percent;
-
-                          let colorClass = "bg-red-500";
-                          if (percent >= 80) colorClass = "bg-green-500";
-                          else if (percent >= 40) colorClass = "bg-yellow-500";
-
                           return (
                               <div key={i}>
                                   <div className="flex justify-between items-end mb-1">
                                       <span className="font-bold text-slate-700 text-xs uppercase">{topic}</span>
-                                      <span className={`text-xs font-black ${percent >= 80 ? 'text-green-600' : percent >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>
-                                          {stats.correct}/{stats.total} ({percent}%)
-                                      </span>
+                                      <span className="text-xs font-black">{stats.correct}/{stats.total} ({stats.percent}%)</span>
                                   </div>
                                   <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                      <div
-                                          className={`h-full ${colorClass} transition-all duration-1000 ease-out`}
-                                          style={{ width: `${percent}%` }}
-                                      ></div>
+                                      <div className={`h-full ${stats.percent >= 80 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${stats.percent}%` }}></div>
                                   </div>
                               </div>
                           );
@@ -1108,74 +668,131 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       );
   };
 
-  // MARKSHET STYLE 1: Centered Logo
+  const renderFullOMR = () => (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mt-6">
+          <h3 className="font-black text-slate-800 text-lg mb-4">Complete OMR Sheet</h3>
+          <div className="grid grid-cols-4 gap-x-4 gap-y-2">
+              {result.omrData?.map((data) => renderOMRRow(data.qIndex, data.selected, data.correct))}
+          </div>
+      </div>
+  );
+
+  const renderDetailedSolutions = () => (
+      <div className="space-y-6 mt-6">
+          <h3 className="font-black text-slate-800 text-lg border-b pb-2">Detailed Solutions</h3>
+          {questions?.map((q, idx) => {
+              const omrEntry = result.omrData?.find(d => d.qIndex === idx);
+              const userSelected = omrEntry ? omrEntry.selected : -1;
+              const isCorrect = userSelected === q.correctAnswer;
+
+              return (
+                  <div key={idx} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm break-inside-avoid">
+                      <div className="flex gap-2 mb-2">
+                          <span className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{idx + 1}</span>
+                          <div className="text-sm font-bold text-slate-800" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.question) }} />
+                      </div>
+                      <div className="ml-8 space-y-1">
+                          {q.options?.map((opt: string, optIdx: number) => {
+                              const isAnswer = q.correctAnswer === optIdx;
+                              const isSelected = userSelected === optIdx;
+                              let cls = "text-slate-600";
+                              if (isAnswer) cls = "text-green-700 font-bold bg-green-50 px-2 rounded";
+                              else if (isSelected) cls = "text-red-700 font-bold bg-red-50 px-2 rounded";
+
+                              return (
+                                  <div key={optIdx} className={`text-xs ${cls}`}>
+                                      {String.fromCharCode(65 + optIdx)}. <span dangerouslySetInnerHTML={{ __html: renderMathInHtml(opt) }} />
+                                  </div>
+                              );
+                          })}
+                      </div>
+                      <div className="ml-8 mt-2 p-2 bg-slate-50 text-[10px] text-slate-600 italic rounded">
+                          <span className="font-bold">Explanation:</span> <span dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.explanation || 'N/A') }} />
+                      </div>
+                  </div>
+              );
+          })}
+      </div>
+  );
+
   const renderMarksheetStyle1 = () => (
-      <div id="marksheet-style-1" className="bg-white p-8 max-w-2xl mx-auto border-4 border-slate-900 rounded-none relative">
-          <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-slate-900"></div>
-          <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-slate-900"></div>
-          <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-slate-900"></div>
-          <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-slate-900"></div>
-          
-          {/* Header */}
-          <div className="text-center mb-8">
+      <div id="marksheet-style-1" className="bg-white p-8 max-w-2xl mx-auto border-4 border-double border-slate-900 relative shadow-sm">
+          {/* Professional Header */}
+          <div className="flex items-center justify-between border-b-2 border-slate-900 pb-6 mb-6">
               {settings?.appLogo && (
-                  <img src={settings.appLogo} alt="Logo" className="w-16 h-16 mx-auto mb-2 object-contain" />
+                  <img src={settings.appLogo} alt="Logo" className="w-20 h-20 object-contain" />
               )}
-              <h1 className="text-3xl font-black text-slate-900 uppercase tracking-widest">{settings?.appName || 'INSTITUTE NAME'}</h1>
-              <p className="text-lg font-bold text-slate-500">{settings?.aiName || 'AI Assessment Center'}</p>
-              <p className="text-[10px] font-bold text-slate-400 mt-1">Generated By {settings?.aiName || 'AI'}</p>
-          </div>
-
-          {/* User Info */}
-          <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8 flex justify-between items-center">
-              <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase">Candidate Name</p>
-                  <p className="text-xl font-black text-slate-800">{user.name}</p>
-              </div>
-              <div className="text-right">
-                  <p className="text-xs font-bold text-slate-400 uppercase">UID / Roll No</p>
-                  <p className="text-xl font-black font-mono text-slate-800">{user.displayId || user.id}</p>
+              <div className="text-right flex-1 ml-4">
+                  <h1 className="text-3xl font-black text-slate-900 uppercase tracking-wide">{settings?.appName || 'INSTITUTE NAME'}</h1>
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{settings?.aiName || 'OFFICIAL RESULT REPORT'}</p>
               </div>
           </div>
 
-          {/* Score Grid */}
-          <div className="mb-8">
-              <h3 className="text-center font-bold text-slate-900 uppercase mb-4 border-b pb-2">Performance Summary</h3>
-              <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="border p-4 bg-slate-50">
-                      <p className="text-xs font-bold text-slate-400 uppercase">Total Questions</p>
-                      <p className="text-xl font-black">{result.totalQuestions}</p>
-                  </div>
-                  <div className="border p-4 bg-slate-50">
-                      <p className="text-xs font-bold text-slate-400 uppercase">Attempted</p>
-                      <p className="text-xl font-black">{result.correctCount + result.wrongCount}</p>
-                  </div>
-                  <div className="border p-4 bg-green-50 border-green-200">
-                      <p className="text-xs font-bold text-green-600 uppercase">Correct</p>
-                      <p className="text-xl font-black text-green-700">{result.correctCount}</p>
-                  </div>
-                  <div className="border p-4 bg-red-50 border-red-200">
-                      <p className="text-xs font-bold text-red-600 uppercase">Wrong</p>
-                      <p className="text-xl font-black text-red-700">{result.wrongCount}</p>
-                  </div>
+          {/* Student Details Grid */}
+          <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+              <div className="p-3 border border-slate-200 bg-slate-50 rounded">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Student Name</p>
+                  <p className="font-bold text-slate-900 text-lg">{user.name}</p>
               </div>
-              <div className="mt-4 bg-slate-900 text-white p-6 text-center rounded-xl">
-                  <p className="text-sm font-bold opacity-60 uppercase mb-1">Total Score</p>
-                  <p className="text-5xl font-black">{result.score} <span className="text-lg opacity-50">/ {result.totalQuestions}</span></p>
-                  <p className="text-sm font-bold mt-2 text-yellow-400">{percentage}% Accuracy</p>
+              <div className="p-3 border border-slate-200 bg-slate-50 rounded">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Enrollment ID</p>
+                  <p className="font-mono font-bold text-slate-900 text-lg">{user.displayId || user.id}</p>
+              </div>
+              <div className="p-3 border border-slate-200 bg-slate-50 rounded">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Test Date</p>
+                  <p className="font-bold text-slate-900">{new Date(result.date).toLocaleDateString()}</p>
+              </div>
+              <div className="p-3 border border-slate-200 bg-slate-50 rounded">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Subject / Chapter</p>
+                  <p className="font-bold text-slate-900 truncate">{result.chapterTitle}</p>
+              </div>
+          </div>
+
+          {/* Score Summary Grid */}
+          <div className="mb-8 border-t-2 border-slate-900 pt-6">
+              <h3 className="text-center font-black text-slate-900 uppercase mb-4 tracking-widest text-sm">Performance Summary</h3>
+              <div className="grid grid-cols-4 gap-2 text-center mb-6">
+                  <div className="p-2 border bg-slate-50"><div className="text-[10px] text-slate-500 uppercase font-bold">Total</div><div className="font-black text-xl">{result.totalQuestions}</div></div>
+                  <div className="p-2 border bg-slate-50"><div className="text-[10px] text-slate-500 uppercase font-bold">Attempted</div><div className="font-black text-xl">{result.correctCount + result.wrongCount}</div></div>
+                  <div className="p-2 border bg-green-50 border-green-200"><div className="text-[10px] text-green-600 uppercase font-bold">Correct</div><div className="font-black text-xl text-green-700">{result.correctCount}</div></div>
+                  <div className="p-2 border bg-red-50 border-red-200"><div className="text-[10px] text-red-600 uppercase font-bold">Wrong</div><div className="font-black text-xl text-red-700">{result.wrongCount}</div></div>
+              </div>
+
+              {/* Big Score Display */}
+              <div className="flex items-center justify-center gap-6">
+                  <div className="text-center">
+                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Score Achieved</p>
+                      <div className="text-6xl font-black text-slate-900 leading-none">{result.score}</div>
+                  </div>
+                  <div className="h-16 w-px bg-slate-300"></div>
+                  <div className="text-center">
+                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Percentage</p>
+                      <div className={`text-4xl font-black leading-none ${percentage >= 80 ? 'text-green-600' : percentage >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>{percentage}%</div>
+                  </div>
               </div>
           </div>
 
           {/* Footer */}
-          <div className="text-center border-t border-slate-200 pt-4 mt-8">
-              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Developed by {devName}</p>
+          <div className="text-center border-t-2 border-slate-900 pt-4 mt-8 flex justify-between items-center text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+              <span>Generated on {new Date().toLocaleDateString()}</span>
+              <span>{settings?.appName} Official Record</span>
           </div>
+      </div>
+  );
+
+  const renderFullReport = () => (
+      <div className="p-8 bg-white max-w-4xl mx-auto space-y-8">
+          {renderMarksheetStyle1()}
+          <div className="border-t-2 border-dashed border-slate-300 my-8"></div>
+          {renderAnalysisContent()}
+          {renderTopicBreakdown()}
+          {renderFullOMR()}
+          {renderDetailedSolutions()}
       </div>
   );
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 sm:p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in">
-
         <CustomConfirm
             isOpen={confirmConfig.isOpen}
             title={confirmConfig.title}
@@ -1183,136 +800,81 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
             onConfirm={confirmConfig.onConfirm}
             onCancel={() => setConfirmConfig({...confirmConfig, isOpen: false})}
         />
+
+        {/* HIDDEN PRINT CONTAINER */}
+        <div id="full-report-print-container" style={{ position: 'absolute', left: '-10000px', width: '800px' }}>
+            {renderFullReport()}
+        </div>
+
         <div className="w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] bg-white sm:rounded-3xl shadow-2xl flex flex-col relative overflow-hidden">
-            
-            {/* Header - Sticky */}
+            {/* Header */}
             <div className="bg-white text-slate-800 px-4 py-3 border-b border-slate-100 flex justify-between items-center z-10 sticky top-0 shrink-0">
                 <div className="flex items-center gap-3">
-                    {settings?.appLogo && (
-                        <img src={settings.appLogo} alt="Logo" className="w-8 h-8 rounded-lg object-contain bg-slate-50 border" />
-                    )}
+                    {settings?.appLogo && <img src={settings.appLogo} alt="Logo" className="w-8 h-8 rounded-lg object-contain bg-slate-50 border" />}
                     <div>
-                        <h1 className="text-sm font-black uppercase text-slate-900 tracking-wide">
-                            {settings?.appName || 'RESULT'}
-                        </h1>
+                        <h1 className="text-sm font-black uppercase text-slate-900 tracking-wide">{settings?.appName || 'RESULT'}</h1>
                         <p className="text-[10px] font-bold text-slate-400">Official Marksheet</p>
                     </div>
                 </div>
-                <button onClick={onClose} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
-                    <X size={20} />
-                </button>
+                <button onClick={onClose} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors"><X size={20} /></button>
             </div>
 
-            {/* COMPARISON MESSAGE ALERT */}
+            {/* Comparison Alert */}
             {comparisonMessage && (
                 <div className="px-4 pt-2">
                     <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl flex gap-3 animate-in slide-in-from-top-2">
-                        <div className="bg-white p-2 rounded-full h-fit shadow-sm text-blue-600">
-                            <TrendingUp size={16} />
-                        </div>
-                        <p className="text-xs text-blue-800 font-medium leading-relaxed">
-                            {comparisonMessage}
-                        </p>
+                        <div className="bg-white p-2 rounded-full h-fit shadow-sm text-blue-600"><TrendingUp size={16} /></div>
+                        <p className="text-xs text-blue-800 font-medium leading-relaxed">{comparisonMessage}</p>
                     </div>
                 </div>
             )}
 
-            {/* TAB HEADER (Conditional Rendering based on Lock) */}
+            {/* Tab Header */}
             <div className="px-4 pt-2 pb-0 bg-white border-b border-slate-100 flex gap-2 overflow-x-auto shrink-0 scrollbar-hide items-center">
-                {/* Free Mode: Show Marksheet */}
                 {mcqMode === 'FREE' && (
-                    <button
-                        onClick={() => setActiveTab('OFFICIAL_MARKSHEET')}
-                        className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'OFFICIAL_MARKSHEET' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
-                    >
+                    <button onClick={() => setActiveTab('OFFICIAL_MARKSHEET')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'OFFICIAL_MARKSHEET' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
                         <FileText size={14} className="inline mr-1 mb-0.5" /> Official Marksheet
                     </button>
                 )}
-
-                {/* LOCKED BUTTONS */}
                 {!isAnalysisUnlocked ? (
-                    <button
-                        onClick={unlockFreeAnalysis}
-                        className="px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-600 flex items-center gap-1 bg-slate-50/50"
-                    >
+                    <button onClick={unlockFreeAnalysis} className="px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-600 flex items-center gap-1 bg-slate-50/50">
                         <Lock size={12} /> Analysis (Locked)
                     </button>
                 ) : (
                     <>
-                        <button
-                            onClick={() => setActiveTab('SOLUTION')}
-                            className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'SOLUTION' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
-                        >
+                        <button onClick={() => setActiveTab('SOLUTION')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'SOLUTION' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
                             <FileSearch size={14} className="inline mr-1 mb-0.5" /> Analysis
                         </button>
-                        <button
-                            onClick={() => setActiveTab('OMR')}
-                            className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'OMR' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
-                        >
+                        <button onClick={() => setActiveTab('OMR')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'OMR' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
                             <Grid size={14} className="inline mr-1 mb-0.5" /> OMR
                         </button>
-
-                        <button
-                            onClick={() => setActiveTab('RECOMMEND')}
-                            className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'RECOMMEND' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
-                        >
+                        <button onClick={() => setActiveTab('RECOMMEND')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'RECOMMEND' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
                             <Lightbulb size={14} className="inline mr-1 mb-0.5" /> Recommend Notes
                         </button>
                     </>
                 )}
             </div>
 
-            {/* SCROLLABLE CONTENT */}
+            {/* Scrollable Content */}
             <div id="marksheet-content" className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-50">
-                
-                {/* 1. MARKSHEET SECTION (Always Visible) */}
                 {activeTab === 'OFFICIAL_MARKSHEET' && (
                     <>
                         {renderMarksheetStyle1()}
-                        {/* LOCKED VIEW ADVERTISEMENT */}
                         {!isAnalysisUnlocked && (
                             <div className="mt-6 bg-white p-6 rounded-2xl border-2 border-indigo-100 text-center shadow-lg">
                                 <Lock className="mx-auto text-indigo-400 mb-3" size={48} />
                                 <h3 className="text-xl font-black text-slate-800 mb-2">Analysis Locked</h3>
-                                <p className="text-slate-500 text-sm mb-6 max-w-xs mx-auto">
-                                    Unlock detailed answers, OMR sheet, and weak concept analysis.
-                                </p>
-                                <button
-                                    onClick={unlockFreeAnalysis}
-                                    className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-xl hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto"
-                                >
+                                <p className="text-slate-500 text-sm mb-6 max-w-xs mx-auto">Unlock detailed answers, OMR sheet, and weak concept analysis.</p>
+                                <button onClick={unlockFreeAnalysis} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-xl hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto">
                                     <BrainCircuit size={20} /> Unlock Now (20 Coins)
                                 </button>
-                            </div>
-                        )}
-                        {/* Always show Mistakes in Marksheet view for Free mode as requested?
-                            "pahle wala me bas mistake rakha jayega".
-                            Maybe below the marksheet?
-                        */}
-                        {!isAnalysisUnlocked && result.wrongQuestions && result.wrongQuestions.length > 0 && (
-                            <div className="mt-6">
-                                <h3 className="font-bold text-red-600 mb-4 flex items-center gap-2">
-                                    <XCircle size={20} /> Mistakes Preview
-                                </h3>
-                                <div className="space-y-3">
-                                    {result.wrongQuestions.slice(0, 3).map((q, i) => (
-                                        <div key={i} className="bg-red-50 p-3 rounded-xl border border-red-100">
-                                            <p className="text-xs font-bold text-red-800">Q{q.qIndex + 1}: {stripHtml(q.question)}</p>
-                                        </div>
-                                    ))}
-                                    <p className="text-center text-xs text-slate-400 font-bold mt-2">
-                                        ...and {Math.max(0, result.wrongQuestions.length - 3)} more. Unlock to view all.
-                                    </p>
-                                </div>
                             </div>
                         )}
                     </>
                 )}
 
-                {/* 2. SOLUTION SECTION (New Analysis) */}
                 {activeTab === 'SOLUTION' && isAnalysisUnlocked && (
-                    <div className="animate-in slide-in-from-bottom-4" id="full-analysis-container">
-                        {/* AI ANALYSIS INTEGRATION (Merged) */}
+                    <div className="animate-in slide-in-from-bottom-4">
                         <div className="mb-8">
                              {!ultraAnalysisResult ? (
                                 <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-3xl p-6 text-center text-white shadow-lg">
@@ -1325,46 +887,38 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                                 </div>
                             ) : renderAnalysisContent()}
                         </div>
-
-                        <div className="flex items-center justify-between mb-3 px-2">
-                            <div className="flex items-center gap-2">
-                                <FileSearch className="text-blue-600" size={20} />
-                                <h3 className="font-black text-slate-800 text-lg">Question Analysis</h3>
+                        {/* RESTORED: Retry Mistakes Button */}
+                        {result.wrongQuestions && result.wrongQuestions.length > 0 && (
+                            <div className="mb-4">
+                                <button onClick={handleRetryMistakes} className="w-full py-3 bg-red-50 text-red-600 rounded-xl font-bold border border-red-100 hover:bg-red-100 flex items-center justify-center gap-2">
+                                    <RefreshCw size={18} /> Retry Mistakes ({result.wrongQuestions.length})
+                                </button>
                             </div>
-                        </div>
+                        )}
                         {questions && questions.length > 0 ? (
                             <div className="space-y-6">
                                 {questions.map((q, idx) => {
                                     const omrEntry = result.omrData?.find(d => d.qIndex === idx);
                                     const userSelected = omrEntry ? omrEntry.selected : -1;
-                                    const correctAnswerIndex = q.correctAnswer;
-                                    const isCorrect = userSelected === correctAnswerIndex;
+                                    const isCorrect = userSelected === q.correctAnswer;
                                     const isSkipped = userSelected === -1;
-
                                     return (
                                         <div key={idx} className={`bg-white rounded-2xl border ${isCorrect ? 'border-green-200' : isSkipped ? 'border-slate-200' : 'border-red-200'} shadow-sm overflow-hidden`}>
                                             <div className={`p-4 ${isCorrect ? 'bg-green-50' : isSkipped ? 'bg-slate-50' : 'bg-red-50'} border-b ${isCorrect ? 'border-green-100' : isSkipped ? 'border-slate-100' : 'border-red-100'} flex gap-3`}>
-                                                <span className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${isCorrect ? 'bg-green-100 text-green-700' : isSkipped ? 'bg-slate-200 text-slate-600' : 'bg-red-100 text-red-600'}`}>
-                                                    {idx + 1}
-                                                </span>
-                                                <div className="flex-1">
-                                                    <div className="text-sm font-bold text-slate-800 leading-snug prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.question) }} />
-                                                </div>
+                                                <span className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${isCorrect ? 'bg-green-100 text-green-700' : isSkipped ? 'bg-slate-200 text-slate-600' : 'bg-red-100 text-red-600'}`}>{idx + 1}</span>
+                                                <div className="flex-1"><div className="text-sm font-bold text-slate-800 leading-snug" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.question) }} /></div>
                                             </div>
                                             {q.options && (
                                                 <div className="p-4 space-y-2">
                                                     {q.options.map((opt: string, optIdx: number) => {
-                                                        const isSelectedByUser = userSelected === optIdx;
-                                                        const isTheCorrectAnswer = correctAnswerIndex === optIdx;
-                                                        let optionClass = "border-slate-100 bg-white text-slate-600";
-                                                        if (isTheCorrectAnswer) optionClass = "border-green-300 bg-green-50 text-green-800 font-bold";
-                                                        else if (isSelectedByUser) optionClass = "border-red-300 bg-red-50 text-red-800 font-bold";
-
+                                                        const isSelected = userSelected === optIdx;
+                                                        const isAnswer = q.correctAnswer === optIdx;
+                                                        let cls = "border-slate-100 bg-white text-slate-600";
+                                                        if (isAnswer) cls = "border-green-300 bg-green-50 text-green-800 font-bold";
+                                                        else if (isSelected) cls = "border-red-300 bg-red-50 text-red-800 font-bold";
                                                         return (
-                                                            <div key={optIdx} className={`p-3 rounded-xl border flex items-center gap-3 text-xs transition-colors ${optionClass}`}>
-                                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] border ${isTheCorrectAnswer ? 'border-green-400 bg-green-100 text-green-700' : isSelectedByUser ? 'border-red-400 bg-red-100 text-red-700' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
-                                                                    {String.fromCharCode(65 + optIdx)}
-                                                                </div>
+                                                            <div key={optIdx} className={`p-3 rounded-xl border flex items-center gap-3 text-xs transition-colors ${cls}`}>
+                                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] border ${isAnswer ? 'border-green-400 bg-green-100 text-green-700' : isSelected ? 'border-red-400 bg-red-100 text-red-700' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>{String.fromCharCode(65 + optIdx)}</div>
                                                                 <div className="flex-1" dangerouslySetInnerHTML={{ __html: renderMathInHtml(opt) }} />
                                                             </div>
                                                         );
@@ -1373,7 +927,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                                             )}
                                             {q.explanation && (
                                                 <div className="p-4 bg-blue-50 border-t border-blue-100">
-                                                    <div className="text-xs text-slate-700 leading-relaxed font-medium prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.explanation) }} />
+                                                    <div className="text-xs text-slate-700 leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.explanation) }} />
                                                 </div>
                                             )}
                                         </div>
@@ -1381,73 +935,68 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                                 })}
                             </div>
                         ) : <p>No questions data.</p>}
-
-                        {/* LINKED NOTES SECTION (Bottom of Solution) */}
                         {recommendations.length > 0 && (
                             <div className="mt-8 pt-8 border-t-2 border-slate-100">
-                                <h3 className="font-black text-slate-800 text-lg mb-4 flex items-center gap-2">
-                                    <BookOpen className="text-indigo-600" size={20} /> Recommended Study Material
-                                </h3>
-                                <p className="text-xs text-slate-500 mb-4">Based on your performance, we recommend reviewing these notes.</p>
-                                {/* Render Recommendations (Embedded Mode) */}
-                                <div className="border border-slate-200 rounded-2xl overflow-hidden">
-                                    {renderRecommendationsSection()}
-                                </div>
+                                <h3 className="font-black text-slate-800 text-lg mb-4 flex items-center gap-2"><BookOpen className="text-indigo-600" size={20} /> Recommended Study Material</h3>
+                                <div className="border border-slate-200 rounded-2xl overflow-hidden">{renderRecommendationsSection()}</div>
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* 3. OMR SECTION */}
                 {activeTab === 'OMR' && isAnalysisUnlocked && (
                     <div className="animate-in slide-in-from-bottom-4">
                          {renderTopicBreakdown()}
                          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mt-6">
-                            <h3 className="font-black text-slate-800 text-lg mb-4 flex items-center gap-2">
-                                <Grid size={18} /> OMR Response Sheet
-                            </h3>
+                            <h3 className="font-black text-slate-800 text-lg mb-4 flex items-center gap-2"><Grid size={18} /> OMR Response Sheet</h3>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2">
                                 {currentData.map((data) => renderOMRRow(data.qIndex, data.selected, data.correct))}
                             </div>
+                            {/* RESTORED: Pagination */}
+                            {hasOMR && (
+                                <div className="flex justify-between items-center mt-4">
+                                    <button
+                                        disabled={page === 1}
+                                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                                        className="p-2 rounded-lg bg-slate-100 disabled:opacity-50 hover:bg-slate-200"
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    <span className="text-xs font-bold text-slate-500">Page {page} of {totalPages}</span>
+                                    <button
+                                        disabled={page === totalPages}
+                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                        className="p-2 rounded-lg bg-slate-100 disabled:opacity-50 hover:bg-slate-200"
+                                    >
+                                        <ChevronRight size={20} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
 
-                {/* 5. RECOMMENDED NOTES PAGE */}
                 {activeTab === 'RECOMMEND' && isAnalysisUnlocked && (
-                    <div className="animate-in slide-in-from-bottom-4 h-full">
-                        {renderRecommendationsSection()}
-                    </div>
+                    <div className="animate-in slide-in-from-bottom-4 h-full">{renderRecommendationsSection()}</div>
                 )}
-
             </div>
 
             {/* Footer Actions */}
-            <div className="bg-white p-4 border-t border-slate-100 flex items-center justify-center gap-6 z-10 shrink-0">
-                {/* Only show share/download if unlocked or basic marksheet */}
-                <button
-                    onClick={handleShare}
-                    className="p-3 bg-green-50 text-green-600 rounded-full hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-95"
-                    title="Share Result"
-                >
+            <div className="bg-white p-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-4 z-10 shrink-0">
+                <button onClick={handleShare} className="p-3 bg-green-50 text-green-600 rounded-full hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-95" title="Share Result">
                     <Share2 size={20} />
                 </button>
-                
                 <button
-                    onClick={() => handleDownload()}
-                    className="p-3 bg-slate-100 text-slate-600 rounded-full hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95"
-                    title={activeTab === 'OFFICIAL_MARKSHEET' ? 'Download Marksheet' : 'Download Page'}
+                    onClick={handleDownloadMarksheet}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors shadow-sm"
                 >
-                    <Download size={20} />
+                    <Download size={16} /> Download Marksheet
                 </button>
-
-                {/* PDF DOWNLOAD BUTTON */}
                 <button
-                    onClick={() => handleDownloadAll()}
-                    className="p-3 bg-slate-100 text-slate-600 rounded-full hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95"
-                    title="Download Full Analysis PDF"
+                    onClick={handleDownloadFullReport}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
                 >
-                    {isDownloadingAll ? <span className="animate-spin">⏳</span> : <Download size={20} />}
+                    {isDownloadingAll ? <span className="animate-spin">⏳</span> : <Download size={16} />} Download Full Analysis
                 </button>
             </div>
              
@@ -1456,18 +1005,12 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
              </div>
         </div>
 
-        {/* VIEW NOTE POPUP */}
         {viewingNote && (
             <div className="fixed inset-0 z-[250] bg-slate-900/90 flex items-center justify-center p-4 animate-in fade-in">
                 <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden shadow-2xl">
                     <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                        <div className="flex items-center gap-2">
-                             <BookOpen size={18} className="text-indigo-600"/>
-                             <h3 className="font-bold text-slate-800 text-sm line-clamp-1">{viewingNote.title}</h3>
-                        </div>
-                        <button onClick={() => setViewingNote(null)} className="p-1 hover:bg-slate-200 rounded-full text-slate-500">
-                            <X size={20} />
-                        </button>
+                        <div className="flex items-center gap-2"><BookOpen size={18} className="text-indigo-600"/><h3 className="font-bold text-slate-800 text-sm line-clamp-1">{viewingNote.title}</h3></div>
+                        <button onClick={() => setViewingNote(null)} className="p-1 hover:bg-slate-200 rounded-full text-slate-500"><X size={20} /></button>
                     </div>
                     <div className="p-6 overflow-y-auto prose prose-sm max-w-none">
                          <div dangerouslySetInnerHTML={{ __html: viewingNote.content || viewingNote.html || '<p>No content available.</p>' }} />

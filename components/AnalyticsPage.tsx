@@ -223,43 +223,86 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                                 <div className="p-3 bg-white space-y-3 animate-in slide-in-from-top-2">
                                     {Object.keys(topicTree[topic]).map(subtopic => {
                                         const results = topicTree[topic][subtopic];
-                                        // Compare oldest vs newest for this subtopic
+                                        // Sort by Date (Oldest First)
                                         const sorted = results.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                                        const oldest = sorted[0];
-                                        const newest = sorted[sorted.length - 1];
-                                        const improvement = newest.score - oldest.score; // Raw score diff (simplified)
-                                        const improvePercent = newest.totalQuestions > 0 && oldest.totalQuestions > 0
-                                            ? Math.round((newest.score/newest.totalQuestions*100) - (oldest.score/oldest.totalQuestions*100))
-                                            : 0;
+                                        const current = sorted[sorted.length - 1]; // Latest
+                                        const previous = sorted.length > 1 ? sorted[sorted.length - 2] : null; // Previous attempt
+
+                                        const currPct = current.totalQuestions > 0 ? Math.round((current.score/current.totalQuestions)*100) : 0;
+                                        const prevPct = previous && previous.totalQuestions > 0 ? Math.round((previous.score/previous.totalQuestions)*100) : 0;
+
+                                        const improvePercent = previous ? currPct - prevPct : 0;
+                                        const questions = getQuestionsForAttempt(current.id);
 
                                         return (
-                                            <div key={subtopic} className="border-l-2 border-purple-200 pl-3">
-                                                <div className="flex justify-between items-start mb-1">
+                                            <div key={subtopic} className="border-l-2 border-purple-200 pl-3 pb-4">
+                                                <div className="flex justify-between items-start mb-2">
                                                     <div>
-                                                        <p className="text-xs font-bold text-slate-800">{subtopic}</p>
-                                                        <p className="text-[10px] text-slate-400">{results.length} Attempts</p>
+                                                        <p className="text-sm font-bold text-slate-800">{subtopic}</p>
+                                                        <p className="text-[10px] text-slate-500 font-bold">{results.length} Attempts • Latest: {new Date(current.date).toLocaleDateString()}</p>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <span className={`text-[10px] font-black ${improvePercent >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                                            {improvePercent > 0 ? '+' : ''}{improvePercent}%
-                                                        </span>
-                                                        <p className="text-[9px] text-slate-400">Improvement</p>
-                                                    </div>
+
+                                                    {/* UPGRADE STATUS BADGE */}
+                                                    {previous ? (
+                                                        <div className="text-right">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <span className="text-[10px] text-slate-400 line-through">{prevPct}%</span>
+                                                                <span className="text-xs text-slate-300">→</span>
+                                                                <span className={`text-sm font-black ${currPct >= prevPct ? 'text-green-600' : 'text-red-500'}`}>
+                                                                    {currPct}%
+                                                                </span>
+                                                            </div>
+                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${improvePercent > 0 ? 'bg-green-100 text-green-700' : improvePercent < 0 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                                {improvePercent > 0 ? `UPGRADE +${improvePercent}%` : improvePercent < 0 ? `DROP ${improvePercent}%` : 'NO CHANGE'}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-right">
+                                                            <span className="text-sm font-black text-blue-600">{currPct}%</span>
+                                                            <p className="text-[9px] text-slate-400">First Attempt</p>
+                                                        </div>
+                                                    )}
                                                 </div>
 
-                                                {/* LIST QUESTIONS (Aggregated from latest attempt) */}
-                                                <div className="mt-2 space-y-1">
-                                                    {getQuestionsForAttempt(newest.id).slice(0, 3).map((q: any, qi: number) => (
-                                                        <div key={qi} className="flex gap-2 items-start bg-slate-50 p-1.5 rounded">
-                                                            <div className={`mt-0.5 w-1.5 h-1.5 rounded-full shrink-0 ${q.userAnswer === q.correctAnswer ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                                            <p className="text-[10px] text-slate-600 line-clamp-1">{q.question}</p>
-                                                        </div>
-                                                    ))}
-                                                    {getQuestionsForAttempt(newest.id).length > 3 && (
-                                                        <p className="text-[9px] text-purple-600 font-bold cursor-pointer mt-1" onClick={() => handleOpenMarksheet(newest)}>
-                                                            View all {getQuestionsForAttempt(newest.id).length} questions...
-                                                        </p>
-                                                    )}
+                                                {/* EXPANDED QUESTIONS LIST */}
+                                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Questions in this Test</p>
+                                                    <div className="space-y-2">
+                                                        {questions.length === 0 ? (
+                                                            <p className="text-[10px] text-slate-400 italic">Questions data not available.</p>
+                                                        ) : (
+                                                            questions.map((q: any, qi: number) => {
+                                                                // Infer status if not explicit
+                                                                const isCorrect = q.userAnswer === q.correctAnswer; // Assuming data structure matches
+                                                                // If userAnswer is missing, try to find it in result? result only has scores.
+                                                                // We need to trust getQuestionsForAttempt returns data with answers merged or we can't show status.
+                                                                // Actually getQuestionsForAttempt returns mcqData.
+                                                                // We need to merge answers?
+                                                                // In McqView, we saved `userAnswers` inside `newHistoryItem`.
+                                                                // Let's assume `q` has it or we can't color code.
+                                                                // If not, we just list the question.
+
+                                                                // Check if we can find the answer in history item?
+                                                                // `getQuestionsForAttempt` pulls `mcqData`.
+                                                                // The `newHistoryItem` has `userAnswers`.
+                                                                // We need to modify `getQuestionsForAttempt` or `AnalyticsPage` to return answers too.
+                                                                // But for now, let's just list them.
+
+                                                                return (
+                                                                    <div key={qi} className="flex gap-2 items-start">
+                                                                        <span className="text-[10px] font-mono text-slate-400 mt-0.5">Q{qi+1}</span>
+                                                                        <p className="text-[11px] text-slate-700 leading-snug line-clamp-2">{q.question}</p>
+                                                                    </div>
+                                                                );
+                                                            })
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleOpenMarksheet(current)}
+                                                        className="w-full mt-3 py-2 bg-white border border-purple-200 text-purple-700 text-[10px] font-bold rounded-lg hover:bg-purple-50 transition-colors shadow-sm"
+                                                    >
+                                                        View Full Solution & Analysis
+                                                    </button>
                                                 </div>
                                             </div>
                                         );

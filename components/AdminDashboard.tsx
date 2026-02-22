@@ -2680,7 +2680,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                           <DashboardCard icon={Monitor} label="General" onClick={() => setActiveTab('CONFIG_GENERAL')} color="blue" />
                           <DashboardCard icon={ShieldCheck} label="Security" onClick={() => setActiveTab('CONFIG_SECURITY')} color="red" />
                           {/* <DashboardCard icon={Zap} label="App Power Manager" onClick={() => setActiveTab('POWER_MANAGER')} color="amber" />  REMOVED "Mistry Button" (Power Manager) as primary entry */}
-                          <DashboardCard icon={Eye} label="Visibility Control" onClick={() => setActiveTab('CONFIG_VISIBILITY')} color="amber" />
+                          <DashboardCard icon={Eye} label="Visibility & Watermark" onClick={() => setActiveTab('CONFIG_VISIBILITY')} color="amber" />
                           <DashboardCard icon={Settings} label="Advanced Settings" onClick={() => setActiveTab('POWER_MANAGER')} color="slate" />
                           {currentUser?.role === 'ADMIN' && <DashboardCard icon={PenTool} label="Blogger Hub" onClick={() => setActiveTab('BLOGGER_HUB')} color="orange" />}
                           <DashboardCard icon={Gamepad2} label="Game Config" onClick={() => setActiveTab('CONFIG_GAME')} color="orange" />
@@ -8128,7 +8128,16 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                   <h4 className="text-red-800 font-bold mb-2 flex items-center gap-2"><AlertTriangle size={20} /> DANGER ZONE</h4>
                   <p className="text-xs text-red-600 mb-4">This action will delete ALL content (Notes, Videos, Syllabus) from the database. This cannot be undone.</p>
                   <button
-                      onClick={() => {
+                      onClick={async () => {
+                          const steps = ["RESET", "DELETE", "CONFIRM", "1234", "FINAL"];
+                          for (let i = 0; i < steps.length; i++) {
+                              const input = prompt(`SECURITY CHECK (${i+1}/5):\nTo proceed, type: ${steps[i]}`);
+                              if (input !== steps[i]) {
+                                  alert("❌ Incorrect Code. Reset Aborted.");
+                                  return;
+                              }
+                          }
+
                           if (confirm("⚠️ NUCLEAR RESET: Are you sure you want to delete ALL content data?")) {
                               if (confirm("🔴 FINAL WARNING: This will wipe Firebase Content. Are you absolutely sure?")) {
                                   resetAllContent()
@@ -8164,6 +8173,22 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                       className="w-full mt-4 py-3 bg-orange-100 text-orange-700 font-bold rounded-xl border border-orange-200 hover:bg-orange-200 flex items-center justify-center gap-2"
                   >
                       <RefreshCw size={18} /> 🧹 Clear Local Cache Only (Fix "Old Notes")
+                  </button>
+
+                  <button
+                      onClick={() => {
+                          if(confirm("Reset ALL System Settings to Default?")) {
+                              localStorage.removeItem('nst_system_settings');
+                              if(isFirebaseConnected) {
+                                  // Optionally clear from firebase or just let next save overwrite
+                                  alert("Settings cleared locally. Save a change to sync defaults to cloud.");
+                              }
+                              window.location.reload();
+                          }
+                      }}
+                      className="w-full mt-4 py-3 bg-slate-800 text-white font-bold rounded-xl border border-slate-700 hover:bg-slate-900 flex items-center justify-center gap-2"
+                  >
+                      <RotateCcw size={18} /> Reset All Settings to Default
                   </button>
               </div>
 
@@ -9174,15 +9199,9 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                       <button onClick={() => generateDirectCode('MCQ', editingChapterId!)} className="px-4 bg-yellow-400 text-black font-bold py-3 rounded-xl shadow hover:bg-yellow-500 flex items-center justify-center gap-2">
                                           <Key size={16} /> Code
                                       </button>
-                                      <button onClick={saveChapterContent} className="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl shadow hover:bg-purple-700 transition flex items-center justify-center gap-2">
-                                          <Save size={16} /> Save MCQ Set
-                                      </button>
                                   </div>
-                                  <button onClick={() => generateDirectCode('TOPIC_NOTE', editingChapterId!)} className="px-4 bg-yellow-400 text-black font-bold py-3 rounded-xl shadow hover:bg-yellow-500 flex items-center justify-center gap-2">
-                                      <Key size={16} />
-                                  </button>
-                                  <button onClick={saveChapterContent} className="flex-1 bg-cyan-600 text-white font-bold py-3 rounded-xl shadow hover:bg-cyan-700 transition flex items-center justify-center gap-2">
-                                      <Save size={16} /> Save Changes
+                                  <button onClick={saveChapterContent} className="w-full mt-4 bg-cyan-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-cyan-700 transition flex items-center justify-center gap-2 sticky bottom-0 z-10 border-2 border-white">
+                                      <Save size={18} /> SAVE ALL CHANGES
                                   </button>
                               </div>
                           </div>
@@ -9662,38 +9681,33 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                   <h3 className="text-xl font-black text-slate-800">Content Visibility Control</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {['VIDEO', 'PDF', 'MCQ', 'AUDIO'].map((type) => {
-                      const isVisible = localSettings.contentVisibility?.[type as keyof typeof localSettings.contentVisibility] !== false;
-                      return (
-                          <div key={type} className={`p-6 rounded-2xl border-2 transition-all ${isVisible ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                              <div className="flex justify-between items-center mb-4">
-                                  <h4 className={`font-black text-lg ${isVisible ? 'text-green-800' : 'text-red-800'}`}>{type} Section</h4>
-                                  <button
-                                      onClick={() => {
-                                          const newVisibility = { ...localSettings.contentVisibility, [type]: !isVisible };
-                                          setLocalSettings({ ...localSettings, contentVisibility: newVisibility });
-                                      }}
-                                      className={`px-4 py-2 rounded-lg font-bold text-xs shadow-lg transition-transform active:scale-95 ${isVisible ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
-                                  >
-                                      {isVisible ? 'VISIBLE' : 'HIDDEN'}
-                                  </button>
-                              </div>
-                              <p className="text-xs text-slate-500 font-medium">
-                                  {isVisible
-                                      ? `Students can access ${type} content normally.`
-                                      : `The ${type} section is completely hidden from the student dashboard.`}
-                              </p>
-                          </div>
-                      );
-                  })}
-              </div>
-
-              {/* WATERMARK CONTROLS */}
-              <div className="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+              {/* WATERMARK CONTROLS (Moved to Top) */}
+              <div className="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200">
                   <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                       <Eye size={20} /> Watermark Settings (Global)
                   </h4>
+
+                  {/* LIVE PREVIEW BOX */}
+                  <div className="mb-6 p-4 border border-slate-300 rounded-xl bg-white relative h-32 overflow-hidden flex items-center justify-center">
+                      <p className="z-10 font-bold text-slate-800 relative">Live Preview (Content Layer)</p>
+                      {/* PREVIEW LAYER */}
+                      <img
+                          src={localSettings.appLogo || ''}
+                          alt="Watermark Preview"
+                          style={{
+                              width: `${localSettings.watermarkSize || 150}px`,
+                              height: 'auto',
+                              opacity: localSettings.watermarkOpacity || 0.05,
+                              position: 'absolute',
+                              top: localSettings.watermarkPosition?.top || '50%',
+                              left: localSettings.watermarkPosition?.left || '50%',
+                              transform: `translate(-50%, -50%) rotate(${localSettings.watermarkAngle || -10}deg)`,
+                              filter: 'grayscale(100%)',
+                              pointerEvents: 'none'
+                          }}
+                      />
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                           <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Watermark Opacity ({localSettings.watermarkOpacity || 0.05})</label>
@@ -9803,6 +9817,33 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                            <p className="text-[10px] text-slate-400 mt-1 px-1">Master Toggle: Turn off to hide watermark everywhere.</p>
                       </div>
                   </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {['VIDEO', 'PDF', 'MCQ', 'AUDIO'].map((type) => {
+                      const isVisible = localSettings.contentVisibility?.[type as keyof typeof localSettings.contentVisibility] !== false;
+                      return (
+                          <div key={type} className={`p-6 rounded-2xl border-2 transition-all ${isVisible ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                              <div className="flex justify-between items-center mb-4">
+                                  <h4 className={`font-black text-lg ${isVisible ? 'text-green-800' : 'text-red-800'}`}>{type} Section</h4>
+                                  <button
+                                      onClick={() => {
+                                          const newVisibility = { ...localSettings.contentVisibility, [type]: !isVisible };
+                                          setLocalSettings({ ...localSettings, contentVisibility: newVisibility });
+                                      }}
+                                      className={`px-4 py-2 rounded-lg font-bold text-xs shadow-lg transition-transform active:scale-95 ${isVisible ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
+                                  >
+                                      {isVisible ? 'VISIBLE' : 'HIDDEN'}
+                                  </button>
+                              </div>
+                              <p className="text-xs text-slate-500 font-medium">
+                                  {isVisible
+                                      ? `Students can access ${type} content normally.`
+                                      : `The ${type} section is completely hidden from the student dashboard.`}
+                              </p>
+                          </div>
+                      );
+                  })}
               </div>
 
               <div className="mt-8 flex justify-end">

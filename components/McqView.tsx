@@ -612,24 +612,6 @@ export const McqView: React.FC<Props> = ({
       });
   };
 
-  if (viewMode !== 'SELECTION' && lessonContent) {
-      return (
-          <LessonView 
-              content={lessonContent} 
-              subject={subject} 
-              classLevel={classLevel as any} 
-              chapter={chapter} 
-              loading={false} 
-              onBack={() => setViewMode('SELECTION')} 
-              onMCQComplete={handleMCQComplete}
-              user={user}
-              onUpdateUser={onUpdateUser}
-              settings={settings} // Pass settings down
-              instantExplanation={mcqMode === 'PREMIUM'} // Pass new mode
-          />
-      );
-  }
-
   const handlePublishResult = () => {
       if (!resultData) return;
       const percentage = Math.round((resultData.score / resultData.totalQuestions) * 100);
@@ -648,23 +630,26 @@ export const McqView: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-white min-h-screen pb-20 animate-in fade-in slide-in-from-right-8">
+    <>
        {resultData && (
-           <MarksheetCard
-               result={resultData}
-               user={user}
-               settings={settings}
-               onClose={() => {
-                   setResultData(null);
-                   setViewMode('SELECTION');
-               }}
-               onViewAnalysis={handleViewAnalysis}
-               onPublish={handlePublishResult}
-               questions={completedMcqData}
-               onUpdateUser={onUpdateUser}
-               mcqMode={mcqMode} // PASS MODE TO MARKSHEET
-           />
+           <div className="fixed inset-0 z-[200]">
+               <MarksheetCard
+                   result={resultData}
+                   user={user}
+                   settings={settings}
+                   onClose={() => {
+                       setResultData(null);
+                       setViewMode('SELECTION');
+                   }}
+                   onViewAnalysis={handleViewAnalysis}
+                   onPublish={handlePublishResult}
+                   questions={completedMcqData}
+                   onUpdateUser={onUpdateUser}
+                   mcqMode={mcqMode}
+               />
+           </div>
        )}
+
        <CustomAlert 
            isOpen={alertConfig.isOpen} 
            title={alertConfig.title} 
@@ -679,8 +664,24 @@ export const McqView: React.FC<Props> = ({
            onCancel={() => setConfirmConfig({...confirmConfig, isOpen: false})}
        />
 
-       {/* HEADER */}
-       <div className="sticky top-0 z-20 bg-white border-b border-slate-100 shadow-sm p-4 flex items-center gap-3">
+       {viewMode !== 'SELECTION' && lessonContent ? (
+          <LessonView
+              content={lessonContent}
+              subject={subject}
+              classLevel={classLevel as any}
+              chapter={chapter}
+              loading={false}
+              onBack={() => setViewMode('SELECTION')}
+              onMCQComplete={handleMCQComplete}
+              user={user}
+              onUpdateUser={onUpdateUser}
+              settings={settings}
+              instantExplanation={mcqMode === 'PREMIUM'}
+          />
+       ) : (
+        <div className="bg-white min-h-screen pb-20 animate-in fade-in slide-in-from-right-8">
+           {/* HEADER */}
+           <div className="sticky top-0 z-20 bg-white border-b border-slate-100 shadow-sm p-4 flex items-center gap-3">
            <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full text-slate-600">
                <ArrowLeft size={20} />
            </button>
@@ -810,5 +811,7 @@ export const McqView: React.FC<Props> = ({
            />
        )}
     </div>
+    )}
+    </>
   );
 };

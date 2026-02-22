@@ -4,6 +4,18 @@ export const recalculateSubscriptionStatus = (user: User, settings?: SystemSetti
     const now = new Date();
     let updatedUser = { ...user };
 
+    // EMERGENCY GUARD: Protect LIFETIME/YEARLY Status
+    // If user was previously Lifetime/Yearly, DO NOT downgrade to FREE just because activeSubscriptions is empty/buggy.
+    if ((updatedUser.subscriptionTier === 'LIFETIME' || updatedUser.subscriptionTier === 'YEARLY') && !updatedUser.isPremium) {
+        // Auto-fix state
+        updatedUser.isPremium = true;
+        if (!updatedUser.subscriptionEndDate) {
+             updatedUser.subscriptionEndDate = updatedUser.subscriptionTier === 'LIFETIME'
+                ? new Date(now.getTime() + 100 * 365 * 24 * 60 * 60 * 1000).toISOString()
+                : new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        }
+    }
+
     // 0. Check Free Access Override (Admin Config)
     if (settings?.freeAccessConfig) {
         const { validUntil, classes } = settings.freeAccessConfig;

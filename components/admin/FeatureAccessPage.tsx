@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SystemSettings, AppFeature } from '../../types';
 import { ALL_APP_FEATURES } from '../../constants';
-import { Search, Save, Eye, EyeOff, Tag, Star, Lock, CheckCircle, RefreshCw, LayoutGrid, List } from 'lucide-react';
+import { Search, Save, Eye, EyeOff, Tag, Star, Lock, CheckCircle, RefreshCw, LayoutGrid, List, Sparkles } from 'lucide-react';
 
 interface Props {
     settings: SystemSettings;

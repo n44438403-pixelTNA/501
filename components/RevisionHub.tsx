@@ -111,26 +111,24 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         current.lastMcqDate = attemptDate;
                         current.cycleCount += 1;
 
-                        // REPLACE Logic: Use only the LATEST attempt stats instead of aggregating
-                        // Since we iterate chronologically (oldest -> newest), the last one processed is the latest.
-                        // We simply overwrite the stats.
                         const questionsInThisAttempt = qCount !== undefined ? qCount : result.totalQuestions;
                         const correctInThisAttempt = correct !== undefined ? correct : result.correctCount;
 
                         current.totalQs = questionsInThisAttempt;
                         current.totalCorrect = correctInThisAttempt;
 
-                        // Calculate Percentage
                         const percentage = current.totalQs > 0 ? (current.totalCorrect / current.totalQs) * 100 : 0;
                         current.score = percentage;
 
-                        // Mastery Logic: Track number of Excellent scores
                         const thisAttemptPct = scorePct !== undefined ? scorePct : (questionsInThisAttempt > 0 ? (correctInThisAttempt / questionsInThisAttempt) * 100 : 0);
+
+                        // Smart Streak Tracking (Exponential Backoff)
                         if (thisAttemptPct >= thresholds.mastery) {
                             current.excellentCount = (current.excellentCount || 0) + 1;
+                        } else if (thisAttemptPct < thresholds.average) {
+                            current.excellentCount = 0; // Reset streak on failure
                         }
 
-                        // Determine Status based on LATEST Score
                         if (reportedStatus) {
                             current.status = reportedStatus;
                         } else {
@@ -142,34 +140,39 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                     }
                     trackingMap.set(uniqueId, current);
 
-                    // Calculate Due Dates (DYNAMIC INTERVALS)
                     let nextRev: string | null = null;
                     let mcqDue: string | null = null;
 
                     const lastActionWasRevision = current.lastRevDate && new Date(current.lastRevDate).getTime() > new Date(current.lastMcqDate).getTime();
-                    const isMastered = current.excellentCount >= masteryCountReq && current.status === 'EXCELLENT';
 
-                    const getIntervalsForStatus = (status: TopicStatus, isMaster: boolean) => {
-                        if (isMaster) return intervals.mastered;
+                    // SMART INTERVAL SCALING (Exponential Backoff)
+                    const getSmartInterval = (baseSeconds: number, streak: number) => {
+                        if (streak <= 1) return baseSeconds;
+                        // Multiplier: 1.5x for each streak level beyond 1
+                        // e.g. Streak 2 -> 1.5x, Streak 3 -> 2.25x
+                        const multiplier = Math.pow(1.5, streak - 1);
+                        return Math.floor(baseSeconds * multiplier);
+                    };
+
+                    const getIntervalsForStatus = (status: TopicStatus) => {
                         if (status === 'WEAK') return intervals.weak;
                         if (status === 'AVERAGE') return intervals.average;
-                        // Strong or Excellent (but not mastered yet) use Strong intervals
                         return intervals.strong;
                     };
 
-                    const activeIntervals = getIntervalsForStatus(current.status, isMastered);
+                    const baseIntervals = getIntervalsForStatus(current.status);
+
+                    // Apply Scaling based on Streak
+                    const scaledRevision = getSmartInterval(baseIntervals.revision, current.excellentCount);
+                    const scaledMcq = getSmartInterval(baseIntervals.mcq, current.excellentCount);
 
                     if (lastActionWasRevision) {
-                        // Revised recently -> Waiting for MCQ
-                        const seconds = activeIntervals.mcq;
                         const date = new Date(current.lastRevDate!);
-                        date.setSeconds(date.getSeconds() + seconds);
+                        date.setSeconds(date.getSeconds() + scaledMcq);
                         mcqDue = date.toISOString();
                     } else {
-                        // Took Test -> Waiting for Revision
-                        const seconds = activeIntervals.revision;
                         const date = new Date(current.lastMcqDate);
-                        date.setSeconds(date.getSeconds() + seconds);
+                        date.setSeconds(date.getSeconds() + scaledRevision);
                         nextRev = date.toISOString();
                     }
 
@@ -273,90 +276,75 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
         let isMounted = true;
 
         const expandTopics = async () => {
-            // Initial render with processed topics
             if (isMounted) setTopics(processedTopics);
 
-            const expandedTopics: TopicItem[] = [];
-            let hasExpansion = false;
-
-            for (const topic of processedTopics) {
-                // Check if this is a Chapter-level entry (name matches chapter name)
+            // Parallel Processing for Speed
+            const expandedResults = await Promise.all(processedTopics.map(async (topic) => {
                 const isChapterLevel = topic.name === topic.chapterName;
+                if (!isChapterLevel) return [topic];
 
-                if (isChapterLevel) {
-                    try {
-                        const board = user.board || 'CBSE';
-                        const classLevel = user.classLevel || '10';
-                        const streamKey = (classLevel === '11' || classLevel === '12') && user.stream ? `-${user.stream}` : '';
-                        const subject = topic.subjectName || 'Unknown';
-                        const strictKey = `nst_content_${board}_${classLevel}${streamKey}_${subject}_${topic.chapterId}`;
+                try {
+                    const board = user.board || 'CBSE';
+                    const classLevel = user.classLevel || '10';
+                    const streamKey = (classLevel === '11' || classLevel === '12') && user.stream ? `-${user.stream}` : '';
+                    const subject = topic.subjectName || 'Unknown';
+                    const strictKey = `nst_content_${board}_${classLevel}${streamKey}_${subject}_${topic.chapterId}`;
 
-                        // Fetch Data
-                        let data: any = await storage.getItem(strictKey);
-                        if (!data) {
-                            try { data = await getChapterData(strictKey); } catch (e) {}
-                        }
-                        if (!data) {
-                             try { data = await getChapterData(topic.chapterId); } catch (e) {}
-                        }
-
-                        if (data) {
-                            const subTopics = new Set<string>();
-
-                            // 1. Extract from Topic Notes (Preferred)
-                            if (data.topicNotes && Array.isArray(data.topicNotes)) {
-                                data.topicNotes.forEach((n: any) => {
-                                    if (n.topic) subTopics.add(n.topic.trim());
-                                });
-                            }
-
-                            // 2. Extract from MCQs (Fallback)
-                            if (subTopics.size === 0 && data.manualMcqData && Array.isArray(data.manualMcqData)) {
-                                data.manualMcqData.forEach((q: any) => {
-                                    if (q.topic) subTopics.add(q.topic.trim());
-                                });
-                            }
-
-                            if (subTopics.size > 0) {
-                                hasExpansion = true;
-                                subTopics.forEach(subName => {
-                                    // Avoid duplicates if specific subtopic history exists
-                                    const exists = processedTopics.some(t => t.chapterId === topic.chapterId && t.name === subName);
-
-                                    // Count notes for this subtopic
-                                    let subNotesCount = 0;
-                                    if (data.topicNotes) {
-                                        subNotesCount = data.topicNotes.filter((n: any) => n.topic && n.topic.trim() === subName).length;
-                                    }
-
-                                    if (!exists) {
-                                        expandedTopics.push({
-                                            ...topic,
-                                            id: `${topic.chapterId}_${subName}`,
-                                            name: subName,
-                                            isSubTopic: true,
-                                            notesCount: subNotesCount
-                                        });
-                                    }
-                                });
-                                continue; // Skip adding the original chapter topic
-                            } else {
-                                // If no subtopics found, maybe count general notes for the chapter
-                                if (data.topicNotes) {
-                                    topic.notesCount = data.topicNotes.length;
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Error expanding chapter:", e);
+                    let data: any = await storage.getItem(strictKey);
+                    if (!data) {
+                        // Parallel fallback fetching
+                        const [cloudData, legacyData] = await Promise.all([
+                            getChapterData(strictKey).catch(() => null),
+                            getChapterData(topic.chapterId).catch(() => null)
+                        ]);
+                        data = cloudData || legacyData;
                     }
+
+                    if (data) {
+                        const subTopics = new Set<string>();
+                        if (data.topicNotes && Array.isArray(data.topicNotes)) {
+                            data.topicNotes.forEach((n: any) => { if (n.topic) subTopics.add(n.topic.trim()); });
+                        }
+                        if (subTopics.size === 0 && data.manualMcqData) {
+                            data.manualMcqData.forEach((q: any) => { if (q.topic) subTopics.add(q.topic.trim()); });
+                        }
+
+                        if (subTopics.size > 0) {
+                            const newSubTopics: TopicItem[] = [];
+                            subTopics.forEach(subName => {
+                                const exists = processedTopics.some(t => t.chapterId === topic.chapterId && t.name === subName);
+                                let subNotesCount = 0;
+                                if (data.topicNotes) {
+                                    subNotesCount = data.topicNotes.filter((n: any) => n.topic && n.topic.trim() === subName).length;
+                                }
+
+                                if (!exists) {
+                                    newSubTopics.push({
+                                        ...topic,
+                                        id: `${topic.chapterId}_${subName}`,
+                                        name: subName,
+                                        isSubTopic: true,
+                                        notesCount: subNotesCount
+                                    });
+                                }
+                            });
+                            return newSubTopics;
+                        } else {
+                            if (data.topicNotes) topic.notesCount = data.topicNotes.length;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error expanding chapter:", e);
                 }
+                return [topic];
+            }));
 
-                expandedTopics.push(topic);
-            }
-
-            if (isMounted && hasExpansion) {
-                setTopics(expandedTopics);
+            if (isMounted) {
+                const flattened = expandedResults.flat();
+                // Only update if count changed (avoid render loop)
+                if (flattened.length !== processedTopics.length) {
+                    setTopics(flattened);
+                }
             }
         };
 
@@ -854,61 +842,22 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         }
                         setShowTodayMcqSession(false);
 
-                        // AGGREGATE RESULTS FOR ANALYSIS
+                        // "banane ke baad ek analysis page aaya hai jo na aaye to hi achha rahega"
+                        // Disable Final Analysis for Revision Hub as per user request.
+                        // Just show a success message or nothing.
                         if (results.length > 0) {
-                            // Merge all results
-                            let totalQ = 0;
-                            let totalScore = 0;
-                            let combinedQuestions: any[] = []; // We need actual questions to show analysis
-                            // Problem: results from TodayMcqSession only contain metadata, NOT question details (omrData has simple data).
-                            // Wait, MCQResult stores wrongQuestions (some details).
-                            // But MarksheetCard expects full questions to render detailed analysis.
-                            // TodayMcqSession DOES NOT pass full questions in `results` (MCQResult type doesn't hold full Q objects usually, unless we extend it).
-                            // Actually `MarksheetCard` takes `questions` prop.
-                            // We need to pass the questions.
-                            // TodayMcqSession needs to return the questions used too.
-                            // Or we construct a simple aggregate result object.
-
-                            // For now, let's create a summary result.
-                            // Note: Detailed Question analysis might be limited if we don't have the questions objects.
-                            // But user wants "analysis".
-                            // Let's assume we show the Marksheet for the LAST topic or a summary.
-
-                            // Combine scores
-                            results.forEach(r => {
-                                totalQ += r.totalQuestions;
-                                totalScore += r.score;
+                            setAlertConfig({
+                                isOpen: true,
+                                type: 'SUCCESS',
+                                title: 'Session Complete',
+                                message: `You completed ${results.length} topics. Keep it up!`
                             });
-
-                            const combinedResult = {
-                                ...results[0],
-                                id: `sess-${Date.now()}`,
-                                chapterTitle: "Revision Session (Multiple Topics)",
-                                totalQuestions: totalQ,
-                                score: totalScore,
-                                correctCount: totalScore,
-                                wrongCount: totalQ - totalScore,
-                                date: new Date().toISOString()
-                            };
-                            setSessionResult(combinedResult);
                         }
                     }}
                 />
             )}
 
-            {sessionResult && (
-                <MarksheetCard
-                    result={sessionResult}
-                    user={user}
-                    settings={settings}
-                    onClose={() => setSessionResult(null)}
-                    mcqMode='PREMIUM'
-                    // We don't have the full questions array here easily, so detailed view might be empty.
-                    // But Comparison and Score Summary will work.
-                    // To show detailed Qs, TodayMcqSession must return them.
-                    // Given the constraints, we show summary.
-                />
-            )}
+            {/* Analysis Page Removed for Revision Hub as per request */}
 
             <CustomAlert
                 isOpen={alertConfig.isOpen}
@@ -1122,7 +1071,13 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                                     {weeklyData[week].map((t, i) => {
                                         const displayName = getCleanDisplayName(t.name, t.chapterName, t.subjectName);
                                         const percent = Math.round(t.score || 0);
-                                        const timer = getTimeUntil(t.nextRevision || t.mcqDueDate);
+                                        const dueDateStr = t.nextRevision || t.mcqDueDate;
+                                        const timer = getTimeUntil(dueDateStr);
+
+                                        // Visual Decay Logic (Overdue)
+                                        const isOverdue = dueDateStr && new Date(dueDateStr) < new Date();
+                                        const decayOpacity = isOverdue ? 'opacity-100' : 'opacity-80';
+                                        const overdueHighlight = isOverdue ? 'ring-2 ring-red-100 bg-red-50/30' : '';
 
                                         // Colors based on score/status
                                         let barColor = "bg-orange-500";
@@ -1141,7 +1096,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                                             <div
                                                 key={i}
                                                 onClick={() => handleTopicClick(t)}
-                                                className={`group ${hubMode === 'PREMIUM' ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'}`}
+                                                className={`group ${hubMode === 'PREMIUM' ? 'cursor-pointer' : 'cursor-not-allowed'} ${decayOpacity} ${overdueHighlight} p-2 rounded-lg transition-all hover:bg-slate-50`}
                                             >
                                                 <div className="flex justify-between items-end mb-1.5">
                                                     <div className="flex items-center gap-2 overflow-hidden flex-1">

@@ -97,7 +97,11 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
                 return; // Early exit, let effect re-trigger
             }
 
-            setCurrentMcqData(mcqs);
+            // LIMIT QUESTIONS (User Request: Don't show 200-400 questions)
+            // Cap at 20 questions per revision session to prevent burnout
+            const limitedMcqs = mcqs.slice(0, 20);
+
+            setCurrentMcqData(limitedMcqs);
         } catch (e) {
             console.error("Failed to load MCQ", e);
             setCurrentMcqData([]);
@@ -118,25 +122,25 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
             if (qIndex < currentMcqData.length - 1) {
                 setQIndex(prev => prev + 1);
             } else {
-                calculateTopicResult(newAnswers);
+                // Topic Finished -> Auto Submit Topic (No Result Screen)
+                calculateAndNext(newAnswers);
             }
         }, 500);
     };
 
-    const calculateTopicResult = (finalAnswers: Record<number, number>) => {
+    const calculateAndNext = (finalAnswers: Record<number, number>) => {
         let correct = 0;
         currentMcqData.forEach((q, i) => {
             if (finalAnswers[i] === q.correctAnswer) correct++;
         });
-        setTopicScore(correct);
-        setShowResult(true);
+        // Save & Move Next immediately
+        processTopicResult(correct, finalAnswers);
     };
 
-    const handleNextTopic = () => {
+    const processTopicResult = (score: number, finalAnswers: Record<number, number>) => {
         // Save Result
         const topic = topics[currentIndex];
         const total = currentMcqData.length;
-        const score = topicScore;
         const percentage = total > 0 ? (score/total)*100 : 0;
 
         // Determine Status based on NEW Logic
@@ -215,43 +219,8 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
         );
     }
 
-    // Topic Result View (Intermediate)
-    if (showResult) {
-        const percentage = Math.round((topicScore / currentMcqData.length) * 100);
-        let statusColor = 'text-orange-500';
-        let statusText = 'Average';
-        if (percentage >= 80) { statusColor = 'text-green-600'; statusText = 'Excellent! 🌟'; }
-        else if (percentage < 50) { statusColor = 'text-red-500'; statusText = 'Needs Work'; }
-        else if (percentage >= 65) { statusColor = 'text-blue-500'; statusText = 'Strong 💪'; }
-
-        return (
-            <div className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-8 text-center animate-in zoom-in">
-                <div className="mb-6 relative">
-                    <svg className="w-32 h-32 transform -rotate-90">
-                        <circle cx="64" cy="64" r="60" stroke="#f1f5f9" strokeWidth="8" fill="transparent" />
-                        <circle cx="64" cy="64" r="60" stroke="currentColor" strokeWidth="8" fill="transparent"
-                            className={statusColor.replace('text-', 'stroke-')}
-                            strokeDasharray={2 * Math.PI * 60}
-                            strokeDashoffset={2 * Math.PI * 60 * (1 - percentage/100)}
-                        />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-slate-800">
-                        {percentage}%
-                    </div>
-                </div>
-
-                <h3 className="text-2xl font-black text-slate-800 mb-2">{topic.name}</h3>
-                <p className={`text-lg font-bold mb-8 ${statusColor}`}>{statusText}</p>
-
-                <button
-                    onClick={handleNextTopic}
-                    className="w-full max-w-xs bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
-                >
-                    Next Topic <ArrowRight size={20} />
-                </button>
-            </div>
-        );
-    }
+    // Intermediate Result Screen REMOVED as per user request
+    // "banane ke baad ek analysis page aaya hai jo na aaye to hi achha rahega"
 
     // MCQ Question View
     const question = currentMcqData[qIndex];
@@ -288,7 +257,15 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
             {/* Header */}
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10 shadow-sm">
                 <div className="flex items-center gap-2">
-                    <button onClick={onClose} className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200">
+                    <button onClick={() => {
+                        // Back Button = Submit & Exit (Auto)
+                        // If we have some results, complete. If not, just close.
+                        if (sessionResults.length > 0) {
+                            onComplete(sessionResults);
+                        } else {
+                            onClose();
+                        }
+                    }} className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200">
                         <ArrowRight size={18} className="rotate-180" /> {/* Back Icon */}
                     </button>
                     <div>
@@ -307,19 +284,11 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
                                 {Math.floor(totalTime / 60)}:{String(totalTime % 60).padStart(2, '0')}
                             </span>
                         </div>
-                        <div className="h-6 w-px bg-slate-200"></div>
-                        <div className="flex flex-col items-end">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">Q-Time</span>
-                            <span className={`text-xs font-mono font-bold ${questionTime > 60 ? 'text-red-500' : 'text-slate-700'}`}>
-                                {Math.floor(questionTime / 60)}:{String(questionTime % 60).padStart(2, '0')}
-                            </span>
-                        </div>
                     </div>
                     <button
                         onClick={() => {
-                            if (confirm("Submit Session early?")) {
-                                onComplete(sessionResults);
-                            }
+                            // "Apne aap submit ho jayega" - Manual submit also triggers finish
+                            onComplete(sessionResults);
                         }}
                         className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow hover:bg-green-700"
                     >

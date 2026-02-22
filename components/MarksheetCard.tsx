@@ -28,7 +28,7 @@ interface Props {
 
 export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose, onViewAnalysis, onPublish, questions, onUpdateUser, initialView, onLaunchContent, mcqMode = 'FREE' }) => {
   const [page, setPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<'OFFICIAL_MARKSHEET' | 'SOLUTION' | 'OMR' | 'PREMIUM_ANALYSIS' | 'RECOMMEND'>(
+  const [activeTab, setActiveTab] = useState<'OFFICIAL_MARKSHEET' | 'SOLUTION' | 'OMR' | 'RECOMMEND'>(
       mcqMode === 'PREMIUM' ? 'SOLUTION' : 'OFFICIAL_MARKSHEET'
   );
   
@@ -76,9 +76,13 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   msg = `Welcome ${user.name}, aapne achhi mehnat ki! Pichhli test me ${prevPct}% aapka marks tha, ish baar aapne ${currPct}% kiya. ${improvement > 0 ? `Improvement: ${improvement}%!` : 'Consistent performance!'}`;
               }
               // Decline (Strong -> Weak/Avg)
-              else if (prevStatus === 'STRONG' && (currStatus === 'AVERAGE' || currStatus === 'WEAK')) {
-                  // "pichhli baar aapka ...% aaya tha ish baar ...%kam mèhnat kijiye aur revision kijiye next attempt me achha result aayega. Do hard work bro ya user ka naam lega"
-                  msg = `Pichhli baar aapka ${prevPct}% aaya tha, ish baar ${currPct}%. Thoda aur mehnat kijiye aur revision kijiye. Next attempt me achha result aayega. Do hard work ${user.name}!`;
+              else if (currPct < prevPct) {
+                  // "appka result pahle se achha hai ...% aapne achha kiya pahle se kharab hài ..... aap revision ķijiye aapka score kam ho gaya hai"
+                  msg = `Pahle se kharab hai... Pichhli baar ${prevPct}% tha, abhi ${currPct}% hai. Aapka score kam ho gaya hai. Aap revision kijiye.`;
+              } else if (currPct > prevPct) {
+                  msg = `Appka result pahle se achha hai! ${currPct - prevPct}% aapne achha kiya. Keep it up ${user.name}!`;
+              } else {
+                  msg = `Result same hai (${currPct}%). Thoda aur push karein!`;
               }
 
               if (msg) setComparisonMessage(msg);
@@ -447,29 +451,80 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
   const handleDownloadAll = async () => {
       setIsDownloadingAll(true);
+      // Wait for UI to update (spinner etc)
       setTimeout(async () => {
-          const element = document.getElementById('full-analysis-report');
+          const element = document.getElementById('marksheet-content'); // Capture FULL content
           if (element) {
               try {
-                  const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-                  const link = document.createElement('a');
-                  link.download = `Full_Analysis_${user.name}_${new Date().getTime()}.png`;
-                  link.href = canvas.toDataURL('image/png');
-                  link.click();
+                  const canvas = await html2canvas(element, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
+                  const imgData = canvas.toDataURL('image/png');
+
+                  const pdf = new jsPDF('p', 'mm', 'a4');
+                  const pdfWidth = pdf.internal.pageSize.getWidth();
+                  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                  // Split into pages if too long
+                  let heightLeft = pdfHeight;
+                  let position = 0;
+
+                  // First page
+                  pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                  heightLeft -= pdf.internal.pageSize.getHeight();
+
+                  while (heightLeft >= 0) {
+                      position = heightLeft - pdfHeight;
+                      pdf.addPage();
+                      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                      heightLeft -= pdf.internal.pageSize.getHeight();
+                  }
+
+                  pdf.save(`Full_Analysis_${user.name}.pdf`);
               } catch (e) {
-                  console.error('Full Download Failed', e);
+                  console.error('Full PDF Download Failed', e);
+                  alert("Could not generate PDF. Please try again.");
               }
           }
           setIsDownloadingAll(false);
-      }, 1000);
+      }, 500);
   };
 
   const handleShare = async () => {
       const appLink = settings?.officialAppUrl || "https://play.google.com/store/apps/details?id=com.nsta.app"; 
-      const text = `*${settings?.appName || 'IDEAL INSPIRATION CLASSES'} RESULT*\n\nName: ${user.name}\nScore: ${result.score}/${result.totalQuestions}\nAccuracy: ${percentage}%\nCorrect: ${result.correctCount}\nWrong: ${result.wrongCount}\nTime: ${formatTime(result.totalTimeSeconds)}\nDate: ${new Date(result.date).toLocaleDateString()}\n\nदेखिये मेरा NSTA रिजल्ट! आप भी टेस्ट दें...\nDownload App: ${appLink}`;
+      const text = `*${settings?.appName || 'IDEAL INSPIRATION CLASSES'} RESULT*\n\nName: ${user.name}\nScore: ${result.score}/${result.totalQuestions}\nAccuracy: ${percentage}%\nCheck attached PDF for details.\n\nDownload App: ${appLink}`;
+
+      // Generate PDF for sharing
       if (navigator.share) {
+          try {
+              const element = document.getElementById('marksheet-content');
+              if (element) {
+                  const canvas = await html2canvas(element, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
+                  const imgData = canvas.toDataURL('image/png');
+                  const pdf = new jsPDF('p', 'mm', 'a4');
+                  const pdfWidth = pdf.internal.pageSize.getWidth();
+                  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+                  const blob = pdf.output('blob');
+                  const file = new File([blob], "Result_Analysis.pdf", { type: "application/pdf" });
+
+                  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                      await navigator.share({
+                          title: 'My Result Analysis',
+                          text: text,
+                          files: [file]
+                      });
+                      return;
+                  }
+              }
+          } catch(e) {
+              console.error("Share File Failed", e);
+          }
+
+          // Fallback to text share
           try { await navigator.share({ title: 'Result', text }); } catch(e) {}
       } else {
+          // Fallback for desktop/unsupported
+          handleDownloadAll(); // Download file
           window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
       }
   };
@@ -1184,16 +1239,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                             <Grid size={14} className="inline mr-1 mb-0.5" /> OMR
                         </button>
 
-                        {/* Premium Analysis - Only for Premium Mode */}
-                        {mcqMode === 'PREMIUM' && (
-                            <button
-                                onClick={() => setActiveTab('PREMIUM_ANALYSIS')}
-                                className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'PREMIUM_ANALYSIS' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
-                            >
-                                <BrainCircuit size={14} className="inline mr-1 mb-0.5" /> Premium Analysis
-                            </button>
-                        )}
-
                         <button
                             onClick={() => setActiveTab('RECOMMEND')}
                             className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'RECOMMEND' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
@@ -1253,13 +1298,25 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
                 {/* 2. SOLUTION SECTION (New Analysis) */}
                 {activeTab === 'SOLUTION' && isAnalysisUnlocked && (
-                    <div className="animate-in slide-in-from-bottom-4">
-                        {/* We reuse previous renderSolution logic via helper functions or inline */}
-                        {/* Need to port renderSolutionSection logic here fully */}
+                    <div className="animate-in slide-in-from-bottom-4" id="full-analysis-container">
+                        {/* AI ANALYSIS INTEGRATION (Merged) */}
+                        <div className="mb-8">
+                             {!ultraAnalysisResult ? (
+                                <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-3xl p-6 text-center text-white shadow-lg">
+                                    <BrainCircuit size={48} className="mx-auto mb-4 opacity-80" />
+                                    <h4 className="text-xl font-black mb-2">Unlock Premium AI Analysis</h4>
+                                    <button onClick={() => handleUltraAnalysis()} disabled={isLoadingUltra} className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-black shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-2 mx-auto disabled:opacity-80">
+                                        {isLoadingUltra ? <span className="animate-spin">⏳</span> : <UnlockIcon />}
+                                        {isLoadingUltra ? 'Analyzing...' : `Unlock Analysis (${settings?.mcqAnalysisCostUltra ?? 20} Coins)`}
+                                    </button>
+                                </div>
+                            ) : renderAnalysisContent()}
+                        </div>
+
                         <div className="flex items-center justify-between mb-3 px-2">
                             <div className="flex items-center gap-2">
                                 <FileSearch className="text-blue-600" size={20} />
-                                <h3 className="font-black text-slate-800 text-lg">Detailed Analysis</h3>
+                                <h3 className="font-black text-slate-800 text-lg">Question Analysis</h3>
                             </div>
                         </div>
                         {questions && questions.length > 0 ? (
@@ -1343,23 +1400,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                     </div>
                 )}
 
-                {/* 4. PREMIUM ANALYSIS SECTION */}
-                {activeTab === 'PREMIUM_ANALYSIS' && isAnalysisUnlocked && (
-                    <div className="animate-in slide-in-from-bottom-4">
-                        {/* Premium Analysis Content Code Reuse */}
-                        {!ultraAnalysisResult ? (
-                            <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-3xl p-6 text-center text-white shadow-lg">
-                                <BrainCircuit size={48} className="mx-auto mb-4 opacity-80" />
-                                <h4 className="text-xl font-black mb-2">Unlock Premium AI Analysis</h4>
-                                <button onClick={() => handleUltraAnalysis()} disabled={isLoadingUltra} className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-black shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-2 mx-auto disabled:opacity-80">
-                                    {isLoadingUltra ? <span className="animate-spin">⏳</span> : <UnlockIcon />}
-                                    {isLoadingUltra ? 'Analyzing...' : `Unlock Analysis (${settings?.mcqAnalysisCostUltra ?? 20} Coins)`}
-                                </button>
-                            </div>
-                        ) : renderAnalysisContent()}
-                    </div>
-                )}
-
                 {/* 5. RECOMMENDED NOTES PAGE */}
                 {activeTab === 'RECOMMEND' && isAnalysisUnlocked && (
                     <div className="animate-in slide-in-from-bottom-4 h-full">
@@ -1388,13 +1428,13 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                     <Download size={20} />
                 </button>
 
-                {/* HTML DOWNLOAD BUTTON */}
+                {/* PDF DOWNLOAD BUTTON */}
                 <button
-                    onClick={handleDownloadHtml}
-                    className="p-3 bg-purple-100 text-purple-600 rounded-full hover:bg-purple-600 hover:text-white transition-all shadow-sm active:scale-95"
-                    title="Download Full Data (HTML) - 10 Credits"
+                    onClick={() => handleDownloadAll()}
+                    className="p-3 bg-slate-100 text-slate-600 rounded-full hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95"
+                    title="Download Full Analysis PDF"
                 >
-                    <FileText size={20} />
+                    {isDownloadingAll ? <span className="animate-spin">⏳</span> : <Download size={20} />}
                 </button>
             </div>
              

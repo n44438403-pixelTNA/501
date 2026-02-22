@@ -321,8 +321,20 @@ export interface LoginBonusConfig {
   main
 }
 
+export interface EventBannerConfig {
+    type: 'DISCOUNT' | 'FREE_EVERYTHING' | 'CREDITS_FREE' | 'MAINTENANCE' | 'UPDATE' | 'COUPON' | 'CUSTOM';
+    title: string;
+    subtitle?: string;
+    imageUrl?: string;
+    actionUrl?: string; // Deep link or External
+    enabled: boolean;
+    bgColor?: string;
+    textColor?: string;
+}
+
 export interface SystemSettings {
   appName: string; // Long Name
+  activeEvents?: EventBannerConfig[]; // NEW: Event Banners
   mcqUnlockThreshold?: number; // NEW: Customizable unlock threshold
   mcqTestLimitFree?: number;
   mcqLimitFree?: number; // Daily Limit Free

@@ -20,3 +20,6 @@ Port 5000 is in use, trying another one...
 11:36:23 AM [vite] (client) hmr update /components/Store.tsx
 11:36:47 AM [vite] (client) hmr update /components/AdminDashboard.tsx
 11:36:47 AM [vite] (client) hmr update /components/AdminDashboard.tsx
+11:45:54 AM [vite] (client) hmr update /components/MarksheetCard.tsx
+11:46:30 AM [vite] (client) hmr update /components/RevisionHub.tsx
+11:47:11 AM [vite] (client) hmr update /components/LessonView.tsx

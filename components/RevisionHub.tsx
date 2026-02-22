@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, StudentTab, SystemSettings, TopicItem, TopicStatus } from '../types';
 import { BrainCircuit, Clock, CheckCircle, TrendingUp, AlertTriangle, ArrowRight, BookOpen, AlertCircle, X, FileText, CheckSquare, Calendar, Zap, AlertCircle as AlertIcon, ChevronDown, ChevronUp, Loader2, Lock, Unlock, MessageSquare, Bot, PlayCircle, Star, Volume2, Mic, AlertOctagon, Crown, Layout, Trophy } from 'lucide-react';
+import jsPDF from 'jspdf';
 import { generateCustomNotes } from '../services/groq';
 import { saveAiInteraction, getChapterData, saveUserToLive, saveDemand } from '../firebase';
 import { storage } from '../utils/storage';
@@ -419,32 +420,45 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
 
         if(onUpdateUser) onUpdateUser({...user, credits: user.credits - 10});
 
-        const html = `
-            <html><body>
-            <h1>Revision Hub Data</h1>
-            <h2>Student: ${user.name}</h2>
-            <table border="1" cellpadding="5">
-                <thead><tr><th>Topic</th><th>Chapter</th><th>Subject</th><th>Status</th><th>Score</th><th>Next Revision</th></tr></thead>
-                <tbody>
-                    ${topics.map(t => `
-                        <tr>
-                            <td>${t.name}</td>
-                            <td>${t.chapterName}</td>
-                            <td>${t.subjectName}</td>
-                            <td>${t.status}</td>
-                            <td>${Math.round(t.score)}%</td>
-                            <td>${new Date(t.nextRevision || t.mcqDueDate || t.lastAttempt).toLocaleDateString()}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-            </body></html>
-        `;
-        const blob = new Blob([html], {type: 'text/html'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `RevisionHub_${user.name}.html`;
-        a.click();
+        // Generate PDF using jsPDF
+        const pdf = new jsPDF();
+        pdf.setFontSize(18);
+        pdf.text("Revision Hub Data", 14, 20);
+        pdf.setFontSize(12);
+        pdf.text(`Student: ${user.name}`, 14, 30);
+        pdf.text(`Date: ${new Date().toLocaleDateString()}`, 14, 36);
+
+        let y = 50;
+        pdf.setFontSize(10);
+        pdf.setTextColor(100);
+
+        // Simple Table Header
+        pdf.text("Topic", 14, y);
+        pdf.text("Status", 100, y);
+        pdf.text("Score", 130, y);
+        pdf.text("Next Due", 160, y);
+
+        y += 5;
+        pdf.line(14, y, 200, y);
+        y += 10;
+
+        pdf.setTextColor(0);
+
+        topics.forEach((t) => {
+            if (y > 280) {
+                pdf.addPage();
+                y = 20;
+            }
+            const name = t.name.length > 40 ? t.name.substring(0, 37) + '...' : t.name;
+            pdf.text(name, 14, y);
+            pdf.text(t.status, 100, y);
+            pdf.text(`${Math.round(t.score)}%`, 130, y);
+            const date = new Date(t.nextRevision || t.mcqDueDate || t.lastAttempt).toLocaleDateString();
+            pdf.text(date, 160, y);
+            y += 8;
+        });
+
+        pdf.save(`RevisionHub_${user.name}.pdf`);
     };
 
     const pendingNotes = topics.filter(t => t.nextRevision && new Date(t.nextRevision) <= now);

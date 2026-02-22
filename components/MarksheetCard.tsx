@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { MCQResult, User, SystemSettings } from '../types';
 import { X, Share2, ChevronLeft, ChevronRight, Download, FileSearch, Grid, CheckCircle, XCircle, Clock, Award, BrainCircuit, Play, StopCircle, BookOpen, Target, Zap, BarChart3, ListChecks, FileText, LayoutTemplate, TrendingUp, Lightbulb, ExternalLink, RefreshCw, Lock, Sparkles } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { generateUltraAnalysis } from '../services/groq';
 import { saveUniversalAnalysis, saveUserToLive, saveAiInteraction, getChapterData } from '../firebase';
 import ReactMarkdown from 'react-markdown';
@@ -430,12 +431,17 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       if (!element) return;
       try {
           const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-          const link = document.createElement('a');
-          link.download = `Marksheet_${user.name}_${new Date().getTime()}.png`;
-          link.href = canvas.toDataURL('image/png');
-          link.click();
+          const imgData = canvas.toDataURL('image/png');
+
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`Marksheet_${user.name}_${result.chapterTitle}.pdf`);
       } catch (e) {
           console.error('Download failed', e);
+          alert("Failed to generate PDF. Please try again.");
       }
   };
 

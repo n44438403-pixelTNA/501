@@ -710,12 +710,6 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                             >
                                 <Zap size={14} /> AI Plan
                             </button>
-                            <button
-                                onClick={handleDownloadHubData}
-                                className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm hover:bg-blue-200 flex items-center gap-2"
-                            >
-                                <FileText size={14} /> Download PDF
-                            </button>
                         </>
                      )}
                      {activeFilter !== 'TODAY' && (

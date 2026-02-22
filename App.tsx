@@ -351,7 +351,7 @@ const App: React.FC = () => {
       if (lastRewardDate !== today && !activeReward) {
           // Check Streak for Strict Mode
           let streakBroken = false;
-          if (state.user.lastLoginDate && lastLoginStr !== yesterday.toDateString() && lastLoginStr !== today) {
+          if (state.user.lastLoginDate && lastLoginDateString !== yesterday.toDateString() && lastLoginDateString !== today) {
               streakBroken = true;
           }
 

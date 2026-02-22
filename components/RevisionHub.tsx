@@ -60,6 +60,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     const [showTodayRevisionSession, setShowTodayRevisionSession] = useState(false);
     const [showTodayMcqSession, setShowTodayMcqSession] = useState(false);
     const [sessionResult, setSessionResult] = useState<any>(null); // For Marksheet
+    const [showCompletedHistory, setShowCompletedHistory] = useState(false);
 
     // Custom Alert State
     const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, type: 'SUCCESS'|'ERROR'|'INFO', title?: string, message: string}>({isOpen: false, type: 'INFO', message: ''});
@@ -846,11 +847,16 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         // Disable Final Analysis for Revision Hub as per user request.
                         // Just show a success message or nothing.
                         if (results.length > 0) {
+                            // Calculate aggregate performance for the alert
+                            const totalQ = results.reduce((acc, r) => acc + r.totalQuestions, 0);
+                            const totalScore = results.reduce((acc, r) => acc + r.score, 0);
+                            const pct = totalQ > 0 ? Math.round((totalScore / totalQ) * 100) : 0;
+
                             setAlertConfig({
                                 isOpen: true,
                                 type: 'SUCCESS',
-                                title: 'Session Complete',
-                                message: `You completed ${results.length} topics. Keep it up!`
+                                title: 'Session Complete!',
+                                message: `You completed ${results.length} topics.\nOverall Score: ${totalScore}/${totalQ} (${pct}%)`
                             });
                         }
                     }}
@@ -1020,25 +1026,37 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
 
                     {/* COMPLETED TODAY (Premium Only) */}
                      {completedToday.length > 0 && hubMode === 'PREMIUM' && (
-                        <div className="bg-slate-50 rounded-3xl border border-slate-200 p-5">
-                            <h3 className="font-black text-slate-600 text-sm flex items-center gap-2 mb-3">
-                                <CheckCircle size={16} /> Completed Today
-                            </h3>
-                            <div className="space-y-2">
-                                {completedToday.map((t, i) => (
-                                    <div key={i} className="bg-white p-2 rounded-xl border border-slate-100 flex items-center justify-between opacity-75 hover:opacity-100 transition-opacity">
-                                        <div>
-                                            <h4 className="font-bold text-slate-700 text-xs">{getCleanDisplayName(t.name, t.chapterTitle || '', t.subjectName)}</h4>
-                                        </div>
-                                        <button
-                                            onClick={() => handleUndoRevision(t.name, t.chapterId)}
-                                            className="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded border border-red-100 font-bold hover:bg-red-100 flex items-center gap-1"
-                                        >
-                                            Undo
-                                        </button>
-                                    </div>
-                                ))}
+                        <div className="bg-slate-50 rounded-3xl border border-slate-200 p-5 transition-all">
+                            <div
+                                onClick={() => setShowCompletedHistory(!showCompletedHistory)}
+                                className="flex justify-between items-center cursor-pointer"
+                            >
+                                <h3 className="font-black text-slate-600 text-sm flex items-center gap-2">
+                                    <CheckCircle size={16} className="text-green-500" /> Completed Today ({completedToday.length})
+                                </h3>
+                                {showCompletedHistory ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                             </div>
+
+                            {showCompletedHistory && (
+                                <div className="space-y-2 mt-3 animate-in fade-in slide-in-from-top-2">
+                                    {completedToday.map((t, i) => (
+                                        <div key={i} className="bg-white p-2 rounded-xl border border-slate-100 flex items-center justify-between opacity-75 hover:opacity-100 transition-opacity">
+                                            <div>
+                                                <h4 className="font-bold text-slate-700 text-xs">{getCleanDisplayName(t.name, t.chapterTitle || '', t.subjectName)}</h4>
+                                            </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleUndoRevision(t.name, t.chapterId);
+                                                }}
+                                                className="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded border border-red-100 font-bold hover:bg-red-100 flex items-center gap-1"
+                                            >
+                                                Undo
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                  </div>

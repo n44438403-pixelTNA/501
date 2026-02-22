@@ -273,6 +273,16 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       loadKeys();
   }, [currentUser]);
 
+  // --- SUBSCRIBE TO UNIVERSAL ANALYSIS ---
+  useEffect(() => {
+      const unsubscribe = subscribeToUniversalAnalysis((logs) => {
+          setAnalysisLogs(logs);
+      });
+      return () => {
+          if (unsubscribe) unsubscribe();
+      };
+  }, []);
+
   // --- AI AUTO-PILOT STATE ---
 
   // --- AI API MONITOR STATE ---

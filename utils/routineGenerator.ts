@@ -20,8 +20,10 @@ export const generateDailyRoutine = (user: User): DailyRoutine => {
     const weakTopics: string[] = [];
     const topicStats: Record<string, { correct: number, total: number }> = {};
 
-    (user.mcqHistory || []).forEach(result => {
-        // Assume chapterTitle as topic for now if topic field is missing
+    // 1. Identify Weak Topics (from mcqHistory)
+    // Enhanced: Use last 10 tests only for recent weakness
+    (user.mcqHistory || []).slice(0, 10).forEach(result => {
+        // Use chapterTitle or topic
         const topic = result.topic || result.chapterTitle || 'General';
         if (!topicStats[topic]) topicStats[topic] = { correct: 0, total: 0 };
         topicStats[topic].correct += result.correctCount;
@@ -30,61 +32,76 @@ export const generateDailyRoutine = (user: User): DailyRoutine => {
 
     Object.keys(topicStats).forEach(topic => {
         const stats = topicStats[topic];
-        if (stats.total > 0 && (stats.correct / stats.total) < 0.6) {
+        // Weakness threshold: < 60% accuracy
+        if (stats.total > 5 && (stats.correct / stats.total) < 0.6) {
             weakTopics.push(topic);
         }
     });
 
-    // 2. Determine Strategy based on Streak & Goal
-    // Default goal: 3 hours (180 mins) if not set
-    const goalHours = user.customSubscriptionDuration?.hours || 3; // Fallback logic, actually user doesn't store daily goal directly in interface, stored in localStorage usually.
-    // We will assume 120 mins base for routine generation for now.
-    const totalMinutes = 120;
+    // 2. Determine Strategy based on User Level (Implied by Streak & Progress)
+    // If streak > 7 days, increase difficulty/load
+    const streak = user.streak || 0;
+    const isConsistent = streak > 7;
+
+    // Default goal from local storage (passed via user object if synced, but we use a default here)
+    const totalMinutes = isConsistent ? 150 : 90; // 2.5h vs 1.5h
 
     const tasks: RoutineTask[] = [];
-    let focusArea = "General Study";
+    let focusArea = "Foundational Study";
 
+    // A. WEAKNESS RECOVERY
     if (weakTopics.length > 0) {
-        focusArea = "Strengthening Weak Topics";
-        // Allocate time to weak topics
-        const topic = weakTopics[0]; // Focus on first weak topic
+        focusArea = "Targeted Weakness Recovery";
+        const topic = weakTopics[0];
         tasks.push({
-            title: `Revise ${topic}`,
-            duration: 30,
+            title: `Deep Dive: ${topic}`,
+            duration: 45,
             type: 'REVISION',
-            description: "Read notes and review key concepts."
+            description: `Your accuracy in ${topic} is low. Review the premium notes carefully.`
         });
         tasks.push({
-            title: `Practice MCQs: ${topic}`,
+            title: `Fix Mistakes: ${topic}`,
             duration: 20,
             type: 'PRACTICE',
-            description: "Take a short test to verify understanding."
+            description: "Retake MCQs for this topic focusing on previous errors."
         });
-    } else {
-        focusArea = "Advancing New Topics";
+    }
+    // B. NEW LEARNING (If no major weaknesses)
+    else {
+        focusArea = "Accelerated Learning";
         tasks.push({
-            title: "New Chapter Study",
-            duration: 45,
+            title: "New Chapter Video",
+            duration: 60,
             type: 'NEW_TOPIC',
-            description: "Watch video lecture or read main notes of a new chapter."
+            description: "Watch a full video lecture for the next chapter in your syllabus."
         });
     }
 
-    // Add Standard Practice
+    // C. CONSISTENCY TASK
     tasks.push({
-        title: "Daily MCQ Challenge",
+        title: "Daily Challenge (Streak)",
         duration: 15,
         type: 'PRACTICE',
-        description: "Complete the daily challenge to maintain streak."
+        description: "Complete today's Daily Challenge to keep your streak alive."
     });
 
-    // Add Review
-    tasks.push({
-        title: "Day Review",
-        duration: 10,
-        type: 'REVISION',
-        description: "Review what you learned today."
-    });
+    // D. REVISION (Spaced Repetition)
+    if (user.mcqHistory && user.mcqHistory.length > 0) {
+        const randomOldTopic = user.mcqHistory[Math.floor(Math.random() * user.mcqHistory.length)].chapterTitle;
+        tasks.push({
+            title: `Flash Review: ${randomOldTopic}`,
+            duration: 10,
+            type: 'REVISION',
+            description: "Quickly scan through notes of a past topic to retain memory."
+        });
+    } else {
+        tasks.push({
+            title: "Explore Library",
+            duration: 10,
+            type: 'REVISION',
+            description: "Browse the library and pick a topic for tomorrow."
+        });
+    }
 
     return {
         date: today,

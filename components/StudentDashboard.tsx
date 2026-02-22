@@ -1142,20 +1142,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                             }}
                         />
 
-                        {/* MYSTERY BUTTON (Universal Video) */}
-                        <button
-                            onClick={() => onTabChange('UNIVERSAL_VIDEO')}
-                            className="absolute -top-2 right-4 bg-slate-900 text-white px-3 py-1.5 rounded-full shadow-lg border-2 border-blue-500 animate-in slide-in-from-right flex items-center gap-2 group z-10 hover:scale-105 transition-transform"
-                            title="Mystery Content"
-                        >
-                            <div className="relative">
-                                <HelpCircle size={16} className="text-yellow-400" />
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-600 rounded-full border border-white animate-pulse"></div>
-                            </div>
-                            <span className="text-[10px] font-bold">
-                                Mystery
-                            </span>
-                        </button>
                     </div>
                 </DashboardSectionWrapper>
 
@@ -1448,6 +1434,17 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                             >
                                 <Edit size={14} />
                             </button>
+                            {/* MYSTERY BUTTON (MOVED HERE) */}
+                            <button
+                                onClick={() => onTabChange('UNIVERSAL_VIDEO')}
+                                className="bg-white/20 p-1.5 rounded-full hover:bg-white/40 transition-colors flex items-center justify-center border border-white/30"
+                                title="Mystery Content"
+                            >
+                                <div className="relative">
+                                    <HelpCircle size={14} className="text-yellow-400" />
+                                    <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse border border-white"></div>
+                                </div>
+                            </button>
                         </div>
                         <p className="text-white/80 text-sm font-mono relative z-10 flex justify-center items-center gap-2">
                             ID: {user.displayId || user.id}
@@ -1548,10 +1545,74 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 </button>
                                 <button
                                     onClick={() => {
-                                        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(user, null, 2));
+                                        // IMPROVED HTML DOWNLOAD
+                                        const htmlContent = `
+                                            <html>
+                                            <head>
+                                                <title>Student Data - ${user.name}</title>
+                                                <style>
+                                                    body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+                                                    .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                                                    h1 { color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+                                                    .section { margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
+                                                    .label { font-weight: bold; color: #64748b; font-size: 0.8em; text-transform: uppercase; }
+                                                    .value { font-size: 1.1em; color: #0f172a; font-weight: bold; }
+                                                    .tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-right: 5px; color: white; background: #3b82f6; }
+                                                    .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                                                    .history-table th { text-align: left; background: #e2e8f0; padding: 8px; font-size: 0.9em; }
+                                                    .history-table td { border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 0.9em; }
+                                                </style>
+                                            </head>
+                                            <body>
+                                                <div class="container">
+                                                    <h1>Student Profile: ${user.name}</h1>
+
+                                                    <div class="section">
+                                                        <div class="label">ID</div>
+                                                        <div class="value">${user.id}</div>
+                                                        <div class="label" style="margin-top: 10px;">Class & Stream</div>
+                                                        <div class="value">${user.classLevel || 'N/A'} - ${user.stream || 'N/A'} (${user.board})</div>
+                                                    </div>
+
+                                                    <div class="section">
+                                                        <div class="label">Subscription Status</div>
+                                                        <div class="value">
+                                                            <span class="tag" style="background: ${user.isPremium ? '#8b5cf6' : '#64748b'}">
+                                                                ${user.subscriptionTier || 'FREE'} ${user.subscriptionLevel || ''}
+                                                            </span>
+                                                        </div>
+                                                        <p>Expires: ${user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleString() : 'Never'}</p>
+                                                    </div>
+
+                                                    <div class="section">
+                                                        <div class="label">Wallet</div>
+                                                        <div class="value">Credits: ${user.credits} | Streak: ${user.streak} Days</div>
+                                                    </div>
+
+                                                    <div class="section">
+                                                        <h3>Recent Test History</h3>
+                                                        <table class="history-table">
+                                                            <thead><tr><th>Date</th><th>Test</th><th>Score</th></tr></thead>
+                                                            <tbody>
+                                                                ${(user.mcqHistory || []).slice(0, 20).map(h => `
+                                                                    <tr>
+                                                                        <td>${new Date(h.date).toLocaleDateString()}</td>
+                                                                        <td>${h.chapterTitle}</td>
+                                                                        <td>${h.score}/${h.totalQuestions}</td>
+                                                                    </tr>
+                                                                `).join('')}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </body>
+                                            </html>
+                                        `;
+                                        const blob = new Blob([htmlContent], { type: 'text/html' });
+                                        const url = URL.createObjectURL(blob);
                                         const downloadAnchorNode = document.createElement('a');
-                                        downloadAnchorNode.setAttribute("href",     dataStr);
-                                        downloadAnchorNode.setAttribute("download", `my_data_${user.id}.json`);
+                                        downloadAnchorNode.setAttribute("href", url);
+                                        downloadAnchorNode.setAttribute("download", `student_data_${user.name.replace(/\s+/g, '_')}.html`);
                                         document.body.appendChild(downloadAnchorNode);
                                         downloadAnchorNode.click();
                                         downloadAnchorNode.remove();

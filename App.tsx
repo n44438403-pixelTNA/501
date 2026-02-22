@@ -326,27 +326,24 @@ const App: React.FC = () => {
       let hasUpdates = false;
       let newReward: PendingReward | null = null;
 
-      // STREAK LOGIC (Corrected)
-      // Check if logged in yesterday
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const lastLoginStr = state.user.lastLoginDate ? new Date(state.user.lastLoginDate).toDateString() : '';
+      // STREAK LOGIC (Strict Date Comparison)
+      const lastLoginRaw = state.user.lastLoginDate ? new Date(state.user.lastLoginDate) : null;
+      const lastLoginDateString = lastLoginRaw ? lastLoginRaw.toDateString() : '';
 
-      // Update Login Date
-      if (lastLoginStr !== today) {
+      // Update Login Date if not today
+      if (lastLoginDateString !== today) {
           updatedUser.lastLoginDate = new Date().toISOString();
           hasUpdates = true;
 
-          // Increment Streak if logged in yesterday
-          if (lastLoginStr === yesterday.toDateString()) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+
+          if (lastLoginDateString === yesterday.toDateString()) {
+              // Consecutive Login: Increment
               updatedUser.streak = (updatedUser.streak || 0) + 1;
           } else {
-              // Reset streak if missed a day (and not first login)
-              if (lastLoginStr) {
-                  updatedUser.streak = 1;
-              } else {
-                  updatedUser.streak = 1; // First login ever
-              }
+              // Streak Broken or First Login: Reset
+              updatedUser.streak = 1;
           }
       }
 
@@ -2115,34 +2112,40 @@ const App: React.FC = () => {
       <div className="fixed bottom-0 left-0 right-0 h-[env(safe-area-inset-bottom,32px)] bg-slate-900 z-[100]"></div>
 
       {/* GLOBAL WATERMARK LAYER (FIXED: Single Logo, Configurable Position, Z-Index Low) */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden select-none" style={{ opacity: state.settings.watermarkOpacity || 0.05 }}>
+      {/* User Requirement: "app ka logo full screen pe dikhega nahi chhota sa... background me hi logo hoga" */}
+      {/* Admin Toggle: state.settings.isWatermarkEnabled */}
+      {state.settings.isWatermarkEnabled !== false && (
+      <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden select-none">
           {state.settings.appLogo && (
-              <div
-                  className="absolute"
+              <img
+                  src={state.settings.appLogo}
+                  alt=""
                   style={{
-                      backgroundImage: `url(${state.settings.appLogo})`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundSize: 'contain',
                       width: `${state.settings.watermarkSize || 150}px`,
-                      height: `${state.settings.watermarkSize || 150}px`,
-                      filter: 'grayscale(100%)',
+                      height: 'auto',
+                      opacity: state.settings.watermarkOpacity || 0.05,
+                      position: 'absolute',
                       top: state.settings.watermarkPosition?.top || '50%',
                       left: state.settings.watermarkPosition?.left || '50%',
                       transform: `translate(-50%, -50%) rotate(${state.settings.watermarkAngle || -10}deg)`,
-                      position: 'absolute'
+                      filter: 'grayscale(100%)'
                   }}
-              ></div>
+              />
           )}
 
           {/* OPTION 2: FLOATING USER NAME (If Enabled) */}
           {(state.user && state.settings.showUserWatermark !== false) && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-4xl font-black text-slate-900/10 -rotate-45 whitespace-nowrap">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div
+                    className="text-4xl font-black -rotate-45 whitespace-nowrap pointer-events-none"
+                    style={{ color: state.settings.footerColor ? `${state.settings.footerColor}10` : 'rgba(15, 23, 42, 0.05)' }}
+                  >
                       {state.user.name} • {state.user.displayId || state.user.id}
                   </div>
               </div>
           )}
       </div>
+      )}
       
       {/* GLOBAL LIVE DASHBOARD 1 (TOP) */}
       {state.settings.bannerConfig?.top?.enabled && showTopBanner && (

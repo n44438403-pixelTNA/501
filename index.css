@@ -78,3 +78,23 @@
     box-shadow: none !important;
     border: 1px solid #333333 !important;
 }
+
+/* GLOBAL UI STABILITY FIXES */
+button {
+  cursor: pointer;
+  white-space: normal; /* Force wrapping */
+  overflow-wrap: break-word; /* Prevent overflow */
+}
+
+/* Prevent layout shifts */
+.min-h-screen {
+  min-height: 100vh;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* App Logo Watermark positioning */
+.app-watermark {
+  z-index: -1;
+  pointer-events: none;
+  user-select: none;
+}

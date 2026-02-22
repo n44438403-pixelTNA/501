@@ -714,7 +714,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                                 onClick={handleDownloadHubData}
                                 className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm hover:bg-blue-200 flex items-center gap-2"
                             >
-                                <FileText size={14} /> HTML (10)
+                                <FileText size={14} /> Download PDF
                             </button>
                         </>
                      )}

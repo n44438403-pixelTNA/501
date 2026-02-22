@@ -329,13 +329,13 @@ const App: React.FC = () => {
       const lastLoginRaw = state.user.lastLoginDate ? new Date(state.user.lastLoginDate) : null;
       const lastLoginDateString = lastLoginRaw ? lastLoginRaw.toDateString() : '';
 
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
       // Update Login Date if not today
       if (lastLoginDateString !== today) {
           updatedUser.lastLoginDate = new Date().toISOString();
           hasUpdates = true;
-
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
 
           if (lastLoginDateString === yesterday.toDateString()) {
               // Consecutive Login: Increment

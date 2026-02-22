@@ -63,7 +63,8 @@ export const LessonView: React.FC<Props> = ({
   const [showQuestionDrawer, setShowQuestionDrawer] = useState(false);
   const [showTopicSidebar, setShowTopicSidebar] = useState(false);
   const [batchIndex, setBatchIndex] = useState(0);
-    const [comparisonMsg, setComparisonMsg] = useState('');
+  const [comparisonMsg, setComparisonMsg] = useState('');
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState<'OVERVIEW' | 'QUESTIONS' | 'MISTAKES'>('OVERVIEW'); // NEW: Analysis Tabs
   // Auto-enable TTS for Premium Instant Explanation Mode
   const [autoReadEnabled, setAutoReadEnabled] = useState(settings?.isAutoTtsEnabled || instantExplanation || false);
   const BATCH_SIZE = 1;
@@ -402,7 +403,7 @@ export const LessonView: React.FC<Props> = ({
   }
 
   // --- MCQ RENDERER ---
-  if ((content.type === 'MCQ_ANALYSIS' || content.type === 'MCQ_SIMPLE') && content.mcqData) {
+  if ((content.type === 'MCQ_ANALYSIS' || content.type === 'MCQ_SIMPLE' || content.type === 'MCQ_RESULT') && content.mcqData) {
       // --- INITIALIZATION & RESUME LOGIC ---
       useEffect(() => {
           if (!content.mcqData) return;
@@ -645,6 +646,10 @@ export const LessonView: React.FC<Props> = ({
     const handleDownloadAnalysis = () => {
         if (!user || !onUpdateUser) return;
 
+        // Use mcqState and displayData which should be populated either from test or history
+        const currentData = displayData.length > 0 ? displayData : (content?.mcqData || []);
+        const currentAnswers = Object.keys(mcqState).length > 0 ? mcqState : (content?.userAnswers || {});
+
         let cost = 10;
         // CHECK CREDIT FREE EVENT
         if (settings?.isCreditFreeEvent || settings?.isGlobalFreeMode) {
@@ -675,16 +680,25 @@ export const LessonView: React.FC<Props> = ({
                 .replace(/'/g, "&#039;");
         };
 
+        // Calculate score if not available
+        let finalScore = score;
+        if (score === 0 && Object.keys(currentAnswers).length > 0) {
+             finalScore = Object.keys(currentAnswers).reduce((acc, key) => {
+                const qIdx = parseInt(key);
+                return acc + (currentAnswers[qIdx] === currentData[qIdx]?.correctAnswer ? 1 : 0);
+            }, 0);
+        }
+
         // Generate HTML
         const analysisData = {
             title: chapter.title,
-            score: score,
-            total: displayData.length,
-            questions: displayData.map((q, i) => ({
+            score: finalScore,
+            total: currentData.length,
+            questions: currentData.map((q, i) => ({
                 q: q.question,
                 opts: q.options,
                 ans: q.correctAnswer,
-                userAns: mcqState[i],
+                userAns: currentAnswers[i],
                 exp: q.explanation
             }))
         };
@@ -785,6 +799,14 @@ export const LessonView: React.FC<Props> = ({
                         </p>
                     </div>
                 )}
+
+                {/* TABS HEADER */}
+                <div className="flex p-1 bg-slate-100 rounded-xl mb-4">
+                    <button onClick={() => setActiveAnalysisTab('OVERVIEW')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeAnalysisTab === 'OVERVIEW' ? 'bg-white shadow text-slate-800' : 'text-slate-500'}`}>Overview</button>
+                    <button onClick={() => setActiveAnalysisTab('QUESTIONS')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeAnalysisTab === 'QUESTIONS' ? 'bg-white shadow text-slate-800' : 'text-slate-500'}`}>All Questions</button>
+                    <button onClick={() => setActiveAnalysisTab('MISTAKES')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeAnalysisTab === 'MISTAKES' ? 'bg-white shadow text-slate-800' : 'text-slate-500'}`}>Mistakes</button>
+                </div>
+
                 <div className="flex justify-end mb-4">
                     <button
                         onClick={handleDownloadAnalysis}
@@ -823,15 +845,19 @@ export const LessonView: React.FC<Props> = ({
         const isPremium = content?.analysisType === 'PREMIUM';
 
         // Filter Notes by Chapter AND Topic (if available)
-        // Update: Show ALL relevant notes (both PDF and HTML) regardless of premium status
-        // But distinguish them visually.
         const notes = universalNotes.filter(n => {
             const isChapterMatch = n.chapterId === chapter.id;
-            const isTopicMatch = content?.topic ? n.topic === content.topic : true;
-            return isChapterMatch && isTopicMatch;
+            // Also show if subtopic name matches
+            return isChapterMatch;
         });
 
-        // if (!isPremium) return null; // REMOVED: Allow everyone to see notes
+        // Group Notes by Topic
+        const groupedNotes: Record<string, any[]> = {};
+        notes.forEach(n => {
+            const t = n.topic || 'General';
+            if (!groupedNotes[t]) groupedNotes[t] = [];
+            groupedNotes[t].push(n);
+        });
 
         return (
             <div className={`p-6 rounded-3xl shadow-sm border relative overflow-hidden mt-8 animate-in slide-in-from-bottom-4 ${isPremium ? 'bg-white border-red-100' : 'bg-white border-orange-100'}`}>
@@ -840,9 +866,9 @@ export const LessonView: React.FC<Props> = ({
                         {isPremium ? <FileText size={20} /> : <Lightbulb size={20} />}
                     </div>
                     <div>
-                        <h3 className="font-black text-slate-800 text-lg">{content?.topic ? `${content.topic} Notes` : (isPremium ? 'Premium Study Notes' : 'Recommended Reading')}</h3>
+                        <h3 className="font-black text-slate-800 text-lg">{isPremium ? 'Premium Study Notes' : 'Recommended Reading'}</h3>
                         <p className={`text-xs font-bold ${isPremium ? 'text-red-600' : 'text-orange-600'}`}>
-                            {isPremium ? 'High-Yield PDFs for Weak Topics' : 'Quick Revision Summaries'}
+                            {isPremium ? 'High-Yield PDFs for Weak Topics' : 'Topic-wise Revision Notes'}
                         </p>
                     </div>
                 </div>
@@ -851,32 +877,31 @@ export const LessonView: React.FC<Props> = ({
                     <div className="text-center py-8 text-slate-400 font-bold animate-pulse">Finding best notes...</div>
                 ) : notes.length === 0 ? (
                     <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        <p className="text-slate-400 font-bold text-sm">No specific notes found for this topic/chapter.</p>
+                        <p className="text-slate-400 font-bold text-sm">No specific notes found for this chapter.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {notes.map((note, idx) => (
-                            <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-blue-300 transition-colors group">
-                                <h4 className="font-bold text-slate-800 text-sm mb-1 group-hover:text-blue-700">{note.title}</h4>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-3 bg-white px-2 py-0.5 rounded w-fit border">{note.topic || 'General'}</p>
-
-                                {isPremium ? (
-                                    <a
-                                        href={note.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block w-full py-2 bg-red-600 text-white text-center rounded-lg text-xs font-bold hover:bg-red-700 shadow-md transition-all"
-                                    >
-                                        Open PDF Note
-                                    </a>
-                                ) : (
-                                    <button
-                                        onClick={() => setViewingNote(note)}
-                                        className="block w-full py-2 bg-orange-500 text-white text-center rounded-lg text-xs font-bold hover:bg-orange-600 shadow-md transition-all"
-                                    >
-                                        Read Summary
-                                    </button>
-                                )}
+                    <div className="space-y-4">
+                        {Object.keys(groupedNotes).map((topic, i) => (
+                            <div key={i} className="space-y-2">
+                                <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">{topic}</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {groupedNotes[topic].map((note, idx) => (
+                                        <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-blue-300 transition-colors group flex justify-between items-center">
+                                            <div>
+                                                <h4 className="font-bold text-slate-800 text-sm mb-1 group-hover:text-blue-700">{note.title}</h4>
+                                            </div>
+                                            {isPremium ? (
+                                                <a href={note.url} target="_blank" rel="noopener noreferrer" className="py-1 px-3 bg-red-600 text-white rounded-lg text-[10px] font-bold hover:bg-red-700 shadow transition-all">
+                                                    PDF
+                                                </a>
+                                            ) : (
+                                                <button onClick={() => setViewingNote(note)} className="py-1 px-3 bg-orange-500 text-white rounded-lg text-[10px] font-bold hover:bg-orange-600 shadow transition-all">
+                                                    Read
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -1122,21 +1147,63 @@ export const LessonView: React.FC<Props> = ({
                    )}
 
                    {/* 2. AI REPORT (Top) */}
-                   {showResults && content.type === 'MCQ_ANALYSIS' && renderAnalysisDashboard()}
+                   {showResults && (content.type === 'MCQ_ANALYSIS' || content.type === 'MCQ_RESULT') && renderAnalysisDashboard()}
 
                    {/* 3. QUESTIONS LIST (Grouped by Topic if Analysis Mode) */}
                    {(() => {
                        // Premium Analysis Mode with Topic Grouping
-                       if (showResults && content.type === 'MCQ_ANALYSIS') {
+                       if (showResults && (content.type === 'MCQ_ANALYSIS' || content.type === 'MCQ_RESULT')) {
+
+                           // TAB LOGIC
+                           if (activeAnalysisTab === 'OVERVIEW') {
+                               return (
+                                   <div className="grid grid-cols-2 gap-4">
+                                       <div className="bg-white p-4 rounded-2xl border shadow-sm">
+                                           <div className="text-sm text-slate-500 font-bold uppercase mb-1">Total Questions</div>
+                                           <div className="text-3xl font-black text-slate-800">{displayData.length}</div>
+                                       </div>
+                                       <div className="bg-white p-4 rounded-2xl border shadow-sm">
+                                           <div className="text-sm text-slate-500 font-bold uppercase mb-1">Attempted</div>
+                                           <div className="text-3xl font-black text-blue-600">{Object.keys(mcqState).length}</div>
+                                       </div>
+                                       <div className="bg-white p-4 rounded-2xl border shadow-sm border-green-100 bg-green-50">
+                                           <div className="text-sm text-green-600 font-bold uppercase mb-1">Correct</div>
+                                           <div className="text-3xl font-black text-green-700">
+                                               {displayData.reduce((acc, q, i) => acc + (mcqState[i] === q.correctAnswer ? 1 : 0), 0)}
+                                           </div>
+                                       </div>
+                                       <div className="bg-white p-4 rounded-2xl border shadow-sm border-red-100 bg-red-50">
+                                           <div className="text-sm text-red-600 font-bold uppercase mb-1">Wrong</div>
+                                           <div className="text-3xl font-black text-red-700">
+                                               {displayData.reduce((acc, q, i) => acc + (mcqState[i] !== undefined && mcqState[i] !== q.correctAnswer ? 1 : 0), 0)}
+                                           </div>
+                                       </div>
+                                   </div>
+                               );
+                           }
+
                            // 1. Group Data
                            const grouped: Record<string, {questions: MCQItem[], indices: number[], correct: number}> = {};
                            displayData.forEach((q, idx) => {
+                               // Filter for MISTAKES tab
+                               if (activeAnalysisTab === 'MISTAKES') {
+                                   if (mcqState[idx] === undefined || mcqState[idx] === q.correctAnswer) return;
+                               }
+
                                const topic = q.topic || 'General';
                                if (!grouped[topic]) grouped[topic] = {questions: [], indices: [], correct: 0};
                                grouped[topic].questions.push(q);
                                grouped[topic].indices.push(idx);
                                if (mcqState[idx] === q.correctAnswer) grouped[topic].correct++;
                            });
+
+                           if (Object.keys(grouped).length === 0) {
+                               return (
+                                   <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
+                                       <p className="text-slate-400 font-bold">No questions found for this filter.</p>
+                                   </div>
+                               );
+                           }
 
                            return Object.keys(grouped).map((topic, groupIdx) => {
                                const group = grouped[topic];
@@ -1147,17 +1214,6 @@ export const LessonView: React.FC<Props> = ({
                                // Find Topic Note (if any)
                                const topicNote = universalNotes.find(n => n.topic === topic && (n.chapterId === chapter.id || n.type === 'HTML')); // Loose match for demo
 
-                               // Calculate Past Average for this Topic (if available)
-                               let pastAvg = 0;
-                               let hasPastData = false;
-                               if (user?.topicStrength && user.topicStrength[topic]) {
-                                   const ts = user.topicStrength[topic];
-                                   pastAvg = Math.round((ts.correct / ts.total) * 100);
-                                   hasPastData = true;
-                               } else if (user?.mcqHistory) {
-                                   // Try to fallback to approximate history if topicStrength is missing
-                               }
-
                                return (
                                    <div key={groupIdx} className="mb-8 border-t-4 border-slate-200 pt-6">
                                        <div className="flex items-center justify-between mb-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -1166,15 +1222,17 @@ export const LessonView: React.FC<Props> = ({
                                                    <span className="bg-slate-200 text-slate-600 w-6 h-6 rounded flex items-center justify-center text-xs">{groupIdx + 1}</span>
                                                    {topic}
                                                </h3>
-                                               {hasPastData && (
-                                                   <p className={`text-xs font-bold mt-1 ${percentage >= pastAvg ? 'text-green-600' : 'text-orange-500'}`}>
-                                                       {percentage >= pastAvg ? '🚀 Improving' : '⚠️ Needs Focus'} (Past Avg: {pastAvg}%)
-                                                   </p>
-                                               )}
                                            </div>
                                            <div className="text-right">
-                                               <div className="text-2xl font-black text-blue-600">{percentage}%</div>
-                                               <div className="text-xs font-bold text-slate-400">{score}/{total} Correct</div>
+                                               {activeAnalysisTab === 'QUESTIONS' && (
+                                                   <>
+                                                       <div className="text-2xl font-black text-blue-600">{percentage}%</div>
+                                                       <div className="text-xs font-bold text-slate-400">{score}/{total} Correct</div>
+                                                   </>
+                                               )}
+                                               {activeAnalysisTab === 'MISTAKES' && (
+                                                   <span className="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded">Needs Improvement</span>
+                                               )}
                                            </div>
                                        </div>
 
@@ -1342,7 +1400,7 @@ export const LessonView: React.FC<Props> = ({
                    })()}
 
                    {/* 4. RECOMMENDED NOTES (Bottom) */}
-                   {showResults && content.type === 'MCQ_ANALYSIS' && renderRecommendedNotes()}
+                   {showResults && (content.type === 'MCQ_ANALYSIS' || content.type === 'MCQ_RESULT') && renderRecommendedNotes()}
                </div>
 
                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 flex gap-3 z-[9999] shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">

@@ -456,7 +456,19 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
           const element = document.getElementById('marksheet-content'); // Capture FULL content
           if (element) {
               try {
-                  const canvas = await html2canvas(element, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
+                  // Create a clone to render full height without scrollbars
+                  const clone = element.cloneNode(true) as HTMLElement;
+                  clone.style.height = 'auto';
+                  clone.style.overflow = 'visible';
+                  clone.style.position = 'absolute';
+                  clone.style.top = '-10000px';
+                  clone.style.left = '0';
+                  clone.style.width = `${element.offsetWidth}px`; // Maintain width
+                  document.body.appendChild(clone);
+
+                  const canvas = await html2canvas(clone, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
+                  document.body.removeChild(clone);
+
                   const imgData = canvas.toDataURL('image/png');
 
                   const pdf = new jsPDF('p', 'mm', 'a4');
@@ -466,16 +478,17 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   // Split into pages if too long
                   let heightLeft = pdfHeight;
                   let position = 0;
+                  const pageHeight = pdf.internal.pageSize.getHeight();
 
                   // First page
                   pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-                  heightLeft -= pdf.internal.pageSize.getHeight();
+                  heightLeft -= pageHeight;
 
                   while (heightLeft >= 0) {
                       position = heightLeft - pdfHeight;
                       pdf.addPage();
                       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-                      heightLeft -= pdf.internal.pageSize.getHeight();
+                      heightLeft -= pageHeight;
                   }
 
                   pdf.save(`Full_Analysis_${user.name}.pdf`);

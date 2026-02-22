@@ -453,22 +453,10 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       setIsDownloadingAll(true);
       // Wait for UI to update (spinner etc)
       setTimeout(async () => {
-          const element = document.getElementById('marksheet-content'); // Capture FULL content
+          const element = document.getElementById('full-report-print-container'); // Capture HIDDEN PRINT content
           if (element) {
               try {
-                  // Create a clone to render full height without scrollbars
-                  const clone = element.cloneNode(true) as HTMLElement;
-                  clone.style.height = 'auto';
-                  clone.style.overflow = 'visible';
-                  clone.style.position = 'absolute';
-                  clone.style.top = '-10000px';
-                  clone.style.left = '0';
-                  clone.style.width = `${element.offsetWidth}px`; // Maintain width
-                  document.body.appendChild(clone);
-
-                  const canvas = await html2canvas(clone, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
-                  document.body.removeChild(clone);
-
+                  const canvas = await html2canvas(element, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
                   const imgData = canvas.toDataURL('image/png');
 
                   const pdf = new jsPDF('p', 'mm', 'a4');
@@ -496,6 +484,8 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   console.error('Full PDF Download Failed', e);
                   alert("Could not generate PDF. Please try again.");
               }
+          } else {
+              alert("Error: Print container not found.");
           }
           setIsDownloadingAll(false);
       }, 500);
@@ -1109,8 +1099,8 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   };
 
   // MARKSHET STYLE 1: Centered Logo
-  const renderMarksheetStyle1 = () => (
-      <div id="marksheet-style-1" className="bg-white p-8 max-w-2xl mx-auto border-4 border-slate-900 rounded-none relative">
+  const renderMarksheetStyle1 = (customId?: string) => (
+      <div id={customId || "marksheet-style-1"} className="bg-white p-8 max-w-2xl mx-auto border-4 border-slate-900 rounded-none relative">
           <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-slate-900"></div>
           <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-slate-900"></div>
           <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-slate-900"></div>
@@ -1175,6 +1165,68 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 sm:p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in">
+
+        {/* HIDDEN PRINT CONTAINER (For Full PDF Generation) */}
+        <div id="full-report-print-container" style={{ position: 'fixed', top: 0, left: -9999, width: '800px', backgroundColor: 'white', zIndex: -1 }}>
+            {/* PAGE 1: MARKSHEET */}
+            <div className="p-8 min-h-[1100px] border-b-2 border-dashed border-slate-300">
+                {renderMarksheetStyle1("print-marksheet-id")}
+            </div>
+
+            {/* PAGE 2: ANALYSIS & BREAKDOWN */}
+            <div className="p-8 min-h-[1100px] border-b-2 border-dashed border-slate-300">
+                <h2 className="text-2xl font-black mb-6 uppercase text-slate-800 border-b-4 border-slate-800 pb-2">Detailed Analysis</h2>
+                {renderProgressDelta()}
+                <div className="mt-8">
+                    {renderTopicBreakdown()}
+                </div>
+                <div className="mt-8">
+                    {renderAnalysisContent()}
+                </div>
+            </div>
+
+            {/* PAGE 3: OMR SHEET */}
+            <div className="p-8 min-h-[1100px] border-b-2 border-dashed border-slate-300">
+                <h2 className="text-2xl font-black mb-6 uppercase text-slate-800 border-b-4 border-slate-800 pb-2">OMR Response Sheet</h2>
+                <div className="grid grid-cols-4 gap-4 text-xs">
+                    {result.omrData?.map((data) => renderOMRRow(data.qIndex, data.selected, data.correct))}
+                </div>
+            </div>
+
+            {/* PAGE 4: MISTAKES & SOLUTIONS */}
+            <div className="p-8 min-h-[1100px]">
+                <h2 className="text-2xl font-black mb-6 uppercase text-slate-800 border-b-4 border-slate-800 pb-2">Full Solutions & Mistakes</h2>
+                <div className="space-y-6">
+                    {questions?.map((q, idx) => {
+                        const omrEntry = result.omrData?.find(d => d.qIndex === idx);
+                        const userSelected = omrEntry ? omrEntry.selected : -1;
+                        const isCorrect = userSelected === q.correctAnswer;
+                        const isSkipped = userSelected === -1;
+
+                        return (
+                            <div key={idx} className={`p-4 border rounded-lg ${!isCorrect && !isSkipped ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
+                                <p className="font-bold text-sm mb-2 text-slate-800">Q{idx + 1}. {stripHtml(q.question)}</p>
+                                <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                                    {q.options.map((opt: string, oIdx: number) => (
+                                        <div key={oIdx} className={`p-1 border rounded ${q.correctAnswer === oIdx ? 'bg-green-100 border-green-300 font-bold' : userSelected === oIdx ? 'bg-red-100 border-red-300' : 'bg-white'}`}>
+                                            {String.fromCharCode(65 + oIdx)}. {stripHtml(opt)}
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-slate-500 italic">
+                                    {isCorrect ? '✅ Correct' : isSkipped ? '⚪ Skipped' : '❌ Wrong'}
+                                </p>
+                                {q.explanation && (
+                                    <div className="mt-2 text-xs bg-slate-50 p-2 rounded">
+                                        <span className="font-bold">Explanation:</span> {stripHtml(q.explanation)}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
 
         <CustomConfirm
             isOpen={confirmConfig.isOpen}
@@ -1441,13 +1493,13 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                     <Download size={20} />
                 </button>
 
-                {/* PDF DOWNLOAD BUTTON */}
+                {/* PDF DOWNLOAD BUTTONS */}
                 <button
                     onClick={() => handleDownloadAll()}
-                    className="p-3 bg-slate-100 text-slate-600 rounded-full hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95"
-                    title="Download Full Analysis PDF"
+                    className="p-3 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95"
+                    title="Download Full Analysis PDF (Report, OMR, Mistakes)"
                 >
-                    {isDownloadingAll ? <span className="animate-spin">⏳</span> : <Download size={20} />}
+                    {isDownloadingAll ? <span className="animate-spin">⏳</span> : <FileText size={20} />}
                 </button>
             </div>
              

@@ -28,7 +28,6 @@ import { RewardPopup } from './components/RewardPopup';
 import { CreditConfirmationModal } from './components/CreditConfirmationModal';
 import { CustomAlert, CustomConfirm } from './components/CustomDialogs';
 import { MarksheetCard } from './components/MarksheetCard';
-import { DailyTrackerPopup } from './components/DailyTrackerPopup';
 import { DailyChallengePopup } from './components/DailyChallengePopup';
 import { UpdatePopup } from './components/UpdatePopup'; // NEW
 import { ErrorBoundary } from './components/ErrorBoundary'; // NEW
@@ -743,12 +742,6 @@ const App: React.FC = () => {
       const today = new Date().toDateString();
 
       if (loggedInUserStr) {
-          // 2. Daily Tracker (Once per day)
-          const lastTracker = localStorage.getItem('nst_last_daily_tracker_date');
-          if (lastTracker !== today) {
-              queue.push('TRACKER');
-          }
-
           // 3. Daily Challenge (Once per day)
           const lastChallenge = localStorage.getItem('nst_last_daily_challenge_date');
           if (lastChallenge !== today) {
@@ -1915,9 +1908,7 @@ const App: React.FC = () => {
   const handlePopupClose = (type: string) => {
       setPopupQueue(prev => prev.slice(1));
 
-      if (type === 'TRACKER') {
-          localStorage.setItem('nst_last_daily_tracker_date', new Date().toDateString());
-      } else if (type === 'CHALLENGE') {
+      if (type === 'CHALLENGE') {
           localStorage.setItem('nst_last_daily_challenge_date', new Date().toDateString());
       } else if (type === 'WELCOME') {
           handleStartApp();
@@ -2074,31 +2065,33 @@ const App: React.FC = () => {
                   </div>
               )}
 
-              {/* Bypass Code Input */}
-              <div className="flex gap-2">
-                  <input
-                      type="password"
-                      placeholder="Access Code"
-                      value={mCode}
-                      onChange={e => setMCode(e.target.value)}
-                      className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-xs font-mono text-white focus:border-red-500 outline-none"
-                  />
-                  <button
-                      onClick={() => {
-                          if (state.settings.maintenanceBypassCode && mCode === state.settings.maintenanceBypassCode) {
-                              // Bypass Logic: Locally disable maintenance mode for this session
-                              sessionStorage.setItem('nst_maintenance_bypassed', 'true');
-                              // Force re-render/update
-                              setState(prev => ({...prev}));
-                          } else {
-                              alert("Invalid Access Code");
-                          }
-                      }}
-                      className="bg-red-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-red-700"
-                  >
-                      Unlock
-                  </button>
-              </div>
+              {/* Bypass Code Input (Admins Only) */}
+              {(state.user?.role === 'ADMIN' || state.user?.role === 'SUB_ADMIN') && (
+                  <div className="flex gap-2">
+                      <input
+                          type="password"
+                          placeholder="Access Code"
+                          value={mCode}
+                          onChange={e => setMCode(e.target.value)}
+                          className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-xs font-mono text-white focus:border-red-500 outline-none"
+                      />
+                      <button
+                          onClick={() => {
+                              if (state.settings.maintenanceBypassCode && mCode === state.settings.maintenanceBypassCode) {
+                                  // Bypass Logic: Locally disable maintenance mode for this session
+                                  sessionStorage.setItem('nst_maintenance_bypassed', 'true');
+                                  // Force re-render/update
+                                  setState(prev => ({...prev}));
+                              } else {
+                                  alert("Invalid Access Code");
+                              }
+                          }}
+                          className="bg-red-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-red-700"
+                      >
+                          Unlock
+                      </button>
+                  </div>
+              )}
           </div>
       );
   }
@@ -2359,13 +2352,6 @@ const App: React.FC = () => {
       {/* POPUP QUEUE MANAGER */}
       {popupQueue.length > 0 && (
         <>
-            {popupQueue[0] === 'TRACKER' && state.user && (
-                 <DailyTrackerPopup
-                    dailySeconds={dailyStudySeconds}
-                    targetSeconds={10800}
-                    onClose={() => handlePopupClose('TRACKER')}
-                />
-            )}
             {popupQueue[0] === 'CHALLENGE' && state.user && (
                 <DailyChallengePopup
                     rewardPercentage={state.settings.dailyChallengeConfig?.rewardPercentage || 90}

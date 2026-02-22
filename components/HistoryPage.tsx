@@ -237,69 +237,8 @@ export const HistoryPage: React.FC<Props> = ({ user, onUpdateUser, settings }) =
                                             {logs.map((log: any, i: number) => (
                                                 <div
                                                     key={i}
-                                                    onClick={() => {
-                                                        // Create a pseudo-item to trigger navigation logic
-                                                        // Find real data from settings to ensure content is available
-                                                        let pseudoItem: LessonContent = {
-                                                            id: log.itemId,
-                                                            title: log.itemTitle,
-                                                            subtitle: log.subject,
-                                                            content: log.content || '',
-                                                            type: log.type === 'VIDEO' ? 'VIDEO_LECTURE' : log.type === 'MCQ' ? 'MCQ_ANALYSIS' : log.type === 'PDF' ? 'PDF_VIEWER' : 'NOTES_SIMPLE',
-                                                            dateCreated: log.timestamp,
-                                                            subjectName: log.subject,
-                                                            mcqData: log.mcqData,
-                                                            videoUrl: log.videoUrl,
-                                                            pdfUrl: log.pdfUrl
-                                                        };
-
-                                                        // 1. Priority: Use data already in the log (especially for AI generated content)
-                                                        if (log.type === 'PDF' && log.pdfUrl) {
-                                                            pseudoItem.pdfUrl = log.pdfUrl;
-                                                            pseudoItem.content = log.pdfUrl;
-                                                            pseudoItem.type = 'PDF_VIEWER';
-                                                        } else if (log.type === 'VIDEO' && log.videoUrl) {
-                                                            pseudoItem.videoUrl = log.videoUrl;
-                                                            pseudoItem.content = log.videoUrl;
-                                                            pseudoItem.type = 'VIDEO_LECTURE';
-                                                        }
-
-                                                        // 2. Fallback: Try to find actual content links from settings to fix "No Content" error
-                                                        if (!pseudoItem.pdfUrl && !pseudoItem.videoUrl && settings?.subjects) {
-                                                            const subjectData = settings.subjects.find(s => s.name === log.subject);
-                                                            if (subjectData) {
-                                                                const chapter = subjectData.chapters?.find(c => c.title === log.itemTitle || c.id === log.itemId);
-                                                                if (chapter) {
-                                                                    if (log.type === 'VIDEO') {
-                                                                        pseudoItem.videoPlaylist = chapter.videoPlaylist;
-                                                                        // If it's a playlist, LessonView might need the first video
-                                                                        if (chapter.videoPlaylist && chapter.videoPlaylist.length > 0) {
-                                                                            pseudoItem.videoUrl = chapter.videoPlaylist[0].videoUrl;
-                                                                            pseudoItem.content = chapter.videoPlaylist[0].videoUrl;
-                                                                            // Add this for direct URL check in LessonView
-                                                                            pseudoItem.type = 'VIDEO_LECTURE';
-                                                                        } else if (chapter.videoUrl) {
-                                                                            pseudoItem.videoUrl = chapter.videoUrl;
-                                                                            pseudoItem.content = chapter.videoUrl;
-                                                                            pseudoItem.type = 'VIDEO_LECTURE';
-                                                                        }
-                                                                    }
-                                                                    if (log.type === 'PDF') {
-                                                                        pseudoItem.pdfUrl = chapter.pdfLink;
-                                                                        pseudoItem.content = chapter.pdfLink; // Used as fallback
-                                                                        pseudoItem.type = 'PDF_VIEWER'; // Match LessonView expectation
-                                                                    }
-                                                                    if (log.type === 'MCQ') {
-                                                                        pseudoItem.type = 'MCQ_ANALYSIS';
-                                                                        pseudoItem.mcqData = chapter.mcqData || log.mcqData;
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-
-                                                        handleOpenItem(pseudoItem);
-                                                    }}
-                                                    className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                                                    // onClick removed to disable interaction
+                                                    className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between opacity-90 transition-all group"
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${

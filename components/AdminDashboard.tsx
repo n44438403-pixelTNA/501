@@ -15,6 +15,7 @@ import { DEFAULT_SYLLABUS, MonthlySyllabus } from '../syllabus_data';
 import { CustomAlert } from './CustomDialogs';
 import { UniversalChat } from './UniversalChat';
 import { ChallengeCreator20 } from './admin/ChallengeCreator20';
+import { FeatureAccessPage } from './admin/FeatureAccessPage';
 import { AdminPowerManager } from './AdminPowerManager';
 import { SyllabusManager } from './SyllabusManager';
 // @ts-ignore
@@ -117,6 +118,7 @@ type AdminTab =
   | 'POWER_MANAGER'
   | 'REVISION_LOGIC' // NEW
   | 'PLAN_MATRIX'
+  | 'FEATURE_ACCESS' // NEW
   | 'EVENT_MANAGER'; // NEW
 
 interface ContentConfig {
@@ -2702,6 +2704,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                           <DashboardCard icon={Trophy} label="Challenge Config" onClick={() => setActiveTab('CONFIG_CHALLENGE')} color="red" />
                           <DashboardCard icon={RotateCcw} label="Revision Logic" onClick={() => setActiveTab('REVISION_LOGIC')} color="indigo" />
                           <DashboardCard icon={Rocket} label="Challenge 2.0" onClick={() => setActiveTab('CHALLENGE_CREATOR_20')} color="violet" />
+                          <DashboardCard icon={LayoutGrid} label="Feature Access" onClick={() => setActiveTab('FEATURE_ACCESS')} color="cyan" />
                           <DashboardCard icon={Video} label="Universal Playlist" onClick={() => setActiveTab('UNIVERSAL_PLAYLIST')} color="rose" />
                       </>
                   )}
@@ -9681,6 +9684,18 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                   <SyllabusManager board={adminBoardContext} />
               </div>
           </div>
+      )}
+
+      {/* --- FEATURE ACCESS PAGE --- */}
+      {activeTab === 'FEATURE_ACCESS' && (
+          <FeatureAccessPage
+              settings={localSettings}
+              onUpdateSettings={(s) => {
+                  setLocalSettings(s);
+                  handleSaveSettings(s);
+              }}
+              onBack={() => setActiveTab('DASHBOARD')}
+          />
       )}
 
       {/* --- VISIBILITY CONTROL (Legacy Restored) --- */}

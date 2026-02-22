@@ -1085,12 +1085,69 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   const isGameEnabled = settings?.isGameEnabled ?? true;
 
 
+  // --- EVENT BANNERS LOGIC ---
+  const getEventSlides = () => {
+      const slides: any[] = [];
+      const events = settings?.activeEvents || [];
+
+      // 1. Explicit Admin Configured Events
+      events.forEach(evt => {
+          if (evt.enabled) {
+              slides.push({
+                  id: `evt-${evt.type}`,
+                  image: evt.imageUrl || 'https://via.placeholder.com/600x300?text=Event', // Placeholder if missing
+                  title: evt.title,
+                  subtitle: evt.subtitle,
+                  link: evt.actionUrl,
+                  // Custom rendering support could be added to BannerCarousel but sticking to props for now
+              });
+          }
+      });
+
+      // 2. Auto-Detected Maintenance Mode (Scheduled)
+      // If maintenance mode is set but we are allowed in (e.g. Admin testing), show banner?
+      // Or if there is a 'maintenanceMessage' set but mode is false (Scheduled/Warning).
+      // Logic: If maintenance mode is OFF but a message exists, implies warning? Or we need a separate flag.
+      // User said "mentenenc mode shuduld rahega". Let's assume there is a flag/date.
+      // For now, if we add a 'MAINTENANCE' event in activeEvents, it covers it.
+
+      // 3. Discount Event (Legacy Support)
+      if (settings?.specialDiscountEvent?.enabled && !slides.some(s => s.id === 'evt-DISCOUNT')) {
+          slides.push({
+              id: 'evt-DISCOUNT',
+              image: 'https://img.freepik.com/free-vector/gradient-sale-background_23-2148934477.jpg',
+              title: `${settings.specialDiscountEvent.eventName || 'Special Sale'}`,
+              subtitle: `Get ${settings.specialDiscountEvent.discountPercent}% OFF! Ends Soon.`,
+              link: 'STORE'
+          });
+      }
+
+      return slides;
+  };
+
   // --- RENDER BASED ON ACTIVE TAB ---
   const renderMainContent = () => {
       // 1. HOME TAB
       if (activeTab === 'HOME') {
+          const eventSlides = getEventSlides();
+
           return (
               <div className="space-y-4 pb-24">
+                {/* EVENT BANNERS */}
+                {eventSlides.length > 0 && (
+                    <div className="mx-4 mt-4 h-48 shadow-lg rounded-2xl overflow-hidden">
+                        <BannerCarousel
+                            slides={eventSlides}
+                            autoPlay={true}
+                            interval={4000}
+                            onBannerClick={(link) => {
+                                if (link === 'STORE') onTabChange('STORE');
+                                else if (link) window.open(link, '_blank');
+                            }}
+                        />
+                    </div>
+                )}
+
                 {/* NEW HEADER DESIGN */}
                 <div className="bg-white p-4 rounded-b-3xl shadow-sm border-b border-slate-200 mb-2 flex items-center justify-between sticky top-0 z-40">
                     <div className="flex items-center gap-3">
@@ -1659,80 +1716,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                             </div>
                         </div>
 
-                        {/* DAILY ROUTINE GENERATOR (Advanced) */}
-                        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-4 rounded-xl border border-emerald-100">
-                            <div className="flex justify-between items-center mb-3">
-                                <h4 className="font-black text-emerald-900 flex items-center gap-2">
-                                    <Calendar size={18} /> Daily Routine AI
-                                </h4>
-                                <button
-                                    onClick={() => {
-                                        const routine = generateDailyRoutine(user);
-                                        const updated = { ...user, dailyRoutine: routine };
-                                        handleUserUpdate(updated);
-                                        showAlert("Routine Regenerated!", "SUCCESS");
-                                    }}
-                                    className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded font-bold hover:bg-emerald-200"
-                                >
-                                    Regenerate
-                                </button>
-                            </div>
-
-                            <p className="text-xs text-emerald-700 mb-3">
-                                Focus: <span className="font-bold">{user.dailyRoutine?.focusArea || 'General Study'}</span>
-                            </p>
-
-                            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                                {user.dailyRoutine?.tasks.map((task, idx) => (
-                                    <div key={idx} className="bg-white/80 p-3 rounded-lg border border-emerald-100 flex gap-3 items-start">
-                                        <input
-                                            type="checkbox"
-                                            className="mt-1 w-4 h-4 accent-emerald-600 cursor-pointer"
-                                            // Ideally sync this state, currently purely visual for session
-                                        />
-                                        <div>
-                                            <p className="text-xs font-bold text-emerald-900">{task.title}</p>
-                                            <p className="text-[10px] text-emerald-600">{task.description}</p>
-                                            <span className="text-[9px] font-mono text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded mt-1 inline-block">
-                                                ⏱️ {task.duration}m
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                                {!user.dailyRoutine && <p className="text-xs text-emerald-600 italic">Generating...</p>}
-                            </div>
-
-                            <button
-                                onClick={() => {
-                                    // Manual Routine Logic (Subject + Time)
-                                    const subject = prompt("Enter Subject (e.g. Math, Physics):");
-                                    if (!subject) return;
-
-                                    const task = prompt("Enter Task Description (e.g. Read Chapter 5):");
-                                    if (!task) return;
-
-                                    const timeStr = prompt("Enter Duration in minutes (e.g. 30):");
-                                    const time = parseInt(timeStr || '30') || 30;
-
-                                    if (subject && task) {
-                                        const newRoutine = { ...(user.dailyRoutine || { date: new Date().toDateString(), tasks: [], focusArea: 'Manual' }) };
-                                        if (!newRoutine.tasks) newRoutine.tasks = [];
-                                        newRoutine.tasks.push({
-                                            title: task,
-                                            duration: time,
-                                            type: 'PRACTICE',
-                                            description: 'Manual Entry',
-                                            subject: subject
-                                        });
-                                        const updated = { ...user, dailyRoutine: newRoutine };
-                                        handleUserUpdate(updated);
-                                    }
-                                }}
-                                className="w-full mt-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow hover:bg-emerald-700"
-                            >
-                                + Add Manual Task
-                            </button>
-                        </div>
 
                         <button onClick={() => { setMarksheetType('MONTHLY'); setShowMonthlyReport(true); }} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow flex items-center justify-center gap-2"><BarChart3 size={18} /> View Monthly Report</button>
                         <button onClick={() => onTabChange('SUB_HISTORY')} className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 shadow flex items-center justify-center gap-2"><History size={18} /> View Subscription History</button>

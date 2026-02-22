@@ -854,61 +854,22 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         }
                         setShowTodayMcqSession(false);
 
-                        // AGGREGATE RESULTS FOR ANALYSIS
+                        // "banane ke baad ek analysis page aaya hai jo na aaye to hi achha rahega"
+                        // Disable Final Analysis for Revision Hub as per user request.
+                        // Just show a success message or nothing.
                         if (results.length > 0) {
-                            // Merge all results
-                            let totalQ = 0;
-                            let totalScore = 0;
-                            let combinedQuestions: any[] = []; // We need actual questions to show analysis
-                            // Problem: results from TodayMcqSession only contain metadata, NOT question details (omrData has simple data).
-                            // Wait, MCQResult stores wrongQuestions (some details).
-                            // But MarksheetCard expects full questions to render detailed analysis.
-                            // TodayMcqSession DOES NOT pass full questions in `results` (MCQResult type doesn't hold full Q objects usually, unless we extend it).
-                            // Actually `MarksheetCard` takes `questions` prop.
-                            // We need to pass the questions.
-                            // TodayMcqSession needs to return the questions used too.
-                            // Or we construct a simple aggregate result object.
-
-                            // For now, let's create a summary result.
-                            // Note: Detailed Question analysis might be limited if we don't have the questions objects.
-                            // But user wants "analysis".
-                            // Let's assume we show the Marksheet for the LAST topic or a summary.
-
-                            // Combine scores
-                            results.forEach(r => {
-                                totalQ += r.totalQuestions;
-                                totalScore += r.score;
+                            setAlertConfig({
+                                isOpen: true,
+                                type: 'SUCCESS',
+                                title: 'Session Complete',
+                                message: `You completed ${results.length} topics. Keep it up!`
                             });
-
-                            const combinedResult = {
-                                ...results[0],
-                                id: `sess-${Date.now()}`,
-                                chapterTitle: "Revision Session (Multiple Topics)",
-                                totalQuestions: totalQ,
-                                score: totalScore,
-                                correctCount: totalScore,
-                                wrongCount: totalQ - totalScore,
-                                date: new Date().toISOString()
-                            };
-                            setSessionResult(combinedResult);
                         }
                     }}
                 />
             )}
 
-            {sessionResult && (
-                <MarksheetCard
-                    result={sessionResult}
-                    user={user}
-                    settings={settings}
-                    onClose={() => setSessionResult(null)}
-                    mcqMode='PREMIUM'
-                    // We don't have the full questions array here easily, so detailed view might be empty.
-                    // But Comparison and Score Summary will work.
-                    // To show detailed Qs, TodayMcqSession must return them.
-                    // Given the constraints, we show summary.
-                />
-            )}
+            {/* Analysis Page Removed for Revision Hub as per request */}
 
             <CustomAlert
                 isOpen={alertConfig.isOpen}

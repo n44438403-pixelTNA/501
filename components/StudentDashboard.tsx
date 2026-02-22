@@ -112,6 +112,8 @@ const DashboardSectionWrapper = ({
 
 export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onSubjectSelect, onRedeemSuccess, settings, onStartWeeklyTest, activeTab, onTabChange, setFullScreen, onNavigate, isImpersonating, onNavigateToChapter, isDarkMode, onToggleDarkMode }) => {
   
+  const analysisLogs = JSON.parse(localStorage.getItem('nst_universal_analysis_logs') || '[]');
+
   const hasPermission = (featureId: string) => {
       if (!settings?.tierPermissions) return true;
       let userTier: 'FREE' | 'BASIC' | 'ULTRA' = 'FREE';

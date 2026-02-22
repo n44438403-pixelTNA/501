@@ -2058,7 +2058,7 @@ const App: React.FC = () => {
   const [mCode, setMCode] = useState('');
   const isMaintenanceBypassed = sessionStorage.getItem('nst_maintenance_bypassed') === 'true';
 
-  if (state.settings.maintenanceMode && state.user?.role !== 'ADMIN' && !isMaintenanceBypassed) {
+  if (state.settings.maintenanceMode && !isMaintenanceBypassed) {
       return (
           <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-8 text-center animate-in fade-in">
               <div className="bg-red-500/10 p-6 rounded-full mb-6 animate-pulse">
@@ -2068,6 +2068,14 @@ const App: React.FC = () => {
               <p className="text-slate-400 mb-8 max-w-sm leading-relaxed">
                   {state.settings.maintenanceMessage || "We are currently upgrading our servers. Please check back later."}
               </p>
+
+              {/* Admin Bypass Code Display */}
+              {(state.user?.role === 'ADMIN' || state.user?.role === 'SUB_ADMIN') && state.settings.maintenanceBypassCode && (
+                  <div className="mb-6 p-3 bg-red-900/30 border border-red-800 rounded-lg">
+                      <p className="text-xs text-red-300 font-bold uppercase mb-1">Admin Access Code</p>
+                      <p className="text-xl font-mono font-black text-red-400 tracking-widest">{state.settings.maintenanceBypassCode}</p>
+                  </div>
+              )}
 
               {/* Bypass Code Input */}
               <div className="flex gap-2">

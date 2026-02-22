@@ -53,6 +53,10 @@ import { StudyGoalTimer } from './StudyGoalTimer';
 import { ExplorePage } from './ExplorePage';
 import { StudentHistoryModal } from './StudentHistoryModal';
 import { generateDailyRoutine } from '../utils/routineGenerator';
+// @ts-ignore
+import jsPDF from 'jspdf';
+// @ts-ignore
+import html2canvas from 'html2canvas';
 
 interface Props {
   user: User;
@@ -751,11 +755,41 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
             if (needsUpdate) {
                 console.log("Syncing User Data from Cloud...", cloudData);
+
+                // --- SUBSCRIPTION PROTECTION GUARD (Anti-Downgrade) ---
+                let protectedSub = {
+                    tier: cloudData.subscriptionTier,
+                    level: cloudData.subscriptionLevel,
+                    endDate: cloudData.subscriptionEndDate,
+                    isPremium: cloudData.isPremium
+                };
+
+                const localTier = currentUser.subscriptionTier || 'FREE';
+                const cloudTier = cloudData.subscriptionTier || 'FREE';
+                const tierPriority: Record<string, number> = { 'LIFETIME': 5, 'YEARLY': 4, '3_MONTHLY': 3, 'MONTHLY': 2, 'WEEKLY': 1, 'FREE': 0, 'CUSTOM': 0 };
+
+                // If Local is better than Cloud, keep Local
+                if (tierPriority[localTier] > tierPriority[cloudTier]) {
+                     const localEnd = currentUser.subscriptionEndDate ? new Date(currentUser.subscriptionEndDate) : new Date();
+                     // Only protect if valid
+                     if (localTier === 'LIFETIME' || localEnd > new Date()) {
+                         console.warn("⚠️ Prevented Cloud Downgrade! Keeping Local Subscription.", localTier);
+                         protectedSub = {
+                             tier: currentUser.subscriptionTier,
+                             level: currentUser.subscriptionLevel,
+                             endDate: currentUser.subscriptionEndDate,
+                             isPremium: true
+                         };
+                         // Heal Cloud
+                         saveUserToLive({ ...cloudData, ...protectedSub });
+                     }
+                }
+
                 // DATA PERSISTENCE FIX:
                 // If cloud has NO history but we have local history, keep local.
                 // This prevents overwriting valid local data with empty cloud data if sync failed previously.
 
-                const updated: User = { ...currentUser, ...cloudData };
+                const updated: User = { ...currentUser, ...cloudData, ...protectedSub };
 
                 // RESTORE LOCAL HISTORY IF CLOUD IS EMPTY (Safety Net)
                 if ((!cloudData.mcqHistory || cloudData.mcqHistory.length === 0) && (currentUser.mcqHistory && currentUser.mcqHistory.length > 0)) {
@@ -1544,100 +1578,160 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                     <Activity size={14} className="text-blue-500"/> View Full Activity
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        // IMPROVED HTML DOWNLOAD
-                                        const htmlContent = `
-                                            <html>
-                                            <head>
-                                                <title>Student Data - ${user.name}</title>
-                                                <style>
-                                                    body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-                                                    .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-                                                    h1 { color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-                                                    .section { margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
-                                                    .label { font-weight: bold; color: #64748b; font-size: 0.8em; text-transform: uppercase; }
-                                                    .value { font-size: 1.1em; color: #0f172a; font-weight: bold; }
-                                                    .tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-right: 5px; color: white; background: #3b82f6; }
-                                                    .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                                                    .history-table th { text-align: left; background: #e2e8f0; padding: 8px; font-size: 0.9em; }
-                                                    .history-table td { border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 0.9em; }
-                                                </style>
-                                            </head>
-                                            <body>
-                                                <div class="container">
-                                                    <h1>Student Profile: ${user.name}</h1>
+                                    onClick={async () => {
+                                        // PDF DOWNLOAD LOGIC
+                                        // 1. Create a hidden element for PDF rendering
+                                        const element = document.createElement('div');
+                                        element.style.position = 'fixed';
+                                        element.style.top = '-9999px';
+                                        element.style.left = '-9999px';
+                                        element.style.width = '210mm'; // A4 width
+                                        element.style.padding = '20mm';
+                                        element.style.backgroundColor = 'white';
+                                        element.style.fontFamily = 'Arial, sans-serif';
+                                        element.style.color = '#333';
 
-                                                    <div class="section">
-                                                        <div class="label">ID</div>
-                                                        <div class="value">${user.id}</div>
-                                                        <div class="label" style="margin-top: 10px;">Class & Stream</div>
-                                                        <div class="value">${user.classLevel || 'N/A'} - ${user.stream || 'N/A'} (${user.board})</div>
-                                                    </div>
-
-                                                    <div class="section">
-                                                        <div class="label">Subscription Status</div>
-                                                        <div class="value">
-                                                            <span class="tag" style="background: ${user.isPremium ? '#8b5cf6' : '#64748b'}">
-                                                                ${user.subscriptionTier || 'FREE'} ${user.subscriptionLevel || ''}
-                                                            </span>
-                                                        </div>
-                                                        <p>Expires: ${user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleString() : 'Never'}</p>
-                                                    </div>
-
-                                                    <div class="section">
-                                                        <div class="label">Wallet</div>
-                                                        <div class="value">Credits: ${user.credits} | Streak: ${user.streak} Days</div>
-                                                    </div>
-
-                                                    <div class="section">
-                                                        <h3>Recent Test History</h3>
-                                                        <table class="history-table">
-                                                            <thead><tr><th>Date</th><th>Test</th><th>Score</th></tr></thead>
-                                                            <tbody>
-                                                                ${(user.mcqHistory || []).slice(0, 20).map(h => `
-                                                                    <tr>
-                                                                        <td>${new Date(h.date).toLocaleDateString()}</td>
-                                                                        <td>${h.chapterTitle}</td>
-                                                                        <td>${h.score}/${h.totalQuestions}</td>
-                                                                    </tr>
-                                                                `).join('')}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
+                                        element.innerHTML = `
+                                            <div style="border: 2px solid #3b82f6; border-radius: 10px; padding: 20px;">
+                                                <h1 style="color: #1e40af; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">${settings?.appName || 'NST AI'} - Student Report</h1>
+                                                <div style="margin-top: 20px;">
+                                                    <p><strong>Name:</strong> ${user.name}</p>
+                                                    <p><strong>ID:</strong> ${user.id}</p>
+                                                    <p><strong>Class:</strong> ${user.classLevel || 'N/A'} (${user.board})</p>
+                                                    <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
                                                 </div>
-                                            </body>
-                                            </html>
+                                                <div style="margin-top: 20px; background: #f8fafc; padding: 15px; border-radius: 5px;">
+                                                    <h3 style="margin-top: 0;">Subscription Details</h3>
+                                                    <p><strong>Plan:</strong> ${user.subscriptionTier || 'FREE'} ${user.subscriptionLevel || ''}</p>
+                                                    <p><strong>Status:</strong> ${user.isPremium ? 'PREMIUM ✅' : 'FREE USER'}</p>
+                                                    <p><strong>Expires:</strong> ${user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleString() : 'Never'}</p>
+                                                </div>
+                                                <div style="margin-top: 20px;">
+                                                    <h3>Recent Activity (Last 10)</h3>
+                                                    <table style="width: 100%; border-collapse: collapse;">
+                                                        <thead>
+                                                            <tr style="background: #e2e8f0;">
+                                                                <th style="padding: 8px; text-align: left;">Date</th>
+                                                                <th style="padding: 8px; text-align: left;">Topic</th>
+                                                                <th style="padding: 8px; text-align: left;">Score</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            ${(user.mcqHistory || []).slice(0, 10).map(h => `
+                                                                <tr>
+                                                                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${new Date(h.date).toLocaleDateString()}</td>
+                                                                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${h.chapterTitle.substring(0, 30)}</td>
+                                                                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">${h.score}/${h.totalQuestions}</td>
+                                                                </tr>
+                                                            `).join('')}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
                                         `;
-                                        const blob = new Blob([htmlContent], { type: 'text/html' });
-                                        const url = URL.createObjectURL(blob);
-                                        const downloadAnchorNode = document.createElement('a');
-                                        downloadAnchorNode.setAttribute("href", url);
-                                        downloadAnchorNode.setAttribute("download", `student_data_${user.name.replace(/\s+/g, '_')}.html`);
-                                        document.body.appendChild(downloadAnchorNode);
-                                        downloadAnchorNode.click();
-                                        downloadAnchorNode.remove();
+
+                                        document.body.appendChild(element);
+
+                                        try {
+                                            showAlert("Generating PDF...", "INFO");
+                                            const canvas = await html2canvas(element, { scale: 2 });
+                                            const imgData = canvas.toDataURL('image/png');
+
+                                            const pdf = new jsPDF('p', 'mm', 'a4');
+                                            const pdfWidth = pdf.internal.pageSize.getWidth();
+                                            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                                            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                                            pdf.save(`Student_Report_${user.id}.pdf`);
+
+                                            showAlert("PDF Downloaded Successfully!", "SUCCESS");
+                                        } catch (e) {
+                                            console.error("PDF Gen Error:", e);
+                                            showAlert("Failed to generate PDF.", "ERROR");
+                                        } finally {
+                                            document.body.removeChild(element);
+                                        }
                                     }}
                                     className="bg-white p-3 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-2"
                                 >
-                                    <Download size={14} className="text-green-500"/> Download Data
+                                    <Download size={14} className="text-red-500"/> Download PDF Report
                                 </button>
                             </div>
                         </div>
 
-                        {/* DAILY ROUTINE GENERATOR (Dynamic) */}
+                        {/* DAILY ROUTINE GENERATOR (Advanced) */}
                         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-4 rounded-xl border border-emerald-100">
-                            <h4 className="font-black text-emerald-900 mb-2 flex items-center gap-2">
-                                <Calendar size={18} /> Daily Routine AI
-                            </h4>
+                            <div className="flex justify-between items-center mb-3">
+                                <h4 className="font-black text-emerald-900 flex items-center gap-2">
+                                    <Calendar size={18} /> Daily Routine AI
+                                </h4>
+                                <button
+                                    onClick={() => {
+                                        const routine = generateDailyRoutine(user);
+                                        const updated = { ...user, dailyRoutine: routine };
+                                        handleUserUpdate(updated);
+                                        showAlert("Routine Regenerated!", "SUCCESS");
+                                    }}
+                                    className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded font-bold hover:bg-emerald-200"
+                                >
+                                    Regenerate
+                                </button>
+                            </div>
+
                             <p className="text-xs text-emerald-700 mb-3">
                                 Focus: <span className="font-bold">{user.dailyRoutine?.focusArea || 'General Study'}</span>
                             </p>
-                            <div className="bg-white/80 p-3 rounded-lg text-xs font-mono text-emerald-800 space-y-1">
+
+                            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                                 {user.dailyRoutine?.tasks.map((task, idx) => (
-                                    <p key={idx}>• {task.title} ({task.duration}m)</p>
+                                    <div key={idx} className="bg-white/80 p-3 rounded-lg border border-emerald-100 flex gap-3 items-start">
+                                        <input
+                                            type="checkbox"
+                                            className="mt-1 w-4 h-4 accent-emerald-600 cursor-pointer"
+                                            // Ideally sync this state, currently purely visual for session
+                                        />
+                                        <div>
+                                            <p className="text-xs font-bold text-emerald-900">{task.title}</p>
+                                            <p className="text-[10px] text-emerald-600">{task.description}</p>
+                                            <span className="text-[9px] font-mono text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded mt-1 inline-block">
+                                                ⏱️ {task.duration}m
+                                            </span>
+                                        </div>
+                                    </div>
                                 ))}
-                                {!user.dailyRoutine && <p>Generating your personalized routine...</p>}
+                                {!user.dailyRoutine && <p className="text-xs text-emerald-600 italic">Generating...</p>}
                             </div>
+
+                            <button
+                                onClick={() => {
+                                    // Manual Routine Logic (Subject + Time)
+                                    const subject = prompt("Enter Subject (e.g. Math, Physics):");
+                                    if (!subject) return;
+
+                                    const task = prompt("Enter Task Description (e.g. Read Chapter 5):");
+                                    if (!task) return;
+
+                                    const timeStr = prompt("Enter Duration in minutes (e.g. 30):");
+                                    const time = parseInt(timeStr || '30') || 30;
+
+                                    if (subject && task) {
+                                        const newRoutine = { ...(user.dailyRoutine || { date: new Date().toDateString(), tasks: [], focusArea: 'Manual' }) };
+                                        if (!newRoutine.tasks) newRoutine.tasks = [];
+                                        newRoutine.tasks.push({
+                                            title: task,
+                                            duration: time,
+                                            type: 'PRACTICE',
+                                            description: 'Manual Entry',
+                                            subject: subject
+                                        });
+                                        const updated = { ...user, dailyRoutine: newRoutine };
+                                        handleUserUpdate(updated);
+                                    }
+                                }}
+                                className="w-full mt-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow hover:bg-emerald-700"
+                            >
+                                + Add Manual Task
+                            </button>
                         </div>
 
                         <button onClick={() => { setMarksheetType('MONTHLY'); setShowMonthlyReport(true); }} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow flex items-center justify-center gap-2"><BarChart3 size={18} /> View Monthly Report</button>

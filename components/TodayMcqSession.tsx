@@ -214,7 +214,7 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
                setTopicSummary(null);
                setCurrentIndex(prev => prev + 1);
             }
-        }, 2000); // Increased slightly to 2s
+        }, 800); // Reduced delay to 800ms for faster transition
     };
 
     if (loading) {

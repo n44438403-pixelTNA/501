@@ -13,6 +13,7 @@ import { TopicChart } from './TopicChart';
 import { speakWithHighlight } from '../utils/ttsHighlighter';
 import { LEVEL_UP_CONFIG } from '../constants';
 import { MarksheetCard } from './MarksheetCard'; // Import MarksheetCard
+import { MonthlyMarksheet } from './MonthlyMarksheet'; // Import MonthlyMarksheet
 
 interface Props {
     user: User;
@@ -58,7 +59,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     const [expandedMistakeAttemptId, setExpandedMistakeAttemptId] = useState<string | null>(null);
 
     // UI State
-    const [showYesterdayReport, setShowYesterdayReport] = useState(false);
+    const [showReport, setShowReport] = useState(false);
     const [showTodayRevisionSession, setShowTodayRevisionSession] = useState(false);
     const [showTodayMcqSession, setShowTodayMcqSession] = useState(false);
     const [sessionResult, setSessionResult] = useState<any>(null); // For Marksheet
@@ -735,35 +736,11 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                             </button>
                         </>
                      )}
-                     {activeFilter !== 'TODAY' && (
-                        <>
-                            <button
-                                onClick={() => {
-                                    const rates = [0.75, 1.0, 1.25, 1.5, 2.0];
-                                    const nextIdx = (rates.indexOf(ttsRate) + 1) % rates.length;
-                                    setTtsRate(rates[nextIdx]);
-                                }}
-                                className="bg-slate-100 text-slate-700 px-2 py-1.5 rounded-xl text-[10px] font-bold shadow-sm hover:bg-slate-200 flex items-center gap-1"
-                                title="Change Speed"
-                            >
-                                <Zap size={12} /> {ttsRate}x
-                            </button>
-                            <button
-                                onClick={() => {
-                                    const weeklyData = getWeeklyBreakdown(topics.filter(t => t.status === activeFilter));
-                                    handleReadPage(weeklyData);
-                                }}
-                                className="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm hover:bg-indigo-200 flex items-center gap-2"
-                            >
-                                <Mic size={14} /> Read Page
-                            </button>
-                        </>
-                    )}
                     <button
-                        onClick={() => setShowYesterdayReport(!showYesterdayReport)}
+                        onClick={() => setShowReport(true)}
                         className="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm hover:bg-slate-50 flex items-center gap-2"
                     >
-                        <Clock size={14} /> Report
+                        <Clock size={14} /> Monthly Report
                     </button>
                 </div>
             </div>
@@ -915,6 +892,15 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
             )}
 
             {/* Analysis Page Removed for Revision Hub as per request */}
+
+            {showReport && (
+                <MonthlyMarksheet
+                    user={user}
+                    onClose={() => setShowReport(false)}
+                    reportType="MONTHLY"
+                    settings={settings}
+                />
+            )}
 
             <CustomAlert
                 isOpen={alertConfig.isOpen}

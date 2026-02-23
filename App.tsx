@@ -242,6 +242,7 @@ const App: React.FC = () => {
   }, [studentTab]);
   const [activeReward, setActiveReward] = useState<PendingReward | null>(null);
   const [lastTestResult, setLastTestResult] = useState<MCQResult | null>(null);
+  const [lastTestQuestions, setLastTestQuestions] = useState<MCQItem[] | null>(null); // NEW: For granular analysis
   
   // CUSTOM DIALOG STATE (GLOBAL)
   const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, message: string}>({isOpen: false, message: ''});
@@ -1020,6 +1021,20 @@ const App: React.FC = () => {
       })
       .filter((item): item is { question: string; qIndex: number } => item !== null);
 
+    // NEW: Calculate Granular Topic Analysis
+    const topicAnalysis: Record<string, { correct: number, total: number, percentage: number }> = {};
+    displayData.forEach((q, idx) => {
+        const topic = q.topic || 'General';
+        if (!topicAnalysis[topic]) topicAnalysis[topic] = { correct: 0, total: 0, percentage: 0 };
+        topicAnalysis[topic].total++;
+        if (answers[idx] === q.correctAnswer) topicAnalysis[topic].correct++;
+    });
+    // Calculate Percentages
+    Object.keys(topicAnalysis).forEach(topic => {
+        const t = topicAnalysis[topic];
+        t.percentage = t.total > 0 ? Math.round((t.correct / t.total) * 100) : 0;
+    });
+
     const result: MCQResult = {
         id: `mcq_${state.selectedChapter.id}_${Date.now()}`,
         date: new Date().toISOString(),
@@ -1031,10 +1046,12 @@ const App: React.FC = () => {
         subjectId: state.selectedSubject?.id || '',
         classLevel: state.selectedClass || '',
         userAnswers: answers,
-        wrongQuestions: wrongQuestions
+        wrongQuestions: wrongQuestions,
+        topicAnalysis: topicAnalysis // Save for history comparison
     };
 
     setLastTestResult(result);
+    setLastTestQuestions(displayData); // Pass for Marksheet Granular View
     
     // UPDATE USER HISTORY & PROGRESS
     let updatedUser = { ...state.user };
@@ -2367,9 +2384,14 @@ const App: React.FC = () => {
               result={lastTestResult}
               user={state.user}
               settings={state.settings}
-              onClose={() => setLastTestResult(null)}
+              questions={lastTestQuestions || undefined} // Pass full questions for analysis
+              onClose={() => {
+                  setLastTestResult(null);
+                  setLastTestQuestions(null);
+              }}
               onLaunchContent={(c: any) => {
                   setLastTestResult(null);
+                  setLastTestQuestions(null);
                   handleContentGeneration(c.isPremium ? 'NOTES_PREMIUM' : 'NOTES_HTML_FREE', undefined, false, c);
               }}
               onPublish={() => {

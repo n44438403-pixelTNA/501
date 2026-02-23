@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // Sync check
 import { MCQResult, User, SystemSettings } from '../types';
-import { X, Share2, ChevronLeft, ChevronRight, Download, FileSearch, Grid, CheckCircle, XCircle, Clock, Award, BrainCircuit, Play, StopCircle, BookOpen, Target, Zap, BarChart3, ListChecks, FileText, LayoutTemplate, TrendingUp, Lightbulb, ExternalLink, RefreshCw, Lock, Sparkles } from 'lucide-react';
+import { X, Share2, ChevronLeft, ChevronRight, Download, FileSearch, Grid, CheckCircle, XCircle, Clock, Award, BrainCircuit, Play, StopCircle, BookOpen, Target, Zap, BarChart3, ListChecks, FileText, LayoutTemplate, TrendingUp, TrendingDown, Lightbulb, ExternalLink, RefreshCw, Lock, Sparkles, Volume2, ChevronDown, ChevronUp, AlertCircle, ArrowRight, BookOpenCheck, ArrowUp, Minus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { generateUltraAnalysis } from '../services/groq';
@@ -515,6 +515,124 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
   // --- SECTION RENDERERS ---
 
+  const generateTeacherRemarks = (percent: number, topic: string) => {
+      if (percent >= 80) return `Excellent work in ${topic}! Your grasp on this topic is strong. Keep practicing to maintain this level.`;
+      if (percent >= 50) return `Good effort in ${topic}. You are doing okay, but a little more revision will help you reach the top level.`;
+      return `You need to focus on ${topic}. Your score is low here. Please read the recommended notes and try again.`;
+  };
+
+  const renderGranularAnalysis = () => {
+      const topics = Object.keys(topicStats);
+
+      // Find previous result for comparison
+      const previousResult = (user.mcqHistory || [])
+          .filter(h => h.chapterId === result.chapterId && h.id !== result.id)
+          .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+      return (
+          <div className="space-y-6">
+              <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+                  <div className="relative z-10">
+                      <h3 className="text-xl font-black mb-2 flex items-center gap-2"><BrainCircuit className="text-yellow-400" /> Detailed Analysis Dashboard</h3>
+                      <p className="text-slate-300 text-xs font-medium mb-4">Topic-wise performance breakdown and teacher remarks.</p>
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-32 bg-white/5 skew-x-12 -mr-8"></div>
+              </div>
+
+              {topics.map((topic, i) => {
+                  const stats = topicStats[topic];
+                  const percent = stats.percent;
+                  const status = percent >= 80 ? 'STRONG' : percent >= 50 ? 'AVERAGE' : 'WEAK';
+
+                  // Compare with previous
+                  let prevPercent = 0;
+                  let hasPrev = false;
+                  if (previousResult && previousResult.topicAnalysis && previousResult.topicAnalysis[topic]) {
+                      prevPercent = previousResult.topicAnalysis[topic].percentage;
+                      hasPrev = true;
+                  } else if (previousResult) {
+                      // Fallback if granular data missing in old records
+                      // Estimate using overall? No, misleading. Just show current.
+                  }
+
+                  const diff = percent - prevPercent;
+                  const remarks = generateTeacherRemarks(percent, topic);
+
+                  // Filter questions for this topic
+                  const topicQuestions = questions?.filter((q, idx) => {
+                      const t = q.topic || 'General';
+                      return t === topic;
+                  }) || [];
+
+                  return (
+                      <div key={i} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md">
+                          <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                              <div>
+                                  <h4 className="font-black text-slate-800 text-sm uppercase flex items-center gap-2">
+                                      {topic}
+                                      {status === 'WEAK' && <AlertCircle size={14} className="text-red-500" />}
+                                  </h4>
+                                  <div className="flex items-center gap-2 mt-1">
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${status === 'STRONG' ? 'bg-green-100 text-green-700' : status === 'AVERAGE' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                          {status}
+                                      </span>
+                                      {hasPrev && (
+                                          <span className={`text-[10px] font-bold flex items-center gap-1 ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-500' : 'text-slate-400'}`}>
+                                              {diff > 0 ? <ArrowUp size={10} /> : diff < 0 ? <TrendingDown size={10} /> : <Minus size={10} />}
+                                              {Math.abs(diff)}% vs Last
+                                          </span>
+                                      )}
+                                  </div>
+                              </div>
+                              <div className="text-right">
+                                  <div className="text-2xl font-black text-slate-800">{percent}%</div>
+                                  <div className="text-[10px] text-slate-500 font-bold">{stats.correct}/{stats.total} Correct</div>
+                              </div>
+                          </div>
+
+                          <div className="p-4 bg-white">
+                              {/* Teacher Remarks */}
+                              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-4 flex gap-3">
+                                  <div className="shrink-0 bg-white p-1.5 rounded-full h-fit shadow-sm text-indigo-600">
+                                      <Sparkles size={16} />
+                                  </div>
+                                  <div>
+                                      <p className="text-xs text-indigo-900 font-medium leading-relaxed italic">"{remarks}"</p>
+                                      <button onClick={() => speakText(remarks)} className="mt-2 text-[10px] font-bold text-indigo-600 flex items-center gap-1 hover:underline">
+                                          <Volume2 size={12} /> Listen Remark
+                                      </button>
+                                  </div>
+                              </div>
+
+                              {/* Questions Accordion (Simplified List) */}
+                              <div className="space-y-3">
+                                  {topicQuestions.map((q, localIdx) => {
+                                      const globalIdx = questions?.indexOf(q) ?? -1;
+                                      const omrEntry = result.omrData?.find(d => d.qIndex === globalIdx);
+                                      const userSelected = omrEntry ? omrEntry.selected : -1;
+                                      const isCorrect = userSelected === q.correctAnswer;
+                                      const isSkipped = userSelected === -1;
+
+                                      return (
+                                          <div key={localIdx} className={`text-xs border-l-2 pl-3 py-1 ${isCorrect ? 'border-green-400' : isSkipped ? 'border-slate-300' : 'border-red-400'}`}>
+                                              <div className="flex justify-between gap-2">
+                                                  <div className="text-slate-700 font-medium line-clamp-1" dangerouslySetInnerHTML={{__html: stripHtml(q.question)}} />
+                                                  <span className={`font-bold shrink-0 ${isCorrect ? 'text-green-600' : isSkipped ? 'text-slate-400' : 'text-red-600'}`}>
+                                                      {isCorrect ? 'Correct' : isSkipped ? 'Skipped' : 'Wrong'}
+                                                  </span>
+                                              </div>
+                                          </div>
+                                      );
+                                  })}
+                              </div>
+                          </div>
+                      </div>
+                  );
+              })}
+          </div>
+      );
+  };
+
   const renderAnalysisContent = () => {
     let data;
     try { data = JSON.parse(ultraAnalysisResult); } catch (e) {
@@ -603,7 +721,10 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                               <div className="p-4 space-y-4">
                                   {relevantRecs.map((rec, rIdx) => (
                                       <div key={rIdx} className="flex justify-between items-center p-3 border rounded-xl">
-                                          <div className="text-xs font-bold text-slate-700">{rec.title}</div>
+                                          <div className="flex items-center gap-2">
+                                              <div className="text-xs font-bold text-slate-700">{rec.title}</div>
+                                              <SpeakButton text={`Recommended Note: ${rec.title}. Topic: ${topicName}`} className="p-1" iconSize={14} />
+                                          </div>
                                           <div className="flex gap-2">
                                               <span className="text-[10px] bg-slate-100 px-2 py-1 rounded">{rec.isPremium ? 'Premium' : 'Free'}</span>
                                               <button
@@ -713,9 +834,18 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               const userSelected = omrEntry ? omrEntry.selected : -1;
               const isCorrect = userSelected === q.correctAnswer;
 
+              // Prepare TTS Text
+              const cleanQuestion = stripHtml(q.question);
+              const cleanExplanation = q.explanation ? stripHtml(q.explanation) : '';
+              const correctAnswerText = q.options ? stripHtml(q.options[q.correctAnswer]) : '';
+              const ttsText = `Question ${idx + 1}. ${cleanQuestion}. The correct answer is option ${String.fromCharCode(65 + q.correctAnswer)}, which is ${correctAnswerText}. Explanation: ${cleanExplanation}`;
+
               return (
-                  <div key={idx} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm break-inside-avoid">
-                      <div className="flex gap-2 mb-2">
+                  <div key={idx} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm break-inside-avoid relative group">
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <SpeakButton text={ttsText} className="bg-slate-100 hover:bg-slate-200 text-slate-600" iconSize={16} />
+                      </div>
+                      <div className="flex gap-2 mb-2 pr-8">
                           <span className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{idx + 1}</span>
                           <div className="text-sm font-bold text-slate-800" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.question) }} />
                       </div>
@@ -903,18 +1033,26 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
                 {activeTab === 'SOLUTION' && isAnalysisUnlocked && (
                     <div className="animate-in slide-in-from-bottom-4">
+                        {/* NEW: Granular Analysis View (Default) */}
+                        <div className="mb-8">
+                            {renderGranularAnalysis()}
+                        </div>
+
+                        {/* ULTRA AI ANALYSIS (Optional Upgrade) */}
                         <div className="mb-8">
                              {!ultraAnalysisResult ? (
-                                <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-3xl p-6 text-center text-white shadow-lg">
-                                    <BrainCircuit size={48} className="mx-auto mb-4 opacity-80" />
-                                    <h4 className="text-xl font-black mb-2">Unlock Premium AI Analysis</h4>
-                                    <button onClick={() => handleUltraAnalysis()} disabled={isLoadingUltra} className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-black shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-2 mx-auto disabled:opacity-80">
-                                        {isLoadingUltra ? <span className="animate-spin">⏳</span> : <UnlockIcon />}
-                                        {isLoadingUltra ? 'Analyzing...' : `Unlock Analysis (${settings?.mcqAnalysisCostUltra ?? 20} Coins)`}
+                                <div className="bg-white border border-dashed border-indigo-200 rounded-3xl p-6 text-center">
+                                    <BrainCircuit size={32} className="mx-auto mb-2 text-indigo-400" />
+                                    <h4 className="text-sm font-black text-slate-700 mb-1">Want Deeper AI Insights?</h4>
+                                    <p className="text-xs text-slate-500 mb-4">Get a personalized study plan and motivation.</p>
+                                    <button onClick={() => handleUltraAnalysis()} disabled={isLoadingUltra} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 mx-auto disabled:opacity-50">
+                                        {isLoadingUltra ? <span className="animate-spin">⏳</span> : <Sparkles size={14} />}
+                                        {isLoadingUltra ? 'Generating...' : `Generate AI Report (${settings?.mcqAnalysisCostUltra ?? 20} Coins)`}
                                     </button>
                                 </div>
                             ) : renderAnalysisContent()}
                         </div>
+
                         {/* RESTORED: Retry Mistakes Button */}
                         {result.wrongQuestions && result.wrongQuestions.length > 0 && (
                             <div className="mb-4">

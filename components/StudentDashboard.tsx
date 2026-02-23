@@ -6,6 +6,8 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { ref, query, limitToLast, onValue } from 'firebase/database';
 import { getSubjectsList, DEFAULT_APP_FEATURES, ALL_APP_FEATURES, LEVEL_UNLOCKABLE_FEATURES, LEVEL_UP_CONFIG } from '../constants';
 import { ALL_FEATURES } from '../utils/featureRegistry';
+import { DashboardLayer1 } from './student/DashboardLayer1';
+import { DashboardLayer2 } from './student/DashboardLayer2';
 import { getActiveChallenges } from '../services/questionBank';
 import { generateDailyChallengeQuestions } from '../utils/challengeGenerator';
 import { generateMorningInsight } from '../services/morningInsight';
@@ -1236,41 +1238,41 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                     </div>
                 </DashboardSectionWrapper>
 
-                {/* MAIN ACTION BUTTONS */}
-                <DashboardSectionWrapper id="section_main_actions" label="Main Actions" settings={settings} isLayoutEditing={isLayoutEditing} onToggleVisibility={toggleLayoutVisibility}>
-                    <div className="grid grid-cols-2 gap-4">
-                        <button
-                            onClick={() => { onTabChange('COURSES'); setContentViewStep('SUBJECTS'); }}
-                            className="col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl shadow-lg shadow-blue-200 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all relative overflow-hidden h-32"
-                        >
-                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <Book size={32} className="text-white mb-1" />
-                            <span className="font-black text-white text-lg tracking-wide uppercase">My Courses</span>
-                        </button>
+                {/* MAIN ACTION BUTTONS (LAYER 1) */}
+                <DashboardSectionWrapper id="section_main_actions" label="Core Actions" settings={settings} isLayoutEditing={isLayoutEditing} onToggleVisibility={toggleLayoutVisibility}>
+                    <DashboardLayer1
+                        onNavigate={(id) => {
+                            if (id === 'START_STUDY') { onTabChange('COURSES'); setContentViewStep('SUBJECTS'); }
+                            else if (id === 'MCQ_PRACTICE') { onTabChange('MCQ'); setContentViewStep('SUBJECTS'); }
+                            else if (id === 'REVISION_HUB') { onTabChange('REVISION'); }
+                            else if (id === 'MY_ANALYSIS') { onTabChange('ANALYTICS'); }
+                            else if (id === 'WEAK_TOPICS') {
+                                // Direct link to Weak Topics in Revision Hub (Future impl)
+                                onTabChange('REVISION');
+                                showAlert("Opening Revision Hub for Weak Topics...", "INFO");
+                            }
+                            else if (id === 'CONTINUE_LAST') {
+                                // Logic to resume last content
+                                // For now, just open courses
+                                onTabChange('COURSES');
+                                showAlert("Continuing last session...", "SUCCESS");
+                            }
+                        }}
+                    />
+                </DashboardSectionWrapper>
 
-                        <button
-                            onClick={() => {
-                                onTabChange('ANALYTICS');
-                            }}
-                            className={`bg-white border-2 border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-blue-200 h-32 relative overflow-hidden`}
-                        >
-                            <BarChart3 size={28} className="text-blue-600 mb-1" />
-                            <span className="font-black text-slate-700 text-sm tracking-wide uppercase text-center">My Analysis</span>
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                onTabChange('UNIVERSAL_VIDEO');
-                            }}
-                            className={`bg-white border-2 border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-rose-200 h-32 relative overflow-hidden`}
-                        >
-                            <div className="relative">
-                                <Video size={28} className="text-rose-600 mb-1" />
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-white"></div>
-                            </div>
-                            <span className="font-black text-slate-700 text-sm tracking-wide uppercase text-center">Universal Video</span>
-                        </button>
-                    </div>
+                {/* SECONDARY TOOLS (LAYER 2) */}
+                <DashboardSectionWrapper id="section_secondary_actions" label="Tools & More" settings={settings} isLayoutEditing={isLayoutEditing} onToggleVisibility={toggleLayoutVisibility}>
+                    <DashboardLayer2
+                        onNavigate={(id) => {
+                            if (id === 'AI_CENTER') onTabChange('AI_HUB');
+                            else if (id === 'GAMES') onTabChange('GAME');
+                            else if (id === 'LEADERBOARD') onTabChange('LEADERBOARD');
+                            else if (id === 'STORE_ACCESS') onTabChange('STORE');
+                            else if (id === 'PREMIUM_ACCESS') onTabChange('SUB_HISTORY');
+                            else if (id === 'TOOLS') showAlert("Tools Menu Coming Soon!", "INFO");
+                        }}
+                    />
                 </DashboardSectionWrapper>
               </div>
           );

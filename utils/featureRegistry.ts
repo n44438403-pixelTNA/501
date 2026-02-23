@@ -19,7 +19,7 @@ export interface Feature {
 }
 
 export const ALL_FEATURES: Feature[] = [
-    // --- CORE (Layer 1) ---
+    // --- CORE (Layer 1: Daily Core Actions - Max 6) ---
     {
         id: 'START_STUDY',
         label: 'Start Study',
@@ -43,7 +43,7 @@ export const ALL_FEATURES: Feature[] = [
     {
         id: 'REVISION_HUB',
         label: 'Revision Hub',
-        group: 'REVISION',
+        group: 'CORE',
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',
         adminVisible: false,
@@ -54,15 +54,129 @@ export const ALL_FEATURES: Feature[] = [
     {
         id: 'MY_ANALYSIS',
         label: 'My Analysis',
-        group: 'ANALYSIS',
+        group: 'CORE',
         surfaceLevel: 1,
         adminVisible: false,
         path: 'ANALYTICS',
         icon: 'BarChart3',
         description: 'Track your progress and performance.'
     },
+    {
+        id: 'WEAK_TOPICS',
+        label: 'Weak Topics',
+        group: 'CORE',
+        surfaceLevel: 1,
+        requiredSubscription: 'BASIC',
+        adminVisible: false,
+        path: 'REVISION', // Deep link logic to be handled
+        icon: 'AlertCircle',
+        description: 'Focus instantly on your weakest areas.'
+    },
+    {
+        id: 'CONTINUE_LAST',
+        label: 'Continue Last',
+        group: 'CORE',
+        surfaceLevel: 1,
+        adminVisible: false,
+        path: 'CONTINUE', // Special handler
+        icon: 'PlayCircle',
+        description: 'Resume exactly where you left off.'
+    },
 
-    // --- REVISION ---
+    // --- SECONDARY (Layer 2: Tools & Exploration) ---
+    {
+        id: 'AI_CENTER',
+        label: 'AI Center',
+        group: 'AI',
+        surfaceLevel: 2,
+        requiredSubscription: 'BASIC',
+        adminVisible: false,
+        path: 'AI_HUB',
+        icon: 'Sparkles',
+        description: 'Central hub for all AI tools.'
+    },
+    {
+        id: 'TOOLS',
+        label: 'Tools',
+        group: 'TOOLS',
+        surfaceLevel: 2,
+        adminVisible: false,
+        path: 'TOOLS', // Expandable section logic
+        icon: 'Wrench',
+        description: 'Calculators, converters, and more.'
+    },
+    {
+        id: 'GAMES',
+        label: 'Game Zone',
+        group: 'GAME',
+        surfaceLevel: 2,
+        adminVisible: false,
+        path: 'GAME',
+        icon: 'Gamepad2',
+        description: 'Relax and earn rewards.'
+    },
+    {
+        id: 'STORE_ACCESS',
+        label: 'Store',
+        group: 'CONTENT',
+        surfaceLevel: 2,
+        adminVisible: false,
+        path: 'STORE',
+        icon: 'ShoppingBag',
+        description: 'Upgrade your plan and buy credits.'
+    },
+    {
+        id: 'LEADERBOARD',
+        label: 'Leaderboard',
+        group: 'GAME',
+        surfaceLevel: 2,
+        adminVisible: false,
+        path: 'LEADERBOARD',
+        icon: 'Trophy',
+        description: 'Compete with others globally.'
+    },
+    {
+        id: 'PREMIUM_ACCESS',
+        label: 'Premium',
+        group: 'CONTENT',
+        surfaceLevel: 2,
+        adminVisible: false,
+        path: 'SUB_HISTORY',
+        icon: 'Crown',
+        description: 'Manage your subscription.'
+    },
+
+    // --- DRAWER / HIDDEN (Layer 3) ---
+    {
+        id: 'ADMIN_PANEL',
+        label: 'Admin Panel',
+        group: 'ADMIN',
+        surfaceLevel: 3,
+        adminVisible: true,
+        path: 'ADMIN_DASHBOARD',
+        icon: 'Shield',
+        requiresSuperAdmin: true
+    },
+    {
+        id: 'REDEEM_CODE',
+        label: 'Redeem Code',
+        group: 'TOOLS',
+        surfaceLevel: 3,
+        adminVisible: false,
+        path: 'REDEEM',
+        icon: 'Gift'
+    },
+    {
+        id: 'LOGS_DEBUG',
+        label: 'Logs & Debug',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: false, // Visible only in dev/admin mode usually
+        path: 'LOGS',
+        icon: 'Terminal'
+    },
+
+    // --- REVISION SUB-FEATURES (Internal to Revision Hub) ---
     {
         id: 'REVISION_AI_PLAN',
         label: 'AI Study Plan',
@@ -80,27 +194,8 @@ export const ALL_FEATURES: Feature[] = [
         adminVisible: false,
         description: 'Review your past mistakes.'
     },
-    {
-        id: 'REVISION_WEAK_TOPICS',
-        label: 'Weak Topics',
-        group: 'REVISION',
-        surfaceLevel: 2,
-        adminVisible: false,
-        description: 'Focus on topics you struggle with.'
-    },
 
-    // --- AI ---
-    {
-        id: 'AI_CENTER',
-        label: 'AI Hub',
-        group: 'AI',
-        surfaceLevel: 1,
-        requiredSubscription: 'BASIC',
-        adminVisible: false,
-        path: 'AI_HUB',
-        icon: 'Sparkles',
-        description: 'Central hub for all AI tools.'
-    },
+    // --- AI SUB-FEATURES ---
     {
         id: 'AI_CHAT',
         label: 'AI Chat Tutor',
@@ -122,29 +217,7 @@ export const ALL_FEATURES: Feature[] = [
         description: 'Generate custom notes.'
     },
 
-    // --- GAMIFICATION ---
-    {
-        id: 'GAMES',
-        label: 'Spin & Win',
-        group: 'GAME',
-        surfaceLevel: 2,
-        adminVisible: false,
-        path: 'GAME',
-        icon: 'Gamepad2',
-        description: 'Daily rewards and games.'
-    },
-    {
-        id: 'LEADERBOARD',
-        label: 'Leaderboard',
-        group: 'GAME',
-        surfaceLevel: 2,
-        adminVisible: false,
-        path: 'LEADERBOARD',
-        icon: 'Trophy',
-        description: 'See where you stand.'
-    },
-
-    // --- CONTENT & TOOLS ---
+    // --- CONTENT SUB-FEATURES ---
     {
         id: 'VIDEO_ACCESS',
         label: 'Video Lectures',

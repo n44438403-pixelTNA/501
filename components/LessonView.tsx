@@ -2,14 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { LessonContent, Subject, ClassLevel, Chapter, MCQItem, ContentType, User, SystemSettings } from '../types';
-import { ArrowLeft, Clock, AlertTriangle, ExternalLink, CheckCircle, XCircle, Trophy, BookOpen, Play, Lock, ChevronRight, ChevronLeft, Save, X, Maximize, Volume2, Square, Zap, StopCircle, Globe, Lightbulb, FileText, BrainCircuit, Grip, CheckSquare, List, Download } from 'lucide-react';
+import { ArrowLeft, Clock, AlertTriangle, ExternalLink, CheckCircle, XCircle, Trophy, BookOpen, Play, Lock, ChevronRight, ChevronLeft, Save, X, Maximize, Volume2, Square, Zap, StopCircle, Globe, Lightbulb, FileText, BrainCircuit, Grip, CheckSquare, List, Download, BarChart3 } from 'lucide-react';
 import { CustomConfirm, CustomAlert } from './CustomDialogs';
 import { CustomPlayer } from './CustomPlayer';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { decodeHtml } from '../utils/htmlDecoder';
 import { storage } from '../utils/storage';
-import { getChapterData, saveUserHistory, saveTestResult } from '../firebase';
+import { getChapterData, saveUserHistory, saveTestResult, saveUserToLive } from '../firebase';
 import { SpeakButton } from './SpeakButton';
 import { renderMathInHtml } from '../utils/mathUtils';
 import { stopSpeaking } from '../utils/ttsHighlighter';
@@ -30,6 +30,7 @@ interface Props {
   onLaunchContent?: (content: any) => void;
   onToggleAutoTts?: (enabled: boolean) => void;
   instantExplanation?: boolean; // NEW: Instant Feedback Mode
+  onShowMarksheet?: (result?: any) => void; // NEW: Marksheet Trigger
 }
 
 export const LessonView: React.FC<Props> = ({ 
@@ -46,7 +47,8 @@ export const LessonView: React.FC<Props> = ({
   isStreaming = false,
   onLaunchContent,
   onToggleAutoTts,
-  instantExplanation = false // Default to standard mode
+  instantExplanation = false, // Default to standard mode
+  onShowMarksheet
 }) => {
   const [mcqState, setMcqState] = useState<Record<number, number | null>>({});
   const [timeSpentPerQuestion, setTimeSpentPerQuestion] = useState<Record<number, number>>({});
@@ -55,7 +57,7 @@ export const LessonView: React.FC<Props> = ({
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [analysisUnlocked, setAnalysisUnlocked] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [language, setLanguage] = useState<Language>('English');
+  const [language, setLanguage] = useState<'English' | 'Hindi'>('English');
   const [universalNotes, setUniversalNotes] = useState<any[]>([]);
   const [recLoading, setRecLoading] = useState(false);
   const [viewingNote, setViewingNote] = useState<any>(null); // New state for HTML Note Modal
@@ -64,10 +66,12 @@ export const LessonView: React.FC<Props> = ({
   const [showTopicSidebar, setShowTopicSidebar] = useState(false);
   const [batchIndex, setBatchIndex] = useState(0);
   const [comparisonMsg, setComparisonMsg] = useState('');
-  const [activeAnalysisTab, setActiveAnalysisTab] = useState<'OVERVIEW' | 'QUESTIONS' | 'MISTAKES'>('OVERVIEW'); // NEW: Analysis Tabs
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState<'CHAPTER_ANALYSIS' | 'OVERVIEW' | 'QUESTIONS' | 'MISTAKES'>('CHAPTER_ANALYSIS');
   // Auto-enable TTS for Premium Instant Explanation Mode
   const [autoReadEnabled, setAutoReadEnabled] = useState(settings?.isAutoTtsEnabled || instantExplanation || false);
   const BATCH_SIZE = 1;
+
+  const submitRef = useRef<() => void>();
 
   useEffect(() => {
       if (settings?.isAutoTtsEnabled !== undefined) {
@@ -138,16 +142,23 @@ export const LessonView: React.FC<Props> = ({
           const handleVisibilityChange = () => {
               if (document.hidden) {
                   setAlertConfig({isOpen: true, message: "⚠️ Exam Mode Violation! Test Submitted Automatically."});
-                  handleConfirmSubmit();
+                  // Defer the submit call to avoid circular dependency before definition
+                  // Since handleConfirmSubmit is defined below, we might need a ref or define it earlier.
+                  // However, useEffect runs after render, so `handleConfirmSubmit` const should be available if defined in scope.
+                  // The issue is likely `handleConfirmSubmit` is used before definition in this closure?
+                  // No, hoisting applies to function declarations, not const arrow functions.
+                  if (submitRef.current) {
+                      submitRef.current();
+                  }
               }
           };
           document.addEventListener("visibilitychange", handleVisibilityChange);
           return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
-  }, [content, showResults, showSubmitModal, mcqState]); // Added mcqState to ensure handleConfirmSubmit has latest data
+  }, [content, showResults, showSubmitModal, mcqState]);
 
   // Custom Dialog State
-  const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, message: string}>({isOpen: false, message: ''});
+  const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, message: string, type?: 'ERROR' | 'SUCCESS' | 'INFO'}>({isOpen: false, message: ''});
   const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void}>({isOpen: false, title: '', message: '', onConfirm: () => {}});
 
   // TTS STATE
@@ -642,6 +653,11 @@ export const LessonView: React.FC<Props> = ({
             saveTestResult(user.id, historyItem);
         }
     };
+
+    // Keep submitRef updated for Anti-Cheat
+    useEffect(() => {
+        submitRef.current = handleConfirmSubmit;
+    }, [handleConfirmSubmit]);
 
     const handleDownloadAnalysis = () => {
         if (!user || !onUpdateUser) return;
@@ -1153,6 +1169,251 @@ export const LessonView: React.FC<Props> = ({
                    {(() => {
                        // Premium Analysis Mode with Topic Grouping
                        if (showResults && (content.type === 'MCQ_ANALYSIS' || content.type === 'MCQ_RESULT')) {
+
+                           // CHAPTER ANALYSIS TAB (FULL PAGE VIEW)
+                           if (activeAnalysisTab === 'CHAPTER_ANALYSIS') {
+                               const attempted = Object.keys(mcqState).length;
+                               const correct = displayData.reduce((acc, q, i) => acc + (mcqState[i] === q.correctAnswer ? 1 : 0), 0);
+                               const wrong = attempted - correct;
+                               const percent = displayData.length > 0 ? Math.round((correct / displayData.length) * 100) : 0;
+
+                               // Topic Stats
+                               const topicStats: Record<string, {total: number, correct: number}> = {};
+                               displayData.forEach((q, idx) => {
+                                   const t = q.topic || 'General';
+                                   if (!topicStats[t]) topicStats[t] = {total: 0, correct: 0};
+                                   topicStats[t].total++;
+                                   if (mcqState[idx] === q.correctAnswer) topicStats[t].correct++;
+                               });
+
+                               // Recent Progress (Last 3 Attempts)
+                               const pastAttempts = user?.mcqHistory
+                                  ?.filter(h => h.chapterId === chapter.id)
+                                  .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                                  .slice(-3) || [];
+
+                               // Mistake Patterns (Weak Topics < 50%)
+                               const weakTopics = Object.keys(topicStats)
+                                  .filter(t => (topicStats[t].correct / topicStats[t].total) < 0.5)
+                                  .map(t => ({ topic: t, score: topicStats[t].correct, total: topicStats[t].total }));
+
+                               // TEACHER INSIGHT (Human Language - Expanded for All Topics)
+                               const getTeacherFeedback = () => {
+                                   let msg = "";
+                                   let overallComparison = "";
+
+                                   // 1. Overall Trend (Comparing with previous attempt if exists)
+                                   if (pastAttempts.length > 0) {
+                                       const last = pastAttempts[pastAttempts.length - 1]; // Previous attempt
+                                       const prevScore = Math.round((last.score / last.totalQuestions) * 100);
+                                       const currScore = percent;
+                                       const diff = currScore - prevScore;
+
+                                       if (diff > 10) overallComparison = `### 🌟 Outstanding Progress!\nBohot badhiya improvement hai! Pichhli baar **${prevScore}%** tha, ish baar **${currScore}%** aaya hai.`;
+                                       else if (diff > 0) overallComparison = `### 👍 Good Improvement\nSahi ja rahe ho! Score ${prevScore}% se badh kar ${currScore}% ho gaya hai.`;
+                                       else if (diff < -10) overallComparison = `### 📉 Needs Attention\nBeta, score kaafi gir gaya (${prevScore}% -> ${currScore}%). Kya samajh nahi aaya?`;
+                                       else if (diff < 0) overallComparison = `### ⚠️ Slight Drop\nThoda dhyan do. Pichhli baar ${prevScore}% tha, ish baar ${currScore}% ho gaya. Consistency zaroori hai.`;
+                                       else overallComparison = `### ⚖️ Consistent Performance\nConsistency achhi hai (**${currScore}%**), par hume ab next level pe jana hai.`;
+                                   } else {
+                                       overallComparison = `### 👋 Welcome!\nFirst attempt hai! Chalo dekhte hain kahan improvement ki zarurat hai.`;
+                                   }
+
+                                   msg += overallComparison + "\n\n";
+
+                                   // 2. Comprehensive Topic Analysis
+                                   const allTopics = Object.keys(topicStats);
+                                   if (allTopics.length > 0) {
+                                       msg += `#### 🧠 Topic-wise Feedback:\n`;
+
+                                       allTopics.forEach(topic => {
+                                           const stats = topicStats[topic];
+                                           const accuracy = (stats.correct / stats.total) * 100;
+
+                                           if (accuracy >= 80) {
+                                               msg += `- ✅ **${topic}**: Shabash! Yahan pakad mazboot hai (${Math.round(accuracy)}%).\n`;
+                                           } else if (accuracy >= 50) {
+                                               msg += `- ⚖️ **${topic}**: Thik hai (${Math.round(accuracy)}%), par thoda aur revision chahiye.\n`;
+                                           } else {
+                                               msg += `- ❌ **${topic}**: Yahan dikkat hai (${Math.round(accuracy)}%). Is topic ko dubara padhna padega.\n`;
+                                           }
+                                       });
+                                   }
+
+                                   return msg;
+                               };
+
+                               const teacherMsg = getTeacherFeedback();
+
+                               return (
+                                   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+
+                                       {/* TEACHER INSIGHT CARD */}
+                                       {teacherMsg && (
+                                           <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 p-5 rounded-2xl flex gap-4 items-start relative overflow-hidden shadow-sm">
+                                               {/* Decorative Elements */}
+                                               <div className="absolute -right-4 -top-4 w-20 h-20 bg-indigo-100 rounded-full blur-2xl opacity-50"></div>
+
+                                               <div className="w-12 h-12 rounded-full bg-white border-2 border-indigo-200 flex items-center justify-center shrink-0 shadow-sm z-10">
+                                                   {/* Use an emoji or icon for the teacher avatar */}
+                                                   <span className="text-2xl">👨‍🏫</span>
+                                               </div>
+                                               <div className="z-10 flex-1">
+                                                   <h4 className="font-black text-indigo-900 text-sm mb-1 uppercase tracking-wide">Teacher's Remarks</h4>
+                                                   <p className="text-indigo-800 text-sm font-medium leading-relaxed">
+                                                       <ReactMarkdown>{teacherMsg}</ReactMarkdown>
+                                                   </p>
+                                               </div>
+                                           </div>
+                                       )}
+
+                                       {/* HEADER & MARKSHEET BUTTON */}
+                                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                           <div>
+                                               <h2 className="text-2xl font-black text-slate-800">Analysis Dashboard</h2>
+                                               <p className="text-slate-500 font-medium">Deep dive into your performance.</p>
+                                           </div>
+                                           {onShowMarksheet && (
+                                                <button
+                                                    onClick={() => onShowMarksheet(content.analytics)}
+                                                    className="bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg hover:bg-slate-900 flex items-center justify-center gap-2 transition-all active:scale-95"
+                                                >
+                                                    <FileText size={18} /> View Official Marksheet
+                                                </button>
+                                           )}
+                                       </div>
+
+                                       {/* Performance Summary */}
+                                       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                                           <h3 className="font-black text-slate-800 text-lg mb-4">Performance Summary</h3>
+                                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100"><div className="text-xs text-slate-500 uppercase font-bold">Score</div><div className="text-2xl font-black text-slate-800">{correct}/{displayData.length}</div></div>
+                                               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100"><div className="text-xs text-slate-500 uppercase font-bold">Accuracy</div><div className="text-2xl font-black text-blue-600">{percent}%</div></div>
+                                               <div className="p-3 bg-green-50 rounded-xl border border-green-100"><div className="text-xs text-green-600 uppercase font-bold">Correct</div><div className="text-2xl font-black text-green-700">{correct}</div></div>
+                                               <div className="p-3 bg-red-50 rounded-xl border border-red-100"><div className="text-xs text-red-600 uppercase font-bold">Wrong</div><div className="text-2xl font-black text-red-700">{wrong}</div></div>
+                                           </div>
+                                       </div>
+
+                                       {/* RECENT PROGRESS (Last 3 Attempts) */}
+                                       {pastAttempts.length > 0 && (
+                                           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                                               <h3 className="font-black text-slate-800 text-lg mb-4 flex items-center gap-2"><BarChart3 size={18}/> Recent Progress</h3>
+                                               <div className="flex items-end gap-2 h-32 pb-2">
+                                                   {pastAttempts.map((att, idx) => {
+                                                       const p = Math.round((att.score / att.totalQuestions) * 100);
+                                                       return (
+                                                           <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full gap-2 group">
+                                                               <span className="text-xs font-bold text-slate-600 group-hover:text-blue-600 transition-colors">{p}%</span>
+                                                               <div className="w-full max-w-[40px] bg-slate-100 rounded-t-lg relative overflow-hidden group-hover:bg-blue-50 transition-colors" style={{height: `${p}%`, minHeight: '10%'}}>
+                                                                   <div className="absolute bottom-0 left-0 right-0 top-0 bg-blue-500 opacity-20"></div>
+                                                                   <div className="absolute bottom-0 left-0 right-0 bg-blue-600 transition-all group-hover:bg-blue-500" style={{height: '4px'}}></div>
+                                                               </div>
+                                                               <span className="text-[10px] font-bold text-slate-400 uppercase">{new Date(att.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})}</span>
+                                                           </div>
+                                                       );
+                                                   })}
+                                               </div>
+                                           </div>
+                                       )}
+
+                                       {/* MISTAKE PATTERNS (Weak Areas) */}
+                                       {weakTopics.length > 0 && (
+                                           <div className="bg-red-50 p-6 rounded-3xl border border-red-100">
+                                                <h3 className="font-black text-red-900 text-lg mb-4 flex items-center gap-2"><AlertTriangle size={18}/> Weak Areas (Needs Focus)</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {weakTopics.map((item, idx) => (
+                                                        <div key={idx} className="bg-white p-3 rounded-xl border border-red-100 flex items-center justify-between">
+                                                            <span className="font-bold text-slate-700 text-sm">{item.topic}</span>
+                                                            <span className="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg">
+                                                                {Math.round((item.score/item.total)*100)}% Accuracy
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                           </div>
+                                       )}
+
+                                       {/* AI Analysis (If Available) */}
+                                       {content?.aiAnalysisText && (
+                                           <div className="bg-white p-6 rounded-3xl shadow-sm border border-purple-100 relative overflow-hidden">
+                                               <div className="flex items-center justify-between mb-4 relative z-10">
+                                                   <h3 className="font-black text-slate-800 text-lg flex items-center gap-2"><BrainCircuit size={18}/> AI Performance Report</h3>
+                                                   <SpeakButton text={content.aiAnalysisText} className="p-2 bg-purple-50 text-purple-600 hover:bg-purple-100" />
+                                               </div>
+                                               <div className="prose prose-sm prose-slate max-w-none prose-p:text-slate-600 prose-headings:font-black prose-headings:text-slate-800 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                                   <ReactMarkdown>{content.aiAnalysisText}</ReactMarkdown>
+                                               </div>
+                                           </div>
+                                       )}
+
+                                       {/* Topic Breakdown */}
+                                       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                                           <h3 className="font-black text-slate-800 text-lg mb-4 flex items-center gap-2"><List size={18}/> Topic Breakdown</h3>
+                                           <div className="space-y-4">
+                                               {Object.keys(topicStats).map((t, i) => {
+                                                   const s = topicStats[t];
+                                                   const p = Math.round((s.correct/s.total)*100);
+                                                   return (
+                                                       <div key={i}>
+                                                           <div className="flex justify-between mb-1 text-xs font-bold">
+                                                               <span className="uppercase text-slate-600">{t}</span>
+                                                               <span>{s.correct}/{s.total} ({p}%)</span>
+                                                           </div>
+                                                           <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                               <div className={`h-full ${p>=80?'bg-green-500':'bg-red-500'}`} style={{width: `${p}%`}}></div>
+                                                           </div>
+                                                       </div>
+                                                   );
+                                               })}
+                                           </div>
+                                       </div>
+
+                                       {/* Detailed Solutions */}
+                                       <div className="space-y-6">
+                                           <h3 className="font-black text-slate-800 text-lg">Detailed Solutions</h3>
+                                           {displayData.map((q, idx) => {
+                                               const userAnswer = mcqState[idx];
+                                               const isAnswered = userAnswer !== undefined && userAnswer !== null;
+                                               const isCorrect = isAnswered && userAnswer === q.correctAnswer;
+
+                                               return (
+                                                   <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                                       <div className="flex gap-3 mb-4">
+                                                           <span className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${isCorrect ? 'bg-green-100 text-green-700' : isAnswered ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}>{idx + 1}</span>
+                                                           <div className="text-sm font-bold text-slate-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.question) }} />
+                                                       </div>
+                                                       <div className="ml-9 space-y-2">
+                                                           {q.options.map((opt, oIdx) => {
+                                                               const isSelected = userAnswer === oIdx;
+                                                               const isAnswer = q.correctAnswer === oIdx;
+                                                               let cls = "border-slate-100 bg-slate-50 text-slate-600";
+                                                               if (isAnswer) cls = "border-green-300 bg-green-50 text-green-800 font-bold";
+                                                               else if (isSelected) cls = "border-red-300 bg-red-50 text-red-800 font-bold";
+
+                                                               return (
+                                                                   <div key={oIdx} className={`p-3 rounded-xl border flex items-center gap-3 text-xs transition-colors ${cls}`}>
+                                                                       <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] border ${isAnswer ? 'border-green-400 bg-green-100 text-green-700' : isSelected ? 'border-red-400 bg-red-100 text-red-700' : 'border-slate-300 bg-white text-slate-400'}`}>
+                                                                           {String.fromCharCode(65 + oIdx)}
+                                                                       </div>
+                                                                       <div className="flex-1" dangerouslySetInnerHTML={{ __html: renderMathInHtml(opt) }} />
+                                                                   </div>
+                                                               );
+                                                           })}
+                                                       </div>
+                                                       {q.explanation && (
+                                                           <div className="ml-9 mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                                                               <div className="text-xs text-slate-700 leading-relaxed font-medium">
+                                                                   <span className="font-bold text-blue-800 block mb-1">Explanation:</span>
+                                                                   <span dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.explanation) }} />
+                                                               </div>
+                                                           </div>
+                                                       )}
+                                                   </div>
+                                               );
+                                           })}
+                                       </div>
+                                   </div>
+                               );
+                           }
 
                            // TAB LOGIC
                            if (activeAnalysisTab === 'OVERVIEW') {

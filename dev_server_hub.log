@@ -1,0 +1,23 @@
+
+  VITE v6.4.1  ready in 677 ms
+
+  ➜  Local:   http://localhost:5000/
+  ➜  Network: http://192.168.0.2:5000/
+[BABEL] Note: The code generator has deoptimised the styling of /app/components/AdminDashboard.tsx as it exceeds the max of 500KB.
+12:36:25 AM [vite] (client) hmr update /components/McqView.tsx
+12:37:59 AM [vite] (client) hmr update /components/RevisionHub.tsx
+12:46:50 AM [vite] (client) hmr update /components/LessonView.tsx
+12:46:56 AM [vite] (client) hmr update /components/LessonView.tsx
+12:47:00 AM [vite] (client) hmr update /components/LessonView.tsx
+12:48:23 AM [vite] (client) hmr update /components/LessonView.tsx
+12:49:13 AM [vite] (client) hmr update /components/LessonView.tsx
+1:47:06 AM [vite] (client) hmr update /components/LessonView.tsx
+1:49:37 AM [vite] (client) hmr update /components/McqView.tsx
+1:52:08 AM [vite] (client) hmr update /components/LessonView.tsx
+1:54:00 AM [vite] (client) hmr update /components/LessonView.tsx
+1:54:18 AM [vite] (client) hmr update /components/TodayMcqSession.tsx
+2:30:57 AM [vite] (client) hmr update /components/LessonView.tsx
+2:31:07 AM [vite] (client) hmr update /components/LessonView.tsx
+2:32:01 AM [vite] (client) hmr update /components/LessonView.tsx
+2:33:36 AM [vite] (client) hmr update /components/RevisionHub.tsx
+2:34:42 AM [vite] (client) hmr update /components/TodayMcqSession.tsx

@@ -178,7 +178,7 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
             userId: user.id,
             chapterId: topic.chapterId,
             chapterTitle: topic.chapterName,
-            subjectId: 'REVISION',
+            subjectId: topic.subjectId || 'REVISION',
             subjectName: topic.subjectName || 'Revision',
             date: new Date().toISOString(),
             score: score,
@@ -204,11 +204,17 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
             total: total
         });
 
-        // Auto Advance after 1.5s
+        // Auto Advance after 1.5s (Modified to allow manual view if needed, but keeping auto-flow for speed)
+        // User requested "same analysis" if they want.
+        // We will add a "View Analysis" button on the summary screen that pauses the timer.
+        // But default behavior remains fast.
+
         setTimeout(() => {
-            setTopicSummary(null);
-            setCurrentIndex(prev => prev + 1);
-        }, 1500);
+            if (topicSummary) { // Only if still showing
+               setTopicSummary(null);
+               setCurrentIndex(prev => prev + 1);
+            }
+        }, 2000); // Increased slightly to 2s
     };
 
     if (loading) {

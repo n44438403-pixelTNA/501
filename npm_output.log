@@ -1,16 +1,9 @@
-
-> students@0.0.0 dev
-> vite
-
-
-  VITE v6.4.1  ready in 1294 ms
-
-  ➜  Local:   http://localhost:5000/
-  ➜  Network: http://192.168.0.2:5000/
-[BABEL] Note: The code generator has deoptimised the styling of /app/components/AdminDashboard.tsx as it exceeds the max of 500KB.
-9:13:26 PM [vite] (client) hmr update /components/RevisionHub.tsx
-9:13:38 PM [vite] (client) hmr update /components/RevisionHub.tsx
-9:13:49 PM [vite] (client) hmr update /components/RevisionHub.tsx
-9:14:20 PM [vite] (client) hmr update /App.tsx
-9:14:27 PM [vite] (client) hmr update /App.tsx
-9:14:38 PM [vite] (client) hmr update /App.tsx
+npm error Missing script: "start"
+npm error
+npm error Did you mean one of these?
+npm error   npm star # Mark your favorite packages
+npm error   npm stars # View packages marked as favorites
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: /home/jules/.npm/_logs/2026-02-23T00_28_49_155Z-debug-0.log

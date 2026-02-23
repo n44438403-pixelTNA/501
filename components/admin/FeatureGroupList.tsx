@@ -21,7 +21,7 @@ const GROUPS: { key: FeatureGroup; label: string; icon: keyof typeof LucideIcons
     { key: 'ADVANCED', label: 'Advanced Settings', icon: 'Settings', color: 'slate' },
 ];
 
-export const FeatureGroupList: React.FC<Props> = ({ onNavigate, activeTab }) => {
+export const FeatureGroupList: React.FC<Props> = ({ onNavigate, activeTab, counts, hasPermission, userRole }) => {
     // Default open the group that contains the active tab, or CORE
     const findGroupForTab = (tab: string) => {
         const feature = ALL_FEATURES.find(f => f.adminTab === tab);

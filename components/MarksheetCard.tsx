@@ -521,6 +521,29 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       return `You need to focus on ${topic}. Your score is low here. Please read the recommended notes and try again.`;
   };
 
+  const renderWeakAreasSummary = () => {
+      const weakTopics = Object.keys(topicStats).filter(t => topicStats[t].percent < 50);
+      if (weakTopics.length === 0) return null;
+
+      return (
+          <div className="bg-red-50 border border-red-100 rounded-2xl p-4 mb-6 animate-in slide-in-from-top-4">
+              <h3 className="text-sm font-black text-red-800 mb-2 flex items-center gap-2">
+                  <AlertCircle size={16} /> Weak Areas (Needs Focus)
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                  {weakTopics.map(t => (
+                      <span key={t} className="px-3 py-1 bg-white border border-red-200 rounded-full text-xs font-bold text-red-600 shadow-sm">
+                          {t} ({topicStats[t].percent}%)
+                      </span>
+                  ))}
+              </div>
+              <p className="text-[10px] text-red-500 font-bold mt-3">
+                  Please review these topics carefully before the next test.
+              </p>
+          </div>
+      );
+  };
+
   const renderGranularAnalysis = () => {
       const topics = Object.keys(topicStats);
 
@@ -533,11 +556,13 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
           <div className="space-y-6">
               <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
                   <div className="relative z-10">
-                      <h3 className="text-xl font-black mb-2 flex items-center gap-2"><BrainCircuit className="text-yellow-400" /> Detailed Analysis Dashboard</h3>
-                      <p className="text-slate-300 text-xs font-medium mb-4">Topic-wise performance breakdown and teacher remarks.</p>
+                      <h3 className="text-xl font-black mb-2 flex items-center gap-2"><BrainCircuit className="text-yellow-400" /> Analysis Dashboard</h3>
+                      <p className="text-slate-300 text-xs font-medium mb-4">Detailed breakdown of your performance by topic.</p>
                   </div>
                   <div className="absolute right-0 top-0 bottom-0 w-32 bg-white/5 skew-x-12 -mr-8"></div>
               </div>
+
+              {renderWeakAreasSummary()}
 
               {topics.map((topic, i) => {
                   const stats = topicStats[topic];
@@ -550,9 +575,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   if (previousResult && previousResult.topicAnalysis && previousResult.topicAnalysis[topic]) {
                       prevPercent = previousResult.topicAnalysis[topic].percentage;
                       hasPrev = true;
-                  } else if (previousResult) {
-                      // Fallback if granular data missing in old records
-                      // Estimate using overall? No, misleading. Just show current.
                   }
 
                   const diff = percent - prevPercent;
@@ -566,6 +588,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
                   return (
                       <div key={i} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md">
+                          {/* 1. Topic Header & Status */}
                           <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                               <div>
                                   <h4 className="font-black text-slate-800 text-sm uppercase flex items-center gap-2">
@@ -576,36 +599,41 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${status === 'STRONG' ? 'bg-green-100 text-green-700' : status === 'AVERAGE' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
                                           {status}
                                       </span>
+                                      {/* 2. Historical Comparison */}
                                       {hasPrev && (
                                           <span className={`text-[10px] font-bold flex items-center gap-1 ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-500' : 'text-slate-400'}`}>
                                               {diff > 0 ? <ArrowUp size={10} /> : diff < 0 ? <TrendingDown size={10} /> : <Minus size={10} />}
-                                              {Math.abs(diff)}% vs Last
+                                              {Math.abs(diff)}% vs Last ({prevPercent}%)
                                           </span>
                                       )}
                                   </div>
                               </div>
+                              {/* 3. Stats */}
                               <div className="text-right">
-                                  <div className="text-2xl font-black text-slate-800">{percent}%</div>
+                                  <div className={`text-2xl font-black ${percent >= 80 ? 'text-green-600' : percent < 50 ? 'text-red-600' : 'text-slate-800'}`}>{percent}%</div>
                                   <div className="text-[10px] text-slate-500 font-bold">{stats.correct}/{stats.total} Correct</div>
                               </div>
                           </div>
 
                           <div className="p-4 bg-white">
-                              {/* Teacher Remarks */}
+                              {/* 4. Teacher Remarks */}
                               <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-4 flex gap-3">
                                   <div className="shrink-0 bg-white p-1.5 rounded-full h-fit shadow-sm text-indigo-600">
                                       <Sparkles size={16} />
                                   </div>
                                   <div>
                                       <p className="text-xs text-indigo-900 font-medium leading-relaxed italic">"{remarks}"</p>
-                                      <button onClick={() => speakText(remarks)} className="mt-2 text-[10px] font-bold text-indigo-600 flex items-center gap-1 hover:underline">
-                                          <Volume2 size={12} /> Listen Remark
-                                      </button>
+                                      <div className="flex gap-4 mt-2">
+                                          <button onClick={() => speakText(remarks)} className="text-[10px] font-bold text-indigo-600 flex items-center gap-1 hover:underline">
+                                              <Volume2 size={12} /> Teacher Remark
+                                          </button>
+                                      </div>
                                   </div>
                               </div>
 
-                              {/* Questions Accordion (Simplified List) */}
-                              <div className="space-y-3">
+                              {/* 5. Questions Accordion List */}
+                              <div className="space-y-2">
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Questions in this Topic</p>
                                   {topicQuestions.map((q, localIdx) => {
                                       const globalIdx = questions?.indexOf(q) ?? -1;
                                       const omrEntry = result.omrData?.find(d => d.qIndex === globalIdx);
@@ -614,13 +642,52 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                                       const isSkipped = userSelected === -1;
 
                                       return (
-                                          <div key={localIdx} className={`text-xs border-l-2 pl-3 py-1 ${isCorrect ? 'border-green-400' : isSkipped ? 'border-slate-300' : 'border-red-400'}`}>
-                                              <div className="flex justify-between gap-2">
-                                                  <div className="text-slate-700 font-medium line-clamp-1" dangerouslySetInnerHTML={{__html: stripHtml(q.question)}} />
-                                                  <span className={`font-bold shrink-0 ${isCorrect ? 'text-green-600' : isSkipped ? 'text-slate-400' : 'text-red-600'}`}>
-                                                      {isCorrect ? 'Correct' : isSkipped ? 'Skipped' : 'Wrong'}
-                                                  </span>
-                                              </div>
+                                          <div key={localIdx} className={`text-xs border rounded-lg overflow-hidden transition-all ${isCorrect ? 'border-green-200 bg-green-50/30' : isSkipped ? 'border-slate-200 bg-slate-50' : 'border-red-200 bg-red-50/30'}`}>
+                                              <details className="group">
+                                                  <summary className="flex items-center justify-between p-3 cursor-pointer list-none select-none">
+                                                      <div className="flex items-center gap-2 overflow-hidden">
+                                                          <span className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center font-bold text-[10px] ${isCorrect ? 'bg-green-100 text-green-700' : isSkipped ? 'bg-slate-200 text-slate-600' : 'bg-red-100 text-red-600'}`}>
+                                                              {globalIdx + 1}
+                                                          </span>
+                                                          <div className="font-medium text-slate-700 truncate pr-2" dangerouslySetInnerHTML={{__html: stripHtml(q.question)}} />
+                                                      </div>
+                                                      <div className="shrink-0">
+                                                          <ChevronDown size={14} className="text-slate-400 group-open:rotate-180 transition-transform" />
+                                                      </div>
+                                                  </summary>
+                                                  <div className="px-3 pb-3 pt-0 border-t border-dashed border-slate-200 mt-2 bg-white">
+                                                      <div className="mt-2 text-slate-800 font-bold mb-2" dangerouslySetInnerHTML={{__html: renderMathInHtml(q.question)}} />
+                                                      <div className="space-y-1 mb-2">
+                                                          {q.options?.map((opt, optIdx) => {
+                                                              const isAns = optIdx === q.correctAnswer;
+                                                              const isSel = optIdx === userSelected;
+                                                              let cls = "text-slate-500";
+                                                              if (isAns) cls = "text-green-700 font-bold";
+                                                              if (isSel && !isAns) cls = "text-red-700 font-bold line-through decoration-red-500";
+
+                                                              return (
+                                                                  <div key={optIdx} className={`flex gap-2 ${cls}`}>
+                                                                      <span className="w-4 shrink-0">{String.fromCharCode(65+optIdx)}.</span>
+                                                                      <span dangerouslySetInnerHTML={{__html: renderMathInHtml(opt)}} />
+                                                                      {isAns && <CheckCircle size={12} className="ml-1 text-green-600 inline" />}
+                                                                      {isSel && !isAns && <XCircle size={12} className="ml-1 text-red-600 inline" />}
+                                                                  </div>
+                                                              );
+                                                          })}
+                                                      </div>
+                                                      <div className="p-2 bg-blue-50 rounded text-blue-800 italic text-[10px]">
+                                                          <span className="font-bold not-italic">Explanation: </span>
+                                                          <span dangerouslySetInnerHTML={{__html: renderMathInHtml(q.explanation || 'Not available')}} />
+                                                      </div>
+                                                      <div className="mt-2 text-right">
+                                                          <SpeakButton
+                                                              text={`Question ${globalIdx + 1}. ${stripHtml(q.question)}. The correct answer is option ${String.fromCharCode(65 + q.correctAnswer)}. Explanation: ${stripHtml(q.explanation || '')}`}
+                                                              className="text-slate-400 hover:text-indigo-600 inline-flex"
+                                                              iconSize={14}
+                                                          />
+                                                      </div>
+                                                  </div>
+                                              </details>
                                           </div>
                                       );
                                   })}

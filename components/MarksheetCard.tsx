@@ -622,9 +622,11 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                                       <Sparkles size={16} />
                                   </div>
                                   <div>
-                                      <p className="text-xs text-indigo-900 font-medium leading-relaxed italic">"{remarks}"</p>
+                                      <div className="text-xs text-indigo-900 font-medium leading-relaxed italic">
+                                          "<span dangerouslySetInnerHTML={{ __html: renderMathInHtml(remarks) }} />"
+                                      </div>
                                       <div className="flex gap-2 mt-2 items-center">
-                                          <SpeakButton text={remarks} className="p-0 hover:bg-transparent text-indigo-600" iconSize={14} />
+                                          <SpeakButton text={stripHtml(remarks)} className="p-0 hover:bg-transparent text-indigo-600" iconSize={14} />
                                           <span className="text-[10px] font-bold text-indigo-600">Teacher Remark</span>
                                       </div>
                                   </div>
@@ -836,20 +838,70 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   };
 
   const renderProgressDelta = () => {
-      const pastTests = (user.mcqHistory || [])
-          .filter(h => h.chapterId === result.chapterId && h.id !== result.id)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, 3);
+      // Fetch past 3 results + current
+      const history = (user.mcqHistory || [])
+          .filter(h => h.chapterId === result.chapterId)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Ascending date
 
-      if (pastTests.length === 0) return null;
-      const lastTest = pastTests[0];
-      const prevPercent = Math.round((lastTest.score / lastTest.totalQuestions) * 100);
-      const diff = percentage - prevPercent;
+      // Find index of current result to slice properly (or just take last 4 if current is latest)
+      // Since 'result' might be from history, we find its position
+      const currentIndex = history.findIndex(h => h.id === result.id);
+
+      // If current result not in history yet (rare edge case), assume it's latest
+      const relevantHistory = currentIndex !== -1
+          ? history.slice(Math.max(0, currentIndex - 3), currentIndex + 1)
+          : [...history.slice(-3), result];
+
+      if (relevantHistory.length <= 1) return null; // No past history to compare
 
       return (
-          <div className="bg-blue-50 rounded-2xl p-4 mb-6 border border-blue-100">
-              <h4 className="font-bold text-blue-900 text-sm mb-2 flex items-center gap-2">Progress Delta</h4>
-              <p className="text-xs font-bold text-slate-700">Last Test: {prevPercent}% → Now: {percentage}% ({diff >= 0 ? '+' : ''}{diff}%)</p>
+          <div className="bg-white rounded-2xl p-5 mb-6 border border-slate-200 shadow-sm">
+              <h4 className="font-black text-slate-800 text-sm mb-4 flex items-center gap-2">
+                  <TrendingUp size={16} className="text-blue-600" /> Progress Trend (Last 3 Tests + Current)
+              </h4>
+              <div className="flex items-end justify-between gap-2 h-24 px-2">
+                  {relevantHistory.map((h, i) => {
+                      const pct = Math.round((h.score / h.totalQuestions) * 100);
+                      const isCurrent = h.id === result.id;
+                      const barColor = isCurrent
+                          ? (pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-blue-500' : 'bg-red-500')
+                          : 'bg-slate-200';
+
+                      return (
+                          <div key={i} className="flex flex-col items-center flex-1 group relative">
+                              <div className="text-[10px] font-bold text-slate-500 mb-1 opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4">{pct}%</div>
+                              <div
+                                  className={`w-full max-w-[20px] rounded-t-sm transition-all duration-500 ${barColor}`}
+                                  style={{ height: `${Math.max(10, pct)}%` }}
+                              ></div>
+                              <div className={`text-[9px] font-bold mt-2 truncate max-w-full ${isCurrent ? 'text-blue-700' : 'text-slate-400'}`}>
+                                  {isCurrent ? 'Now' : `T-${relevantHistory.length - 1 - i}`}
+                              </div>
+                          </div>
+                      );
+                  })}
+              </div>
+              <div className="mt-4 flex justify-between items-center pt-3 border-t border-slate-100">
+                  <span className="text-[10px] font-bold text-slate-400">Consistency is key!</span>
+                  <div className="flex gap-4">
+                      {relevantHistory.map((h, i) => {
+                          const pct = Math.round((h.score / h.totalQuestions) * 100);
+                          const isCurrent = h.id === result.id;
+                          if (!isCurrent) return null; // Only show current diff vs immediate prev
+
+                          const prev = relevantHistory[i - 1];
+                          if (!prev) return null;
+                          const prevPct = Math.round((prev.score / prev.totalQuestions) * 100);
+                          const diff = pct - prevPct;
+
+                          return (
+                              <span key={i} className={`text-xs font-black ${diff >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                  {diff >= 0 ? '+' : ''}{diff}% vs Last
+                              </span>
+                          );
+                      })}
+                  </div>
+              </div>
           </div>
       );
   };

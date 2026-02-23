@@ -1,5 +1,5 @@
 import { User, SystemSettings } from '../types';
-import { callGeminiApiWithTools } from './gemini';
+import { callGroqApiWithTools } from './groq';
 import { ActionRegistry, adminTools } from './actionRegistry';
 import { saveAiInteraction } from '../firebase';
 
@@ -60,8 +60,8 @@ export const processAdminCommand = async (
             { role: "user", content: `Recent Activity:\n${memoryContext}\n\nCurrent Command: ${command}` }
         ];
 
-        // 2. Call AI with Tools
-        const response = await callGeminiApiWithTools(messages, adminTools, "gemini-1.5-flash");
+        // 2. Call AI with Tools (Unified Groq Service)
+        const response = await callGroqApiWithTools(messages, adminTools, "llama-3.3-70b-versatile");
 
         // 3. Handle Tool Calls
         if (response.tool_calls && response.tool_calls.length > 0) {

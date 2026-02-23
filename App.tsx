@@ -271,7 +271,7 @@ const App: React.FC = () => {
       // If no version stored, OR if the Code Version (APP_VERSION) is newer/different than stored,
       // update the storage. This handles the case where user installs a new update.
       if (!storedVersion || storedVersion !== APP_VERSION) {
-          console.log(`Updating Local Version: ${storedVersion} -> ${APP_VERSION}`);
+          // console.log(`Updating Local Version: ${storedVersion} -> ${APP_VERSION}`);
           localStorage.setItem('nst_app_version', APP_VERSION);
       }
   }, []);
@@ -285,7 +285,7 @@ const App: React.FC = () => {
           const newDeletedKeys = deletedKeys.filter(k => (now - k.deletedAt) <= ninetyDaysMs);
           
           if (newDeletedKeys.length !== deletedKeys.length) {
-              console.log("Cleaned up old Groq keys");
+              // console.log("Cleaned up old Groq keys");
               const updatedSettings = { ...state.settings, deletedGroqKeys: newDeletedKeys };
               setState(prev => ({ ...prev, settings: updatedSettings }));
               localStorage.setItem('nst_system_settings', JSON.stringify(updatedSettings));
@@ -359,7 +359,7 @@ const App: React.FC = () => {
           if (state.settings.loginBonusConfig?.strictStreak && streakBroken) {
               // Reset Streak logic handled in updateUserStatus usually, but here we enforce penalty
               // User request: "strict katega tab next day bonus nahi mikega" -> If streak broken, NO BONUS TODAY
-              console.log("Strict Mode: Streak Broken. No Bonus.");
+              // console.log("Strict Mode: Streak Broken. No Bonus.");
               updatedUser.lastLoginRewardDate = new Date().toISOString(); // Mark as checked
               hasUpdates = true;
               // No reward set
@@ -443,7 +443,7 @@ const App: React.FC = () => {
               try {
                   const pending = JSON.parse(pendingStr);
                   if (Array.isArray(pending) && pending.length > 0) {
-                      console.log(`Syncing ${pending.length} offline results...`);
+                      // console.log(`Syncing ${pending.length} offline results...`);
                       pending.forEach(async (item) => {
                           if (item.type === 'HISTORY') {
                               await saveUserHistory(item.userId, item.data);
@@ -583,7 +583,7 @@ const App: React.FC = () => {
                  const currentStr = JSON.stringify(state.user);
                  const cloudStr = JSON.stringify(cloudUser);
                  if (currentStr !== cloudStr) {
-                     console.log("Syncing User Profile from Cloud...");
+                     // console.log("Syncing User Profile from Cloud...");
                      localStorage.setItem('nst_current_user', cloudStr);
                      setState(prev => ({...prev, user: cloudUser}));
                  }
@@ -606,7 +606,7 @@ const App: React.FC = () => {
           const isNowPremium = updatedUser.isPremium;
 
           if (JSON.stringify(updatedUser) !== JSON.stringify(state.user)) {
-               console.log("Subscription Status Updated (Real-time).");
+               // console.log("Subscription Status Updated (Real-time).");
                localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
                saveUserToLive(updatedUser);
 
@@ -717,7 +717,7 @@ const App: React.FC = () => {
                           // Strategy: We will just clear ALL cached content if the "Last Clear Date" was > X days ago.
                           const lastClear = parseInt(localStorage.getItem('nst_last_cache_clear') || '0');
                           if (now - lastClear > retentionMs) {
-                              console.log("Auto-Clearing Content Cache...");
+                              // console.log("Auto-Clearing Content Cache...");
                               Object.keys(localStorage).forEach(k => {
                                   if (k.startsWith('nst_content_')) localStorage.removeItem(k);
                               });
@@ -758,7 +758,7 @@ const App: React.FC = () => {
 
       setPopupQueue(queue);
 
-    console.log("Restoring user from localStorage:", loggedInUserStr);
+    // console.log("Restoring user from localStorage:", loggedInUserStr);
     if (loggedInUserStr) {
       try {
         let user: User = JSON.parse(loggedInUserStr);
@@ -770,7 +770,7 @@ const App: React.FC = () => {
             return;
         }
 
-        console.log("Parsed user:", user);
+        // console.log("Parsed user:", user);
 
         // MIGRATION & RECALCULATION ON LOAD
         if (user.role !== 'ADMIN') {
@@ -814,7 +814,7 @@ const App: React.FC = () => {
         localStorage.removeItem('nst_current_user');
       }
     } else {
-      console.log("No user found in localStorage.");
+      // console.log("No user found in localStorage.");
     }
   }, []);
 
@@ -977,7 +977,7 @@ const App: React.FC = () => {
   }, [state.user?.id, state.view, state.settings]);
 
   const handleLogin = (user: User) => {
-    console.log("Login successful, user:", user);
+    // console.log("Login successful, user:", user);
     // Only save if NOT impersonating
     if (!state.originalAdmin) {
         localStorage.setItem('nst_current_user', JSON.stringify(user));

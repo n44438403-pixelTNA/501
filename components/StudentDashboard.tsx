@@ -152,7 +152,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
           const now = new Date();
           if (now > endDate) {
               // Subscription Expired: Revert to FREE
-              console.log("Subscription Expired. Reverting to FREE.");
+              // console.log("Subscription Expired. Reverting to FREE.");
               const updatedUser: User = {
                   ...user,
                   isPremium: false,
@@ -401,13 +401,13 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
               if (!isGen) {
                   localStorage.setItem(`nst_insight_gen_${today}`, 'true'); // Lock
                   try {
-                      console.log("Generating Morning Insight...");
+                      // console.log("Generating Morning Insight...");
                       // Mock Logs if Universal Logs unavailable locally
                       const logs = JSON.parse(localStorage.getItem('nst_universal_analysis_logs') || '[]');
                       
                       if (logs.length === 0) {
                           // Skip generation if no data
-                          console.log("No logs for insight.");
+                          // console.log("No logs for insight.");
                           return;
                       }
 
@@ -754,7 +754,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 (cloudData.mcqHistory?.length || 0) > (currentUser.mcqHistory?.length || 0);
 
             if (needsUpdate) {
-                console.log("Syncing User Data from Cloud...", cloudData);
+                // console.log("Syncing User Data from Cloud...", cloudData);
 
                 // --- SUBSCRIPTION PROTECTION GUARD (Anti-Downgrade) ---
                 let protectedSub = {
@@ -793,7 +793,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
                 // RESTORE LOCAL HISTORY IF CLOUD IS EMPTY (Safety Net)
                 if ((!cloudData.mcqHistory || cloudData.mcqHistory.length === 0) && (currentUser.mcqHistory && currentUser.mcqHistory.length > 0)) {
-                    console.log("Restoring local history over empty cloud history...");
+                    // console.log("Restoring local history over empty cloud history...");
                     updated.mcqHistory = currentUser.mcqHistory;
                     // Ideally we should push this back to cloud, but let's at least not lose it locally
                     // Only save if we are sure (to avoid loop). For now, just update local state.

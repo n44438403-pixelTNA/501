@@ -1177,6 +1177,15 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                     </div>
                     <div className="flex items-center gap-3">
                         <button
+                            onClick={() => onTabChange('UPDATES')}
+                            className="bg-white p-2 rounded-full border border-slate-200 text-slate-600 hover:text-blue-600 active:scale-95 transition-all relative"
+                        >
+                            <Bell size={20} />
+                            {hasNewUpdate && (
+                                <span className="absolute top-0 right-0 w-3 h-3 bg-red-600 rounded-full border-2 border-white animate-pulse"></span>
+                            )}
+                        </button>
+                        <button
                             onClick={() => onTabChange('STORE')}
                             className="flex flex-col items-end group active:scale-95 transition-transform"
                         >
@@ -2403,18 +2412,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
             </div>
         )}
 
-        {/* NOTIFICATIONS FLOAT BUTTON (New Requirement) */}
-        {activeTab === 'HOME' && (
-            <button
-                onClick={() => onTabChange('UPDATES')}
-                className="fixed top-24 right-4 z-40 bg-white p-3 rounded-full shadow-lg border border-slate-200 text-slate-600 hover:text-blue-600 hover:scale-110 transition-all active:scale-95"
-            >
-                <Bell size={20} />
-                {hasNewUpdate && (
-                    <span className="absolute top-0 right-0 w-3 h-3 bg-red-600 rounded-full border-2 border-white animate-pulse"></span>
-                )}
-            </button>
-        )}
 
         <StudentAiAssistant 
             user={user} 

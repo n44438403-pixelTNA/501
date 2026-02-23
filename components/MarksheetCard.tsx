@@ -520,8 +520,27 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
   // --- SECTION RENDERERS ---
 
-  const generateTeacherRemarks = (percent: number, topic: string) => {
+  const generateTeacherRemarks = (percent: number, topic: string, prevPercent?: number, hasPrev?: boolean) => {
       const isHindi = user.board === 'BSEB';
+
+      // Comparison Logic
+      if (hasPrev && prevPercent !== undefined) {
+          const diff = percent - prevPercent;
+          if (diff > 0) {
+              return isHindi
+                  ? `Badhai ho! Pichhli baar se aapne ${diff}% improve kiya hai (${prevPercent}% -> ${percent}%). ${topic} me aapki mehnat dikh rahi hai!`
+                  : `Great improvement! You scored ${percent}% compared to ${prevPercent}% last time. Your hard work in ${topic} is showing!`;
+          } else if (diff < 0) {
+               return isHindi
+                  ? `Dhyan dein! Pichhli baar aapka score ${prevPercent}% tha, jo gir kar ${percent}% ho gaya hai. ${topic} me revision ki zarurat hai.`
+                  : `Performance dropped. You scored ${percent}% compared to ${prevPercent}% last time. Focus more on ${topic} revision.`;
+          } else {
+               return isHindi
+                  ? `Performance consistent hai (${percent}%). Thoda aur push karein taaki score badhe.`
+                  : `Performance is consistent at ${percent}%. Push a little harder to improve next time.`;
+          }
+      }
+
       if (percent >= 80) return isHindi
           ? `Shabash! ${topic} me aapne bahut achha kiya hai. Is pakad ko banaye rakhein.`
           : `Excellent work in ${topic}! Your grasp on this topic is strong. Keep practicing to maintain this level.`;
@@ -592,7 +611,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   }
 
                   const diff = percent - prevPercent;
-                  const remarks = generateTeacherRemarks(percent, topic);
+                  const remarks = generateTeacherRemarks(percent, topic, prevPercent, hasPrev);
 
                   // Filter questions for this topic
                   const topicQuestions = questions?.filter((q, idx) => {

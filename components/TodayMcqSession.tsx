@@ -210,10 +210,8 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
         // But default behavior remains fast.
 
         setTimeout(() => {
-            if (topicSummary) { // Only if still showing
-               setTopicSummary(null);
-               setCurrentIndex(prev => prev + 1);
-            }
+            setTopicSummary(null);
+            setCurrentIndex(prev => prev + 1);
         }, 800); // Reduced delay to 800ms for faster transition
     };
 

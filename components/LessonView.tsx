@@ -14,6 +14,10 @@ import { SpeakButton } from './SpeakButton';
 import { renderMathInHtml } from '../utils/mathUtils';
 import { stopSpeaking } from '../utils/ttsHighlighter';
 import { speakText, stripHtml } from '../utils/textToSpeech';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { DownloadOptionsModal } from './DownloadOptionsModal';
+import { downloadAsMHTML } from '../utils/downloadUtils';
 
 interface Props {
   content: LessonContent | null;
@@ -659,15 +663,18 @@ export const LessonView: React.FC<Props> = ({
         submitRef.current = handleConfirmSubmit;
     }, [handleConfirmSubmit]);
 
-    const handleDownloadAnalysis = () => {
+    const [downloadModalOpen, setDownloadModalOpen] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    const handleDownloadRequest = () => {
+        if (!user) return;
+        setDownloadModalOpen(true);
+    };
+
+    const handleConfirmDownload = async (type: 'PDF' | 'MHTML') => {
         if (!user || !onUpdateUser) return;
 
-        // Use mcqState and displayData which should be populated either from test or history
-        const currentData = displayData.length > 0 ? displayData : (content?.mcqData || []);
-        const currentAnswers = Object.keys(mcqState).length > 0 ? mcqState : (content?.userAnswers || {});
-
         let cost = 10;
-        // CHECK CREDIT FREE EVENT
         if (settings?.isCreditFreeEvent || settings?.isGlobalFreeMode) {
             cost = 0;
         }
@@ -677,7 +684,7 @@ export const LessonView: React.FC<Props> = ({
             return;
         }
 
-        // Deduct if cost > 0
+        // Deduct
         if (cost > 0) {
             const updatedUser = { ...user, credits: user.credits - cost };
             onUpdateUser(updatedUser);
@@ -685,119 +692,49 @@ export const LessonView: React.FC<Props> = ({
             saveUserToLive(updatedUser);
         }
 
-        // Simple Escape Function
-        const escapeHtml = (text: string) => {
-            if (!text) return '';
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        };
+        setIsDownloading(true);
+        setDownloadModalOpen(false);
 
-        // Calculate score if not available
-        let finalScore = score;
-        if (score === 0 && Object.keys(currentAnswers).length > 0) {
-             finalScore = Object.keys(currentAnswers).reduce((acc, key) => {
-                const qIdx = parseInt(key);
-                return acc + (currentAnswers[qIdx] === currentData[qIdx]?.correctAnswer ? 1 : 0);
-            }, 0);
-        }
+        // Allow UI to update (show hidden container if needed, though it's always there but maybe hidden via CSS)
+        // We use a timeout to let the UI thread breathe
+        setTimeout(async () => {
+            if (type === 'MHTML') {
+                downloadAsMHTML('printable-analysis-report', `${chapter.title}_Analysis`);
+            } else {
+                const element = document.getElementById('printable-analysis-report');
+                if (element) {
+                    try {
+                        const canvas = await html2canvas(element, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
+                        const imgData = canvas.toDataURL('image/png');
 
-        // Generate HTML
-        const analysisData = {
-            title: chapter.title,
-            score: finalScore,
-            total: currentData.length,
-            questions: currentData.map((q, i) => ({
-                q: q.question,
-                opts: q.options,
-                ans: q.correctAnswer,
-                userAns: currentAnswers[i],
-                exp: q.explanation
-            }))
-        };
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        const htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>${escapeHtml(analysisData.title)} - Performance Report</title>
-                <meta charset="UTF-8">
-                <style>
-                    body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #334155; margin: 0; padding: 40px; }
-                    .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-                    .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
-                    h1 { color: #1e293b; font-size: 28px; margin: 0; font-weight: 900; }
-                    .score-card { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 20px; border-radius: 16px; margin: 20px 0; text-align: center; }
-                    .score-val { font-size: 48px; font-weight: 900; }
-                    .question-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 16px; page-break-inside: avoid; }
-                    .q-text { font-weight: 700; color: #0f172a; margin-bottom: 12px; font-size: 16px; line-height: 1.5; }
-                    .options { list-style: none; padding: 0; margin: 0; }
-                    .option { padding: 10px 16px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; }
-                    .correct { background-color: #dcfce7; border-color: #86efac; color: #166534; font-weight: 600; }
-                    .wrong { background-color: #fee2e2; border-color: #fca5a5; color: #991b1b; }
-                    .explanation { margin-top: 16px; padding: 12px; background-color: #eff6ff; border-radius: 8px; color: #1e40af; font-size: 13px; line-height: 1.6; }
-                    .exp-label { font-weight: 700; display: block; margin-bottom: 4px; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
-                    .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>${escapeHtml(analysisData.title)}</h1>
-                        <p>Performance Analysis Report</p>
-                    </div>
+                        let heightLeft = pdfHeight;
+                        let position = 0;
+                        const pageHeight = pdf.internal.pageSize.getHeight();
 
-                    <div class="score-card">
-                        <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8;">Total Score</div>
-                        <div class="score-val">${analysisData.score} / ${analysisData.total}</div>
-                    </div>
+                        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                        heightLeft -= pageHeight;
 
-                    ${analysisData.questions.map((q, i) => `
-                        <div class="question-card">
-                            <div class="q-text">Q${i+1}. ${escapeHtml(q.q)}</div>
-                            <ul class="options">
-                                ${q.opts.map((opt, oIdx) => {
-                                    let className = "option";
-                                    let suffix = "";
-                                    if (oIdx === q.ans) {
-                                        className += " correct";
-                                        suffix = " ✓";
-                                    } else if (oIdx === q.userAns) {
-                                        className += " wrong";
-                                        suffix = " ✗ (Your Answer)";
-                                    }
-                                    return `<li class="${className}">${escapeHtml(opt)}${suffix}</li>`;
-                                }).join('')}
-                            </ul>
-                            ${q.exp ? `
-                                <div class="explanation">
-                                    <span class="exp-label">Explanation</span>
-                                    ${escapeHtml(q.exp)}
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('')}
+                        while (heightLeft >= 0) {
+                            position = heightLeft - pdfHeight;
+                            pdf.addPage();
+                            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                            heightLeft -= pageHeight;
+                        }
 
-                    <div class="footer">
-                        Generated by ${settings?.appName || 'IIC AI Assistant'}
-                    </div>
-                </div>
-            </body>
-            </html>
-        `;
-
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${analysisData.title}_Analysis.html`;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        setAlertConfig({isOpen: true, message: `Downloaded Successfully! (${cost} Coins Deducted)`});
+                        pdf.save(`${chapter.title}_Analysis.pdf`);
+                    } catch (e) {
+                        console.error("PDF Gen Error", e);
+                        setAlertConfig({isOpen: true, message: "PDF Generation Failed."});
+                    }
+                }
+            }
+            setIsDownloading(false);
+            setAlertConfig({isOpen: true, message: `Download Complete! (${cost} Coins Deducted)`});
+        }, 500);
     };
 
     const renderAnalysisDashboard = () => {
@@ -825,7 +762,7 @@ export const LessonView: React.FC<Props> = ({
 
                 <div className="flex justify-end mb-4">
                     <button
-                        onClick={handleDownloadAnalysis}
+                        onClick={handleDownloadRequest}
                         className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-green-700 flex items-center gap-2"
                     >
                         <Download size={16} /> Download Report (10 CR)
@@ -1663,6 +1600,71 @@ export const LessonView: React.FC<Props> = ({
                    {/* 4. RECOMMENDED NOTES (Bottom) */}
                    {showResults && (content.type === 'MCQ_ANALYSIS' || content.type === 'MCQ_RESULT') && renderRecommendedNotes()}
                </div>
+
+                {/* HIDDEN PRINT CONTAINER */}
+                <div id="printable-analysis-report" style={{ position: 'absolute', left: '-10000px', width: '800px', backgroundColor: 'white', padding: '40px' }}>
+                    <div className="text-center mb-8 border-b-2 border-slate-900 pb-6">
+                        <h1 className="text-3xl font-black text-slate-900 uppercase">{settings?.appName || 'Analysis Report'}</h1>
+                        <p className="text-lg font-bold text-slate-500">{chapter.title}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-8 text-center">
+                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                            <p className="text-xs font-bold text-slate-400 uppercase">Score</p>
+                            <p className="text-4xl font-black text-slate-900">{Object.keys(mcqState).reduce((acc, k) => acc + (mcqState[parseInt(k)] === (displayData[parseInt(k)]?.correctAnswer) ? 1 : 0), 0)} / {displayData.length}</p>
+                        </div>
+                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                            <p className="text-xs font-bold text-slate-400 uppercase">Accuracy</p>
+                            <p className="text-4xl font-black text-blue-600">
+                                {displayData.length > 0 ? Math.round((Object.keys(mcqState).reduce((acc, k) => acc + (mcqState[parseInt(k)] === (displayData[parseInt(k)]?.correctAnswer) ? 1 : 0), 0) / displayData.length) * 100) : 0}%
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        {displayData.map((q, idx) => {
+                            const userAnswer = mcqState[idx];
+                            const isCorrect = userAnswer === q.correctAnswer;
+                            const isAnswered = userAnswer !== undefined && userAnswer !== null;
+
+                            return (
+                                <div key={idx} className="border border-slate-200 rounded-xl p-4">
+                                    <div className="flex gap-3 mb-2">
+                                        <span className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${isCorrect ? 'bg-green-100 text-green-700' : isAnswered ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}>
+                                            {idx + 1}
+                                        </span>
+                                        <div className="font-bold text-slate-800 text-sm" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.question) }}></div>
+                                    </div>
+                                    <div className="ml-9 space-y-1 mb-2">
+                                        {q.options.map((opt, oIdx) => {
+                                            const isSelected = userAnswer === oIdx;
+                                            const isAns = q.correctAnswer === oIdx;
+                                            let cls = "text-slate-500";
+                                            if (isAns) cls = "text-green-700 font-bold";
+                                            else if (isSelected) cls = "text-red-700 font-bold line-through";
+                                            return (
+                                                <div key={oIdx} className={`text-xs ${cls}`}>
+                                                    {String.fromCharCode(65 + oIdx)}. <span dangerouslySetInnerHTML={{ __html: renderMathInHtml(opt) }}></span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="ml-9 p-2 bg-slate-50 text-[10px] text-slate-600 italic rounded">
+                                        <span className="font-bold">Explanation:</span> <span dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.explanation || 'N/A') }}></span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+               <DownloadOptionsModal
+                   isOpen={downloadModalOpen}
+                   onClose={() => setDownloadModalOpen(false)}
+                   title="Download Analysis Report"
+                   onDownloadPdf={() => handleConfirmDownload('PDF')}
+                   onDownloadMhtml={() => handleConfirmDownload('MHTML')}
+               />
 
                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 flex gap-3 z-[9999] shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
                    {batchIndex > 0 && (

@@ -1241,7 +1241,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                     <div className="grid grid-cols-2 gap-4">
                         <button
                             onClick={() => { onTabChange('COURSES'); setContentViewStep('SUBJECTS'); }}
-                            className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl shadow-lg shadow-blue-200 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all relative overflow-hidden h-32"
+                            className="col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl shadow-lg shadow-blue-200 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all relative overflow-hidden h-32"
                         >
                             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <Book size={32} className="text-white mb-1" />
@@ -1252,10 +1252,23 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                             onClick={() => {
                                 onTabChange('ANALYTICS');
                             }}
-                            className={`bg-white border-2 border-slate-100 p-6 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-blue-200 h-32 relative overflow-hidden`}
+                            className={`bg-white border-2 border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-blue-200 h-32 relative overflow-hidden`}
                         >
-                            <BarChart3 size={32} className="text-blue-600 mb-1" />
-                            <span className="font-black text-slate-700 text-lg tracking-wide uppercase">My Analysis</span>
+                            <BarChart3 size={28} className="text-blue-600 mb-1" />
+                            <span className="font-black text-slate-700 text-sm tracking-wide uppercase text-center">My Analysis</span>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                onTabChange('UNIVERSAL_VIDEO');
+                            }}
+                            className={`bg-white border-2 border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-rose-200 h-32 relative overflow-hidden`}
+                        >
+                            <div className="relative">
+                                <Video size={28} className="text-rose-600 mb-1" />
+                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-white"></div>
+                            </div>
+                            <span className="font-black text-slate-700 text-sm tracking-wide uppercase text-center">Universal Video</span>
                         </button>
                     </div>
                 </DashboardSectionWrapper>
@@ -1524,17 +1537,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 className="bg-white/20 p-1.5 rounded-full hover:bg-white/40 transition-colors"
                             >
                                 <Edit size={14} />
-                            </button>
-                            {/* MYSTERY BUTTON (MOVED HERE) */}
-                            <button
-                                onClick={() => onTabChange('UNIVERSAL_VIDEO')}
-                                className="bg-white/20 p-1.5 rounded-full hover:bg-white/40 transition-colors flex items-center justify-center border border-white/30"
-                                title="Mystery Content"
-                            >
-                                <div className="relative">
-                                    <HelpCircle size={14} className="text-yellow-400" />
-                                    <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse border border-white"></div>
-                                </div>
                             </button>
                         </div>
                         <p className="text-white/80 text-sm font-mono relative z-10 flex justify-center items-center gap-2">

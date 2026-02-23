@@ -6,6 +6,8 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { ref, query, limitToLast, onValue } from 'firebase/database';
 import { getSubjectsList, DEFAULT_APP_FEATURES, ALL_APP_FEATURES, LEVEL_UNLOCKABLE_FEATURES, LEVEL_UP_CONFIG } from '../constants';
 import { ALL_FEATURES } from '../utils/featureRegistry';
+import { SubscriptionEngine } from '../utils/engines/subscriptionEngine';
+import { RewardEngine } from '../utils/engines/rewardEngine';
 import { Button } from './ui/Button'; // Design System
 import { DashboardLayer1 } from './student/DashboardLayer1';
 import { DashboardLayer2 } from './student/DashboardLayer2';
@@ -148,24 +150,19 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       // No-op
   };
 
-  // --- EXPIRY CHECK & AUTO DOWNGRADE ---
+  // --- EXPIRY CHECK & AUTO DOWNGRADE (Using Engine) ---
   useEffect(() => {
-      if (user.isPremium && user.subscriptionEndDate) {
-          const endDate = new Date(user.subscriptionEndDate);
-          const now = new Date();
-          if (now > endDate) {
-              // Subscription Expired: Revert to FREE
-              // console.log("Subscription Expired. Reverting to FREE.");
-              const updatedUser: User = {
-                  ...user,
-                  isPremium: false,
-                  subscriptionTier: 'FREE',
-                  subscriptionLevel: undefined,
-                  subscriptionEndDate: undefined
-              };
-              handleUserUpdate(updatedUser);
-              showAlert("Your subscription has expired. You are now on the Free Plan.", "ERROR", "Plan Expired");
-          }
+      if (user.isPremium && !SubscriptionEngine.isPremium(user)) {
+          // Subscription Expired: Revert to FREE
+          const updatedUser: User = {
+              ...user,
+              isPremium: false,
+              subscriptionTier: 'FREE',
+              subscriptionLevel: undefined,
+              subscriptionEndDate: undefined
+          };
+          handleUserUpdate(updatedUser);
+          showAlert("Your subscription has expired. You are now on the Free Plan.", "ERROR", "Plan Expired");
       }
   }, [user.isPremium, user.subscriptionEndDate]);
 
@@ -848,31 +845,15 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   const unreadCount = user.inbox?.filter(m => !m.read).length || 0;
 
   useEffect(() => {
-    const today = new Date().toDateString();
-    const lastClaim = user.lastRewardClaimDate ? new Date(user.lastRewardClaimDate).toDateString() : '';
-    setCanClaimReward(lastClaim !== today && dailyStudySeconds >= dailyTargetSeconds);
+    setCanClaimReward(RewardEngine.canClaimDaily(user, dailyStudySeconds, dailyTargetSeconds));
   }, [user.lastRewardClaimDate, dailyStudySeconds, dailyTargetSeconds]);
 
   const claimDailyReward = () => {
       if (!canClaimReward) return;
       
-      // DYNAMIC REWARD LOGIC (ADMIN CONTROLLED)
-      let finalReward = settings?.loginBonusConfig?.freeBonus ?? 3;
-      if (user.subscriptionTier !== 'FREE') {
-          if (user.subscriptionLevel === 'BASIC') finalReward = settings?.loginBonusConfig?.basicBonus ?? 5;
-          if (user.subscriptionLevel === 'ULTRA') finalReward = settings?.loginBonusConfig?.ultraBonus ?? 10;
-      }
+      const finalReward = RewardEngine.calculateDailyBonus(user, settings);
+      const updatedUser = RewardEngine.processClaim(user, finalReward);
 
-      // STRICT STREAK LOGIC
-      // If Strict Mode is ON and User missed yesterday, they might get reduced reward or no reward next time
-      // Here we just grant the reward for hitting the goal TODAY.
-      // But we update streak logic elsewhere.
-
-      const updatedUser = {
-          ...user,
-          credits: (user.credits || 0) + finalReward,
-          lastRewardClaimDate: new Date().toISOString()
-      };
       handleUserUpdate(updatedUser);
       setCanClaimReward(false);
       showAlert(`Received: ${finalReward} Free Credits!`, 'SUCCESS', 'Daily Goal Met');

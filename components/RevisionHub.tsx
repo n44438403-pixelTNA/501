@@ -50,6 +50,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     const [topics, setTopics] = useState<TopicItem[]>([]);
     const [hubMode, setHubMode] = useState<'FREE' | 'PREMIUM'>(user.subscriptionTier !== 'FREE' ? 'PREMIUM' : 'FREE');
     const [activeFilter, setActiveFilter] = useState<'TODAY' | 'WEAK' | 'AVERAGE' | 'STRONG' | 'EXCELLENT' | 'MISTAKES' | 'MCQ'>('TODAY');
+    const [scoreViewMode, setScoreViewMode] = useState<'LATEST' | 'ALL_TIME'>('LATEST'); // NEW: Score View Mode
     const [ttsRate, setTtsRate] = useState(1.0); // TTS Speed Control
 
     // Mistakes View State
@@ -122,10 +123,10 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         current.totalQs = questionsInThisAttempt;
                         current.totalCorrect = correctInThisAttempt;
 
-                        // OVERRIDE: Check Global Topic Strength if available
+                        // OVERRIDE: Check Global Topic Strength if available (ONLY IF ALL_TIME MODE)
                         let percentage = current.totalQs > 0 ? (current.totalCorrect / current.totalQs) * 100 : 0;
 
-                        if (user.topicStrength && user.topicStrength[name.trim()]) {
+                        if (scoreViewMode === 'ALL_TIME' && user.topicStrength && user.topicStrength[name.trim()]) {
                              const s = user.topicStrength[name.trim()];
                              if (s.total > 0) {
                                  percentage = (s.correct / s.total) * 100;
@@ -287,7 +288,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
             return [];
         }
 
-    }, [user.mcqHistory]);
+    }, [user.mcqHistory, scoreViewMode]);
 
     useEffect(() => {
         let isMounted = true;
@@ -709,10 +710,20 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
 
             {/* STICKY HEADER */}
             <div className="flex items-center justify-between mb-4 sticky top-0 z-30 bg-white/95 backdrop-blur-sm p-2 rounded-xl shadow-sm border border-slate-100">
-                <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                    <BrainCircuit className={hubMode === 'PREMIUM' ? "text-indigo-600" : "text-slate-600"} />
-                    {hubMode === 'PREMIUM' ? 'Premium Hub' : 'Revision Hub'}
-                </h2>
+                <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                        <BrainCircuit className={hubMode === 'PREMIUM' ? "text-indigo-600" : "text-slate-600"} />
+                        {hubMode === 'PREMIUM' ? 'Premium Hub' : 'Revision Hub'}
+                    </h2>
+                    {/* VIEW TOGGLE */}
+                    <button
+                        onClick={() => setScoreViewMode(prev => prev === 'LATEST' ? 'ALL_TIME' : 'LATEST')}
+                        className={`text-[9px] font-bold px-2 py-1 rounded border transition-colors ${scoreViewMode === 'LATEST' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}
+                        title={scoreViewMode === 'LATEST' ? 'Showing Latest Result' : 'Showing All-Time Average'}
+                    >
+                        {scoreViewMode === 'LATEST' ? 'LATEST RESULT' : 'TOTAL SCORE'}
+                    </button>
+                </div>
                 <div className="flex gap-2">
                      {activeFilter === 'TODAY' && hubMode === 'PREMIUM' && (
                         <>

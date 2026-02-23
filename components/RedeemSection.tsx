@@ -153,7 +153,7 @@ export const RedeemSection: React.FC<Props> = ({ user, onSuccess }) => {
             else if (subTier === 'MONTHLY') endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
             else if (subTier === '3_MONTHLY') endDate = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
             else if (subTier === 'YEARLY') endDate = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
-            else if (subTier === 'LIFETIME') endDate = null;
+            else if (subTier === 'LIFETIME') endDate = new Date(now.getTime() + 365 * 10 * 24 * 60 * 60 * 1000); // 10 Years fallback
             
             const isoEndDate = endDate ? endDate.toISOString() : undefined;
 

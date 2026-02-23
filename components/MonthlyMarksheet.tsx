@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { User, SystemSettings, MCQResult } from '../types';
 import { X, Download, Calendar, Trophy, Target, Award, Crown, Star } from 'lucide-react';
 import html2canvas from 'html2canvas';

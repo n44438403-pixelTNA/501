@@ -3,6 +3,7 @@ import { User } from '../../types';
 export const SubscriptionEngine = {
     isPremium: (user: User): boolean => {
         if (!user.isPremium) return false;
+        if (user.subscriptionTier === 'LIFETIME') return true;
         if (!user.subscriptionEndDate) return false;
         return new Date(user.subscriptionEndDate) > new Date();
     },

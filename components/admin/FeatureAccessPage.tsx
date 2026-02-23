@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SystemSettings, AppFeature } from '../../types';
 import { ALL_APP_FEATURES } from '../../constants';
-import { Search, Save, Eye, EyeOff, Tag, Star, Lock, CheckCircle, RefreshCw, LayoutGrid, List, Sparkles } from 'lucide-react';
+import { Search, Save, Eye, EyeOff, Tag, Star, Lock, CheckCircle, RefreshCw, LayoutGrid, List, Sparkles, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface Props {
     settings: SystemSettings;
@@ -136,10 +136,11 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
                             </div>
                             <button
                                 onClick={() => handleToggle(feature.id, 'visible')}
-                                className={`p-2 rounded-lg transition-colors ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
-                                title={feature.visible ? "Hide Feature" : "Show Feature"}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors font-bold text-xs ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
+                                title={feature.visible ? "Feed Control Active" : "Matrix Control (Fallback)"}
                             >
-                                {feature.visible ? <Eye size={18} /> : <EyeOff size={18} />}
+                                {feature.visible ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+                                {feature.visible ? 'FEED CONTROL' : 'MATRIX CONTROL'}
                             </button>
                         </div>
 

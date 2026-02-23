@@ -122,7 +122,17 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   const analysisLogs = JSON.parse(localStorage.getItem('nst_universal_analysis_logs') || '[]');
 
   const hasPermission = (featureId: string) => {
+      // 1. DUAL CONTROL: Check Feature Feed (Admin > Feature Access)
+      // User Logic: "Feed ON -> Feed Control (Min Tier). Feed OFF -> Plan Matrix Control."
+      const feedConfig = settings?.featureConfig?.[featureId];
+      if (feedConfig && feedConfig.visible) {
+          const requiredTier = feedConfig.minTier || 'FREE';
+          return SubscriptionEngine.checkAccess(user, requiredTier);
+      }
+
+      // 2. FALLBACK: Plan Matrix (Legacy Permissions)
       if (!settings?.tierPermissions) return true;
+
       let userTier: 'FREE' | 'BASIC' | 'ULTRA' = 'FREE';
       if (user.isPremium) {
           if (user.subscriptionLevel === 'ULTRA') userTier = 'ULTRA';
@@ -131,6 +141,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       if (user.subscriptionTier === 'LIFETIME' || user.subscriptionTier === 'YEARLY') {
            if (!user.subscriptionLevel) userTier = 'ULTRA';
       }
+
       const allowedFeatures = settings.tierPermissions[userTier] || [];
       return allowedFeatures.includes(featureId);
   };

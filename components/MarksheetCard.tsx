@@ -623,10 +623,9 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                                   </div>
                                   <div>
                                       <p className="text-xs text-indigo-900 font-medium leading-relaxed italic">"{remarks}"</p>
-                                      <div className="flex gap-4 mt-2">
-                                          <button onClick={() => speakText(remarks)} className="text-[10px] font-bold text-indigo-600 flex items-center gap-1 hover:underline">
-                                              <Volume2 size={12} /> Teacher Remark
-                                          </button>
+                                      <div className="flex gap-2 mt-2 items-center">
+                                          <SpeakButton text={remarks} className="p-0 hover:bg-transparent text-indigo-600" iconSize={14} />
+                                          <span className="text-[10px] font-bold text-indigo-600">Teacher Remark</span>
                                       </div>
                                   </div>
                               </div>
@@ -1242,8 +1241,18 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
             <div className="fixed inset-0 z-[250] bg-slate-900/90 flex items-center justify-center p-4 animate-in fade-in">
                 <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden shadow-2xl">
                     <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                        <div className="flex items-center gap-2"><BookOpen size={18} className="text-indigo-600"/><h3 className="font-bold text-slate-800 text-sm line-clamp-1">{viewingNote.title}</h3></div>
-                        <button onClick={() => setViewingNote(null)} className="p-1 hover:bg-slate-200 rounded-full text-slate-500"><X size={20} /></button>
+                        <div className="flex items-center gap-2">
+                            <BookOpen size={18} className="text-indigo-600"/>
+                            <h3 className="font-bold text-slate-800 text-sm line-clamp-1 max-w-[200px] sm:max-w-xs">{viewingNote.title}</h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <SpeakButton
+                                text={stripHtml(viewingNote.content || viewingNote.html || 'No content available.')}
+                                className="hover:bg-slate-200 text-slate-600 p-1.5"
+                                iconSize={18}
+                            />
+                            <button onClick={() => setViewingNote(null)} className="p-1 hover:bg-slate-200 rounded-full text-slate-500"><X size={20} /></button>
+                        </div>
                     </div>
                     <div className="p-6 overflow-y-auto prose prose-sm max-w-none">
                          <div dangerouslySetInnerHTML={{ __html: viewingNote.content || viewingNote.html || '<p>No content available.</p>' }} />

@@ -6,6 +6,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { ref, query, limitToLast, onValue } from 'firebase/database';
 import { getSubjectsList, DEFAULT_APP_FEATURES, ALL_APP_FEATURES, LEVEL_UNLOCKABLE_FEATURES, LEVEL_UP_CONFIG } from '../constants';
 import { ALL_FEATURES } from '../utils/featureRegistry';
+import { Button } from './ui/Button'; // Design System
 import { DashboardLayer1 } from './student/DashboardLayer1';
 import { DashboardLayer2 } from './student/DashboardLayer2';
 import { getActiveChallenges } from '../services/questionBank';
@@ -1721,8 +1722,22 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                         </div>
 
 
-                        <button onClick={() => { setMarksheetType('MONTHLY'); setShowMonthlyReport(true); }} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow flex items-center justify-center gap-2"><BarChart3 size={18} /> View Monthly Report</button>
-                        <button onClick={() => onTabChange('SUB_HISTORY')} className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 shadow flex items-center justify-center gap-2"><History size={18} /> View Subscription History</button>
+                        <Button
+                            onClick={() => { setMarksheetType('MONTHLY'); setShowMonthlyReport(true); }}
+                            variant="secondary"
+                            fullWidth
+                            icon={<BarChart3 size={18} />}
+                        >
+                            View Monthly Report
+                        </Button>
+                        <Button
+                            onClick={() => onTabChange('SUB_HISTORY')}
+                            variant="secondary"
+                            fullWidth
+                            icon={<History size={18} />}
+                        >
+                            View Subscription History
+                        </Button>
                         
                         <div className="flex items-center justify-between p-4 bg-slate-100 rounded-xl">
                             <div className="flex items-center gap-2">
@@ -1739,12 +1754,18 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                             </button>
                         </div>
 
-                        <button onClick={() => setEditMode(true)} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900">✏️ Edit Profile</button>
-                        <button onClick={() => {
-                            handleUserUpdate(user); // Force sync before logout
-                            localStorage.removeItem('nst_current_user');
-                            window.location.reload();
-                        }} className="w-full bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600">🚪 Logout</button>
+                        <Button onClick={() => setEditMode(true)} variant="outline" fullWidth>✏️ Edit Profile</Button>
+                        <Button
+                            onClick={() => {
+                                handleUserUpdate(user); // Force sync before logout
+                                localStorage.removeItem('nst_current_user');
+                                window.location.reload();
+                            }}
+                            variant="danger"
+                            fullWidth
+                        >
+                            🚪 Logout
+                        </Button>
                     </div>
                 </div>
       );
@@ -1830,14 +1851,16 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 </div>
                             </div>
 
-                            <button 
+                            <Button
                                 onClick={handleAiNotesGeneration}
-                                disabled={aiGenerating}
-                                className="w-full py-4 bg-indigo-600 text-white font-black rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                isLoading={aiGenerating}
+                                variant="primary"
+                                fullWidth
+                                size="lg"
+                                icon={<Sparkles />}
                             >
-                                {aiGenerating ? <Sparkles className="animate-spin" /> : <Sparkles />}
                                 {aiGenerating ? "Generating Magic..." : "Generate Notes"}
-                            </button>
+                            </Button>
                         </div>
                     ) : (
                         <div className="flex-1 overflow-hidden flex flex-col">
@@ -1845,21 +1868,23 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 <div className="whitespace-pre-wrap">{aiResult}</div>
                             </div>
                             <div className="flex gap-2">
-                                <button 
+                                <Button
                                     onClick={() => setAiResult(null)}
-                                    className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl"
+                                    variant="ghost"
+                                    className="flex-1"
                                 >
                                     New Topic
-                                </button>
-                                <button 
+                                </Button>
+                                <Button
                                     onClick={() => {
                                         navigator.clipboard.writeText(aiResult);
                                         showAlert("Notes Copied!", "SUCCESS");
                                     }}
-                                    className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg"
+                                    variant="primary"
+                                    className="flex-1"
                                 >
                                     Copy Text
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     )}
@@ -1912,8 +1937,8 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                     </div>
 
                     <div className="flex gap-2">
-                        <button onClick={() => setShowRequestModal(false)} className="flex-1 py-3 text-slate-500 font-bold bg-slate-100 rounded-xl">Cancel</button>
-                        <button 
+                        <Button onClick={() => setShowRequestModal(false)} variant="ghost" className="flex-1">Cancel</Button>
+                        <Button
                             onClick={() => {
                                 if (!requestData.subject || !requestData.topic) {
                                     showAlert("Please fill all fields", 'ERROR');
@@ -1938,10 +1963,10 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                     })
                                     .catch(() => showAlert("Failed to send request.", 'ERROR'));
                             }}
-                            className="flex-1 py-3 bg-pink-600 text-white font-bold rounded-xl hover:bg-pink-700 shadow-lg"
+                            className="flex-1 bg-pink-600 hover:bg-pink-700 shadow-lg"
                         >
                             Send Request
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -1961,8 +1986,8 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                     />
                     <p className="text-xs text-slate-500 mb-4">Cost: <span className="font-bold text-orange-600">{settings?.nameChangeCost || 10} Coins</span></p>
                     <div className="flex gap-2">
-                        <button onClick={() => setShowNameChangeModal(false)} className="flex-1 py-2 text-slate-500 font-bold bg-slate-100 rounded-lg">Cancel</button>
-                        <button 
+                        <Button onClick={() => setShowNameChangeModal(false)} variant="ghost" className="flex-1">Cancel</Button>
+                        <Button
                             onClick={() => {
                                 const cost = settings?.nameChangeCost || 10;
                                 if (newNameInput && newNameInput !== user.name) {
@@ -1973,10 +1998,10 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                     showAlert("Name Updated Successfully!", 'SUCCESS');
                                 }
                             }}
-                            className="flex-1 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700"
+                            className="flex-1"
                         >
                             Pay & Update
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -2199,18 +2224,28 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 <p className="text-slate-700 leading-relaxed mb-2">{msg.text}</p>
                                 
                                 {(msg.type === 'REWARD' || msg.type === 'GIFT') && !msg.isClaimed && (
-                                    <button 
+                                    <Button
                                         onClick={() => claimRewardMessage(msg.id, msg.reward, msg.gift)}
-                                        className="w-full mt-2 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-lg shadow-md hover:scale-[1.02] transition-transform text-xs flex items-center justify-center gap-2"
+                                        className="w-full mt-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:scale-[1.02]"
+                                        size="sm"
+                                        icon={<Gift size={14} />}
                                     >
-                                        <Gift size={14} /> Claim {msg.type === 'GIFT' ? 'Gift' : 'Reward'}
-                                    </button>
+                                        Claim {msg.type === 'GIFT' ? 'Gift' : 'Reward'}
+                                    </Button>
                                 )}
                                 {(msg.isClaimed) && <p className="text-[10px] text-green-600 font-bold bg-green-50 inline-block px-2 py-1 rounded">✅ Claimed</p>}
                             </div>
                         ))}
                     </div>
-                    {unreadCount > 0 && <button onClick={markInboxRead} className="w-full py-3 bg-blue-600 text-white font-bold text-sm hover:opacity-90">Mark All as Read</button>}
+                    {unreadCount > 0 && (
+                        <Button
+                            onClick={markInboxRead}
+                            fullWidth
+                            className="rounded-none rounded-b-2xl py-4"
+                        >
+                            Mark All as Read
+                        </Button>
+                    )}
                 </div>
             </div>
         )}
@@ -2227,19 +2262,22 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                         Contact Admin directly for support, subscription issues, or questions.
                     </p>
                     
-                    <button 
+                    <Button
                         onClick={handleSupportEmail}
-                        className="w-full bg-green-500 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2 mb-3"
+                        className="bg-green-500 hover:bg-green-600 shadow-lg mb-3"
+                        fullWidth
+                        icon={<Mail size={20} />}
                     >
-                        <Mail size={20} /> Email Support
-                    </button>
+                        Email Support
+                    </Button>
                     
-                    <button 
+                    <Button
                         onClick={() => setShowSupportModal(false)} 
-                        className="w-full py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl"
+                        variant="ghost"
+                        fullWidth
                     >
                         Close
-                    </button>
+                    </Button>
                 </div>
             </div>
         )}
@@ -2305,79 +2343,59 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-2">
                         {/* REORDERED MENU as per request */}
-                        <button onClick={() => { setShowInbox(true); setShowSidebar(false); }} className="w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700">
-                            <div className="bg-indigo-100 text-indigo-600 p-2 rounded-lg"><Mail size={20} /></div>
-                            Inbox
-                        </button>
-                        <button
-                            onClick={() => {
-                                onTabChange('ANALYTICS'); setShowSidebar(false);
-                            }}
-                            className={`w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700`}
-                        >
-                            <div className="bg-blue-100 text-blue-600 p-2 rounded-lg"><BarChart3 size={20} /></div>
-                            Analytics
-                        </button>
-                        <button onClick={() => { setShowMonthlyReport(true); setShowSidebar(false); }} className="w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700">
-                            <div className="bg-green-100 text-green-600 p-2 rounded-lg"><FileText size={20} /></div>
-                            Marksheet
-                        </button>
-                        <button onClick={() => { onTabChange('HISTORY'); setShowSidebar(false); }} className="w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700">
-                            <div className="bg-slate-100 text-slate-600 p-2 rounded-lg"><History size={20} /></div>
-                            History
-                        </button>
-                        <button onClick={() => { onTabChange('SUB_HISTORY'); setShowSidebar(false); }} className="w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700">
-                            <div className="bg-purple-100 text-purple-600 p-2 rounded-lg"><CreditCard size={20} /></div>
-                            My Plan
-                        </button>
-                        {isGameEnabled && (
-                            <button
-                                onClick={() => {
-                                    onTabChange('GAME'); setShowSidebar(false);
-                                }}
-                                className={`w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700`}
+                        {[
+                            { id: 'INBOX', label: 'Inbox', icon: Mail, color: 'indigo', action: () => { setShowInbox(true); setShowSidebar(false); } },
+                            { id: 'ANALYTICS', label: 'Analytics', icon: BarChart3, color: 'blue', action: () => { onTabChange('ANALYTICS'); setShowSidebar(false); } },
+                            { id: 'MARKSHEET', label: 'Marksheet', icon: FileText, color: 'green', action: () => { setShowMonthlyReport(true); setShowSidebar(false); } },
+                            { id: 'HISTORY', label: 'History', icon: History, color: 'slate', action: () => { onTabChange('HISTORY'); setShowSidebar(false); } },
+                            { id: 'PLAN', label: 'My Plan', icon: CreditCard, color: 'purple', action: () => { onTabChange('SUB_HISTORY'); setShowSidebar(false); } },
+                            ...(isGameEnabled ? [{ id: 'GAME', label: 'Play Game', icon: Gamepad2, color: 'orange', action: () => { onTabChange('GAME'); setShowSidebar(false); } }] : []),
+                            { id: 'REDEEM', label: 'Redeem', icon: Gift, color: 'pink', action: () => { onTabChange('REDEEM'); setShowSidebar(false); } },
+                            { id: 'PRIZES', label: 'Prizes', icon: Trophy, color: 'yellow', action: () => { onTabChange('PRIZES'); setShowSidebar(false); } },
+                            { id: 'REQUEST', label: 'Request Content', icon: Megaphone, color: 'purple', action: () => { setShowRequestModal(true); setShowSidebar(false); } },
+                        ].map(item => (
+                            <Button
+                                key={item.id}
+                                onClick={item.action}
+                                variant="ghost"
+                                fullWidth
+                                className="justify-start gap-4 p-4 hover:bg-slate-50"
                             >
-                                <div className="bg-orange-100 text-orange-600 p-2 rounded-lg"><Gamepad2 size={20} /></div>
-                                Play Game
-                            </button>
-                        )}
-                        <button onClick={() => { onTabChange('REDEEM'); setShowSidebar(false); }} className="w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700">
-                            <div className="bg-pink-100 text-pink-600 p-2 rounded-lg"><Gift size={20} /></div>
-                            Redeem
-                        </button>
-                        <button onClick={() => { onTabChange('PRIZES'); setShowSidebar(false); }} className="w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700">
-                            <div className="bg-yellow-100 text-yellow-600 p-2 rounded-lg"><Trophy size={20} /></div>
-                            Prizes
-                        </button>
-                        {/* RESTORED: Request Content */}
-                        <button onClick={() => { setShowRequestModal(true); setShowSidebar(false); }} className="w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700">
-                            <div className="bg-purple-100 text-purple-600 p-2 rounded-lg"><Megaphone size={20} /></div>
-                            Request Content
-                        </button>
+                                <div className={`bg-${item.color}-100 text-${item.color}-600 p-2 rounded-lg`}><item.icon size={20} /></div>
+                                {item.label}
+                            </Button>
+                        ))}
 
-                        {/* EXTERNAL APPS (Admin Configured) */}
+                        {/* EXTERNAL APPS */}
                         {settings?.externalApps?.map(app => (
-                            <button
+                            <Button
                                 key={app.id}
                                 onClick={() => { handleExternalAppClick(app); setShowSidebar(false); }}
-                                className="w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700"
+                                variant="ghost"
+                                fullWidth
+                                className="justify-start gap-4 p-4 hover:bg-slate-50"
                             >
                                 <div className="bg-cyan-100 text-cyan-600 p-2 rounded-lg">
                                     {app.icon ? <img src={app.icon} alt="" className="w-5 h-5"/> : <Smartphone size={20} />}
                                 </div>
-                                {app.name}
-                                {app.isLocked && <Lock size={14} className="text-red-500 ml-auto" />}
-                            </button>
+                                <span className="flex-1 text-left">{app.name}</span>
+                                {app.isLocked && <Lock size={14} className="text-red-500" />}
+                            </Button>
                         ))}
 
-                        {/* NEW: What's New / Blogger Hub */}
-                        <button onClick={() => { onTabChange('CUSTOM_PAGE'); setShowSidebar(false); }} className="w-full p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 transition-colors font-bold text-slate-700 relative">
+                        {/* WHAT'S NEW */}
+                        <Button
+                            onClick={() => { onTabChange('CUSTOM_PAGE'); setShowSidebar(false); }}
+                            variant="ghost"
+                            fullWidth
+                            className="justify-start gap-4 p-4 hover:bg-slate-50 relative"
+                        >
                             <div className="bg-teal-100 text-teal-600 p-2 rounded-lg"><Zap size={20} /></div>
                             What's New
                             {hasNewUpdate && (
                                 <span className="absolute top-4 right-4 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white"></span>
                             )}
-                        </button>
+                        </Button>
                     </div>
 
                     <div className="p-4 border-t border-slate-100">

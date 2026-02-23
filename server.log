@@ -7,3 +7,4 @@ Port 5000 is in use, trying another one...
 [BABEL] Note: The code generator has deoptimised the styling of /app/components/AdminDashboard.tsx as it exceeds the max of 500KB.
 3:13:43 AM [vite] (client) hmr update /components/MarksheetCard.tsx
 3:15:26 AM [vite] (client) hmr update /components/MarksheetCard.tsx
+3:40:16 AM [vite] (client) hmr update /components/MarksheetCard.tsx

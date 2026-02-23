@@ -122,7 +122,18 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         current.totalQs = questionsInThisAttempt;
                         current.totalCorrect = correctInThisAttempt;
 
-                        const percentage = current.totalQs > 0 ? (current.totalCorrect / current.totalQs) * 100 : 0;
+                        // OVERRIDE: Check Global Topic Strength if available
+                        let percentage = current.totalQs > 0 ? (current.totalCorrect / current.totalQs) * 100 : 0;
+
+                        if (user.topicStrength && user.topicStrength[name.trim()]) {
+                             const s = user.topicStrength[name.trim()];
+                             if (s.total > 0) {
+                                 percentage = (s.correct / s.total) * 100;
+                                 current.totalQs = s.total; // Sync total
+                                 current.totalCorrect = s.correct;
+                             }
+                        }
+
                         current.score = percentage;
 
                         const thisAttemptPct = scorePct !== undefined ? scorePct : (questionsInThisAttempt > 0 ? (correctInThisAttempt / questionsInThisAttempt) * 100 : 0);
@@ -191,6 +202,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         status: current.status,
                         nextRevision: nextRev,
                         mcqDueDate: mcqDue,
+                        subjectId: result.subjectId, // Pass ID
                         subjectName: result.subjectName,
                         isSubTopic: true,
                         // Pass Aggregates
@@ -818,6 +830,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                             id: `rev-note-${Date.now()}-${t.id}`,
                             userId: user.id,
                             chapterId: t.chapterId,
+                            subjectId: t.subjectId || 'REV_ID',
                             subjectName: t.subjectName || 'Revision',
                             chapterTitle: t.chapterName,
                             date: new Date().toISOString(),

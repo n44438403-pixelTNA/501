@@ -19,7 +19,7 @@ export interface FrequencyConfig {
     unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'months' | 'years';
 }
 
-export type ContentType = 'NOTES_SIMPLE' | 'NOTES_PREMIUM' | 'MCQ_ANALYSIS' | 'MCQ_SIMPLE' | 'PDF_FREE' | 'PDF_PREMIUM' | 'PDF_ULTRA' | 'PDF_VIEWER' | 'WEEKLY_TEST' | 'VIDEO_LECTURE' | 'NOTES_HTML_FREE' | 'NOTES_HTML_PREMIUM' | 'NOTES_IMAGE_AI';
+export type ContentType = 'NOTES_SIMPLE' | 'NOTES_PREMIUM' | 'MCQ_ANALYSIS' | 'MCQ_SIMPLE' | 'MCQ_RESULT' | 'PDF_FREE' | 'PDF_PREMIUM' | 'PDF_ULTRA' | 'PDF_VIEWER' | 'WEEKLY_TEST' | 'VIDEO_LECTURE' | 'NOTES_HTML_FREE' | 'NOTES_HTML_PREMIUM' | 'NOTES_IMAGE_AI';
 
 export interface PrizeRule {
   id: string;
@@ -939,6 +939,7 @@ export interface LessonContent {
   analysisType?: 'FREE' | 'PREMIUM';
   aiAnalysisText?: string;
   topic?: string; // Filtered Topic
+  analytics?: any; // For passing full analytics data
 }
 
 export type ViewState = 'BOARDS' | 'CLASSES' | 'STREAMS' | 'SUBJECTS' | 'CHAPTERS' | 'LESSON' | 'ADMIN_DASHBOARD' | 'AUDIO_STUDIO' | 'STUDENT_DASHBOARD' | 'UNIVERSAL_CHAT' | 'RULES' | 'IIC' | 'LEADERBOARD';
@@ -1030,11 +1031,13 @@ export interface TopicItem {
     status: TopicStatus;
     nextRevision: string | null; // ISO Date for Notes (Null if waiting for MCQ)
     mcqDueDate: string | null; // ISO Date for MCQ (Null if waiting for Revision)
+    subjectId?: string; // NEW
     subjectName?: string;
     isSubTopic: boolean;
     totalQs?: number; // Aggregate stats
     totalCorrect?: number; // Aggregate stats
     notesCount?: number; // NEW: Number of notes available for this topic
+    cycleCount?: number; // NEW: Tracking revision cycles
 }
 
 export interface FeatureRow {

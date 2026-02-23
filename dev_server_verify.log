@@ -1,25 +1,12 @@
-
-> students@0.0.0 dev
-> vite
-
-Port 5000 is in use, trying another one...
-
-  VITE v6.4.1  ready in 246 ms
-
-  ➜  Local:   http://localhost:5001/
-  ➜  Network: http://192.168.0.2:5001/
-[BABEL] Note: The code generator has deoptimised the styling of /app/components/AdminDashboard.tsx as it exceeds the max of 500KB.
-10:41:07 AM [vite] (client) hmr update /components/TodayMcqSession.tsx
-10:41:33 AM [vite] (client) hmr update /components/RevisionHub.tsx
-11:20:23 AM [vite] (client) hmr update /components/RevisionHub.tsx
-11:21:04 AM [vite] (client) hmr update /components/RevisionHub.tsx
-11:25:50 AM [vite] (client) hmr update /components/TodayMcqSession.tsx
-11:28:28 AM [vite] (client) hmr update /components/RevisionHub.tsx
-11:30:15 AM [vite] (client) hmr update /components/TodayMcqSession.tsx
-11:31:48 AM [vite] (client) hmr update /components/RevisionHub.tsx
-11:36:23 AM [vite] (client) hmr update /components/Store.tsx
-11:36:47 AM [vite] (client) hmr update /components/AdminDashboard.tsx
-11:36:47 AM [vite] (client) hmr update /components/AdminDashboard.tsx
-11:45:54 AM [vite] (client) hmr update /components/MarksheetCard.tsx
-11:46:30 AM [vite] (client) hmr update /components/RevisionHub.tsx
-11:47:11 AM [vite] (client) hmr update /components/LessonView.tsx
+npm warn exec The following package was not found and will be installed: vite@7.3.1
+failed to load config from /app/vite.config.ts
+error when starting dev server:
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from /app/vite.config.ts.timestamp-1771806603807-1d440aff2942c.mjs
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)
+    at packageResolve (node:internal/modules/esm/resolve:767:81)
+    at moduleResolve (node:internal/modules/esm/resolve:853:18)
+    at defaultResolve (node:internal/modules/esm/resolve:983:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:182:49)

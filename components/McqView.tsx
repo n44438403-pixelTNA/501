@@ -374,12 +374,11 @@ export const McqView: React.FC<Props> = ({
           score: score,
           totalTimeSeconds: timeTaken,
           averageTimePerQuestion: averageTime,
-          performanceTag: perfLabel as any,
+          performanceTag: performanceTag, // Use calculated tag, or align types
           classLevel: classLevel,
           omrData: omrData,
           wrongQuestions: wrongQuestions,
           questionTimes: Object.values(remappedTime),
-          performanceLabel: perfLabel,
           topic: topicFilter, // Save topic if filtered
           ultraAnalysisReport: analysisJson
       };
@@ -428,17 +427,15 @@ export const McqView: React.FC<Props> = ({
 
       // B) Update Granular Topic Strength (if topics exist in questions)
       submittedQuestions.forEach((q, idx) => {
-          if (q.topic) {
-              const topicKey = q.topic.trim();
-              const topicStats = updatedUser.topicStrength![topicKey] || { correct: 0, total: 0 };
+          const topicKey = (q.topic || 'General').trim();
+          const topicStats = updatedUser.topicStrength![topicKey] || { correct: 0, total: 0 };
 
-              const isCorrect = remappedAnswers[idx] === q.correctAnswer;
+          const isCorrect = remappedAnswers[idx] === q.correctAnswer;
 
-              updatedUser.topicStrength![topicKey] = {
-                  correct: topicStats.correct + (isCorrect ? 1 : 0),
-                  total: topicStats.total + 1
-              };
-          }
+          updatedUser.topicStrength![topicKey] = {
+              correct: topicStats.correct + (isCorrect ? 1 : 0),
+              total: topicStats.total + 1
+          };
       });
 
       // 4.2 Add to History
@@ -554,6 +551,8 @@ export const McqView: React.FC<Props> = ({
           return acc;
       }, {}) || {};
 
+      const currentResult = resultData; // Capture current result
+
       setShowAnalysisModal(false);
 
       const analysisContent = {
@@ -564,7 +563,8 @@ export const McqView: React.FC<Props> = ({
           userAnswers: userAnswers,
           analysisType: type,
           aiAnalysisText: aiText,
-          topic: topicFilter || selectedTopic // Pass Topic
+          topic: topicFilter || selectedTopic, // Pass Topic
+          analytics: currentResult // PASS RESULT OBJECT
       };
       
       setResultData(null);
@@ -677,6 +677,12 @@ export const McqView: React.FC<Props> = ({
               onUpdateUser={onUpdateUser}
               settings={settings}
               instantExplanation={mcqMode === 'PREMIUM'}
+              onShowMarksheet={(result) => {
+                  if (result) {
+                      setResultData(result);
+                      // Don't change viewMode, let MarksheetCard overlay handle it
+                  }
+              }}
           />
        ) : (
         <div className="bg-white min-h-screen pb-20 animate-in fade-in slide-in-from-right-8">

@@ -788,45 +788,56 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                 </div>
             </div>
 
-            {/* TABS (Filtered based on Hub Mode) */}
-             <div className="grid grid-cols-5 gap-2 mb-6 bg-slate-100 p-1 rounded-xl relative z-10">
-                {[
-                    { id: 'TODAY', label: 'Today', icon: Calendar, mode: 'BOTH' },
-                    { id: 'MCQ', label: 'MCQ', icon: CheckSquare, mode: 'PREMIUM' },
-                    { id: 'MISTAKES', label: 'Mistakes', icon: AlertOctagon, mode: 'PREMIUM' },
-                    { id: 'WEAK', label: 'Weak', icon: AlertIcon, mode: 'BOTH' },
-                    { id: 'AVERAGE', label: 'Avg', icon: TrendingUp, mode: 'BOTH' },
-                    { id: 'STRONG', label: 'Strong', icon: CheckCircle, mode: 'BOTH' },
-                ].filter(t => t.mode === 'BOTH' || t.mode === hubMode).map(tab => {
-                    const isActive = activeFilter === tab.id;
-                    const Icon = tab.icon;
-                    return (
+            {/* NEW TAB SYSTEM (Phase 3 Compression) */}
+            <div className="flex p-1 bg-slate-100 rounded-xl mb-6 relative z-10">
+                <button
+                    onClick={() => setActiveFilter('TODAY')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                        activeFilter === 'TODAY' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    <Layout size={14} /> Overview
+                </button>
+                <button
+                    onClick={() => setActiveFilter('WEAK')} // Default entry for strength view
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                        ['WEAK', 'AVERAGE', 'STRONG', 'EXCELLENT'].includes(activeFilter) ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    <TrendingUp size={14} /> Topic Strength
+                </button>
+                {hubMode === 'PREMIUM' && (
+                    <button
+                        onClick={() => handleGenerateAiPlan()}
+                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-purple-600 hover:bg-purple-50`}
+                    >
+                        <BrainCircuit size={14} /> AI Plan
+                    </button>
+                )}
+            </div>
+
+            {/* SUB-TABS FOR TOPIC STRENGTH (Only visible when active) */}
+            {['WEAK', 'AVERAGE', 'STRONG', 'EXCELLENT'].includes(activeFilter) && (
+                <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+                    {[
+                        { id: 'WEAK', label: 'Weak', icon: AlertIcon, color: 'red' },
+                        { id: 'AVERAGE', label: 'Average', icon: TrendingUp, color: 'orange' },
+                        { id: 'STRONG', label: 'Strong', icon: CheckCircle, color: 'green' },
+                        { id: 'EXCELLENT', label: 'Mastered', icon: Star, color: 'blue' }
+                    ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveFilter(tab.id as any)}
-                            className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-[10px] font-bold transition-all ${
-                                isActive ? 'bg-white shadow-sm text-blue-600 scale-105' : 'text-slate-500 hover:bg-white/50'
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap ${
+                                activeFilter === tab.id
+                                ? `bg-${tab.color}-100 text-${tab.color}-700 border-${tab.color}-200`
+                                : 'bg-white text-slate-500 border-slate-200'
                             }`}
                         >
-                            <Icon size={16} className={isActive ? 'mb-1 text-blue-600' : 'mb-1 text-slate-400'} />
+                            <tab.icon size={12} className={activeFilter === tab.id ? `fill-${tab.color}-700` : ''} />
                             {tab.label}
                         </button>
-                    );
-                })}
-            </div>
-
-             {/* EXCELLENT TAB (Premium Only) */}
-            {hubMode === 'PREMIUM' && (
-                <div className="flex justify-end mb-4 relative z-10">
-                     <button
-                        onClick={() => setActiveFilter('EXCELLENT')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                            activeFilter === 'EXCELLENT' ? 'bg-green-100 text-green-700 border-2 border-green-200 shadow-sm' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
-                        }`}
-                    >
-                        <Star size={14} className={activeFilter === 'EXCELLENT' ? 'fill-green-700 text-green-700' : 'text-slate-400'} />
-                        30-Day Mastery
-                    </button>
+                    ))}
                 </div>
             )}
 

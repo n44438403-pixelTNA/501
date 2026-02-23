@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Shield, Info, CheckCircle, XCircle, LayoutGrid, BrainCircuit, Gamepad2, BarChart3, Settings, BookOpen } from 'lucide-react';
-import { SystemSettings } from '../../types';
-import { ALL_FEATURES, FeatureGroup, AppFeatureDef } from '../../utils/featureRegistry';
+import { SystemSettings, AppFeature } from '../../types';
+import { ALL_APP_FEATURES } from '../../constants';
+import { Search, Save, Eye, EyeOff, Tag, Star, Lock, CheckCircle, RefreshCw, LayoutGrid, List, Sparkles } from 'lucide-react';
 
 interface Props {
     settings: SystemSettings;
@@ -10,161 +10,177 @@ interface Props {
 }
 
 export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings, onBack }) => {
-    const [activeGroup, setActiveGroup] = useState<FeatureGroup>('CORE');
-    const [localFeatures, setLocalFeatures] = useState<string[]>(settings.hiddenFeatures || []);
-    const [hasChanges, setHasChanges] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filter, setFilter] = useState<'ALL' | 'HIDDEN' | 'NEW' | 'UPDATED'>('ALL');
+    const [localConfig, setLocalConfig] = useState<Record<string, any>>(settings.featureConfig || {});
+    const [viewMode, setViewMode] = useState<'GRID' | 'LIST'>('GRID');
 
-    // Sync with settings on mount
+    // Initialize config from settings if empty, but respect existing
     useEffect(() => {
-        setLocalFeatures(settings.hiddenFeatures || []);
-    }, [settings.hiddenFeatures]);
-
-    const handleToggle = (featureId: string) => {
-        const isHidden = localFeatures.includes(featureId);
-        let newHidden;
-        if (isHidden) {
-            newHidden = localFeatures.filter(id => id !== featureId); // Unhide (Enable)
-        } else {
-            newHidden = [...localFeatures, featureId]; // Hide (Disable)
+        if (settings.featureConfig) {
+            setLocalConfig(settings.featureConfig);
         }
-        setLocalFeatures(newHidden);
-        setHasChanges(true);
-    };
+    }, [settings.featureConfig]);
 
-    const handleSave = () => {
-        onUpdateSettings({
-            ...settings,
-            hiddenFeatures: localFeatures
+    const handleToggle = (id: string, field: 'visible' | 'isNew' | 'isUpdated') => {
+        setLocalConfig(prev => {
+            const current = prev[id] || {};
+            return {
+                ...prev,
+                [id]: { ...current, [field]: current[field] !== undefined ? !current[field] : (field === 'visible' ? false : true) }
+            };
         });
-        setHasChanges(false);
-        alert("Feature Visibility Updated!");
     };
 
-    const getGroupIcon = (group: FeatureGroup) => {
-        switch (group) {
-            case 'CORE': return <BookOpen size={18} />;
-            case 'AI': return <BrainCircuit size={18} />;
-            case 'GAME': return <Gamepad2 size={18} />;
-            case 'ANALYTICS': return <BarChart3 size={18} />;
-            case 'ADMIN': return <Shield size={18} />;
-            default: return <Settings size={18} />;
-        }
+    const handleTierChange = (id: string, tier: 'FREE' | 'BASIC' | 'ULTRA') => {
+        setLocalConfig(prev => {
+            const current = prev[id] || {};
+            return {
+                ...prev,
+                [id]: { ...current, minTier: tier }
+            };
+        });
     };
 
-    const renderFeatureCard = (feature: AppFeatureDef) => {
-        const isEnabled = !localFeatures.includes(feature.id);
-
-        return (
-            <div key={feature.id} className={`p-4 rounded-xl border-2 transition-all ${isEnabled ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 opacity-75'}`}>
-                <div className="flex justify-between items-start mb-2">
-                    <div>
-                        <h4 className={`font-bold text-sm ${isEnabled ? 'text-slate-800' : 'text-slate-500'}`}>{feature.label}</h4>
-                        <p className="text-[10px] text-slate-400 font-mono mt-0.5">{feature.id}</p>
-                    </div>
-                    <button
-                        onClick={() => handleToggle(feature.id)}
-                        className={`w-10 h-6 rounded-full flex items-center p-1 transition-colors ${isEnabled ? 'bg-green-500 justify-end' : 'bg-slate-300 justify-start'}`}
-                    >
-                        <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
-                    </button>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mt-3">
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${
-                        feature.requiredSubscription === 'FREE' ? 'bg-green-50 text-green-700 border-green-100' :
-                        feature.requiredSubscription === 'BASIC' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                        'bg-purple-50 text-purple-700 border-purple-100'
-                    }`}>
-                        {feature.requiredSubscription}
-                    </span>
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">
-                        Level {feature.surfaceLevel}
-                    </span>
-                </div>
-
-                {feature.description && (
-                    <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
-                        {feature.description}
-                    </p>
-                )}
-            </div>
-        );
+    const saveChanges = () => {
+        const updatedSettings = { ...settings, featureConfig: localConfig };
+        onUpdateSettings(updatedSettings);
+        alert("Feature configurations saved successfully!");
     };
 
-    const groups: FeatureGroup[] = ['CORE', 'CONTENT', 'REVISION', 'ANALYTICS', 'AI', 'GAME', 'ADVANCED'];
+    // Merge static list with local config state
+    const mergedFeatures = ALL_APP_FEATURES.map(f => {
+        const conf = localConfig[f.id] || {};
+        return {
+            ...f,
+            visible: conf.visible !== false, // Default true
+            isNew: conf.isNew || false,
+            isUpdated: conf.isUpdated || false,
+            minTier: conf.minTier || 'FREE'
+        };
+    });
+
+    const filteredFeatures = mergedFeatures.filter(f => {
+        const matchesSearch = f.title.toLowerCase().includes(searchTerm.toLowerCase()) || f.id.toLowerCase().includes(searchTerm.toLowerCase());
+        if (!matchesSearch) return false;
+
+        if (filter === 'HIDDEN') return !f.visible;
+        if (filter === 'NEW') return f.isNew;
+        if (filter === 'UPDATED') return f.isUpdated;
+        return true;
+    });
 
     return (
-        <div className="bg-slate-50 min-h-screen pb-20">
+        <div className="bg-slate-50 min-h-screen p-6 animate-in fade-in">
             {/* Header */}
-            <div className="bg-white px-6 py-4 border-b border-slate-200 sticky top-0 z-20 flex justify-between items-center shadow-sm">
-                <div className="flex items-center gap-3">
-                    <button onClick={onBack} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
-                        <ArrowLeft size={20} className="text-slate-600" />
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    <button onClick={onBack} className="p-2 bg-white rounded-full shadow-sm hover:bg-slate-100 text-slate-600">
+                        &larr;
                     </button>
                     <div>
-                        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                            <LayoutGrid className="text-indigo-600" size={20} /> Feature Governance
-                        </h2>
-                        <p className="text-xs text-slate-500 font-medium">Control app features visibility and access.</p>
+                        <h1 className="text-2xl font-black text-slate-800">Feature Access Manager</h1>
+                        <p className="text-xs text-slate-500 font-bold">{mergedFeatures.length} Features Detected</p>
                     </div>
                 </div>
-                {hasChanges && (
+
+                <div className="flex gap-2 w-full md:w-auto">
                     <button
-                        onClick={handleSave}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg hover:bg-indigo-700 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-right-4"
+                        onClick={() => setViewMode(viewMode === 'GRID' ? 'LIST' : 'GRID')}
+                        className="p-3 bg-white text-slate-600 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50"
                     >
-                        <Save size={16} /> Save Changes
+                        {viewMode === 'GRID' ? <List size={20} /> : <LayoutGrid size={20} />}
                     </button>
-                )}
+                    <button
+                        onClick={saveChanges}
+                        className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 flex items-center gap-2 flex-1 md:flex-none justify-center"
+                    >
+                        <Save size={20} /> Save Config
+                    </button>
+                </div>
             </div>
 
-            <div className="max-w-5xl mx-auto p-6 flex flex-col md:flex-row gap-6">
-                {/* Sidebar Navigation */}
-                <div className="w-full md:w-64 shrink-0 space-y-2 sticky top-24">
-                    {groups.map(group => (
+            {/* Filters */}
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Search features..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                    />
+                </div>
+                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
+                    {['ALL', 'HIDDEN', 'NEW', 'UPDATED'].map((f) => (
                         <button
-                            key={group}
-                            onClick={() => setActiveGroup(group)}
-                            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-3 transition-all ${
-                                activeGroup === group
-                                ? 'bg-white shadow-md text-indigo-700 ring-1 ring-indigo-100'
-                                : 'text-slate-500 hover:bg-white hover:text-slate-700'
-                            }`}
+                            key={f}
+                            onClick={() => setFilter(f as any)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors border ${filter === f ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
                         >
-                            <span className={activeGroup === group ? 'text-indigo-600' : 'text-slate-400'}>
-                                {getGroupIcon(group)}
-                            </span>
-                            {group}
+                            {f}
                         </button>
                     ))}
                 </div>
+            </div>
 
-                {/* Content Area */}
-                <div className="flex-1">
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 min-h-[60vh]">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-slate-800">{activeGroup} Features</h3>
+            {/* Grid/List View */}
+            <div className={`grid ${viewMode === 'GRID' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'} gap-4`}>
+                {filteredFeatures.map(feature => (
+                    <div key={feature.id} className={`bg-white p-4 rounded-xl border-2 transition-all ${feature.visible ? 'border-slate-200 shadow-sm' : 'border-slate-100 opacity-60 bg-slate-50'}`}>
+                        <div className="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 className="font-bold text-slate-800 text-sm">{feature.title}</h3>
+                                <p className="text-[10px] text-slate-400 font-mono">{feature.id}</p>
+                            </div>
+                            <button
+                                onClick={() => handleToggle(feature.id, 'visible')}
+                                className={`p-2 rounded-lg transition-colors ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+                                title={feature.visible ? "Hide Feature" : "Show Feature"}
+                            >
+                                {feature.visible ? <Eye size={18} /> : <EyeOff size={18} />}
+                            </button>
+                        </div>
+
+                        {/* Controls */}
+                        <div className="space-y-3">
                             <div className="flex gap-2">
-                                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                    <CheckCircle size={12} className="text-green-500" /> Enabled
-                                </span>
-                                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                    <XCircle size={12} className="text-slate-300" /> Hidden
-                                </span>
+                                <button
+                                    onClick={() => handleToggle(feature.id, 'isNew')}
+                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border flex items-center justify-center gap-1 ${feature.isNew ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-400 border-slate-200'}`}
+                                >
+                                    <Sparkles size={12} /> NEW
+                                </button>
+                                <button
+                                    onClick={() => handleToggle(feature.id, 'isUpdated')}
+                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border flex items-center justify-center gap-1 ${feature.isUpdated ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-white text-slate-400 border-slate-200'}`}
+                                >
+                                    <RefreshCw size={12} /> UPDATED
+                                </button>
+                            </div>
+
+                            <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><Lock size={10} /> Minimum Tier</p>
+                                <div className="flex gap-1">
+                                    {['FREE', 'BASIC', 'ULTRA'].map((tier) => (
+                                        <button
+                                            key={tier}
+                                            onClick={() => handleTierChange(feature.id, tier as any)}
+                                            className={`flex-1 py-1 rounded text-[9px] font-black transition-colors ${
+                                                feature.minTier === tier
+                                                ? (tier === 'FREE' ? 'bg-green-500 text-white' : tier === 'BASIC' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white')
+                                                : 'bg-white border border-slate-200 text-slate-400 hover:bg-slate-100'
+                                            }`}
+                                        >
+                                            {tier}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                            {ALL_FEATURES.filter(f => f.group === activeGroup).map(renderFeatureCard)}
-                        </div>
-
-                        {ALL_FEATURES.filter(f => f.group === activeGroup).length === 0 && (
-                            <div className="text-center py-12 text-slate-400 text-sm italic">
-                                No features defined for this group yet.
-                            </div>
-                        )}
                     </div>
-                </div>
+                ))}
             </div>
         </div>
     );

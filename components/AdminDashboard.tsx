@@ -18,6 +18,8 @@ import { ChallengeCreator20 } from './admin/ChallengeCreator20';
 import { FeatureAccessPage } from './admin/FeatureAccessPage';
 import { AdminPowerManager } from './AdminPowerManager';
 import { SyllabusManager } from './SyllabusManager';
+import { FeatureGroupList } from './admin/FeatureGroupList';
+import { ALL_FEATURES } from '../utils/featureRegistry';
 // @ts-ignore
 import JSZip from 'jszip';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -2635,86 +2637,26 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                   </button>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {(hasPermission('VIEW_USERS') || currentUser?.role === 'ADMIN') && <DashboardCard icon={Users} label="Users" onClick={() => setActiveTab('USERS')} color="blue" count={users.length} />}
-                  {(hasPermission('MANAGE_SUB_ADMINS') || currentUser?.role === 'ADMIN') && <DashboardCard icon={ShieldCheck} label="Sub-Admins" onClick={() => setActiveTab('SUB_ADMINS')} color="indigo" count={users.filter(u => u.role === 'SUB_ADMIN').length} />}
-                  {(hasPermission('MANAGE_SUBS') || currentUser?.role === 'ADMIN') && <DashboardCard icon={CreditCard} label="Subscriptions" onClick={() => setActiveTab('SUBSCRIPTION_MANAGER')} color="purple" />}
-                  {(hasPermission('MANAGE_GIFT_CODES') || currentUser?.role === 'ADMIN') && <DashboardCard icon={Gift} label="Gift Codes" onClick={() => setActiveTab('CODES')} color="pink" />}
-                  {(hasPermission('MANAGE_SYLLABUS') || currentUser?.role === 'ADMIN') && <DashboardCard icon={Book} label="Subjects" onClick={() => setActiveTab('SUBJECTS_MGR')} color="emerald" />}
-                  {(hasPermission('VIEW_DEMANDS') || currentUser?.role === 'ADMIN') && <DashboardCard icon={Megaphone} label="Demands" onClick={() => setActiveTab('DEMAND')} color="orange" count={demands.length} />}
-                  {(hasPermission('APPROVE_LOGIN_REQS') || currentUser?.role === 'ADMIN') && <DashboardCard icon={Key} label="Login Reqs" onClick={() => setActiveTab('ACCESS')} color="purple" count={recoveryRequests.filter(r => r.status === 'PENDING').length} />}
-                  
-                  <div className="col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-6 h-px bg-slate-100 my-2"></div>
-                  
-                  {(hasPermission('MANAGE_CONTENT') || currentUser?.role === 'ADMIN') && (
-                  <div className={`col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-6 p-4 rounded-xl border mb-2 transition-colors ${adminBoardContext === 'CBSE' ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'}`}>
-                      <h4 className={`font-black mb-3 text-sm uppercase tracking-wide flex items-center gap-2 ${adminBoardContext === 'CBSE' ? 'text-blue-800' : 'text-orange-800'}`}>
-                          {adminBoardContext === 'CBSE' ? <Book size={18}/> : <Globe size={18}/>} 
-                          {adminBoardContext} Content Manager
-                      </h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                          <button onClick={() => setActiveTab('CONTENT_PDF')} className="p-3 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600 hover:text-blue-600 hover:shadow-md transition-all flex flex-col items-center gap-2">
-                              <div className="p-2 bg-blue-50 text-blue-600 rounded-full"><FileText size={20} /></div>
-                              <span className="text-[10px] font-bold">Main Notes</span>
-                          </button>
-                          <button onClick={() => setActiveTab('CONTENT_VIDEO')} className="p-3 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600 hover:text-red-600 hover:shadow-md transition-all flex flex-col items-center gap-2">
-                              <div className="p-2 bg-red-50 text-red-600 rounded-full"><Video size={20} /></div>
-                              <span className="text-[10px] font-bold">Video Lectures</span>
-                          </button>
-                          <button onClick={() => setActiveTab('CONTENT_AUDIO')} className="p-3 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600 hover:text-pink-600 hover:shadow-md transition-all flex flex-col items-center gap-2">
-                              <div className="p-2 bg-pink-50 text-pink-600 rounded-full"><Headphones size={20} /></div>
-                              <span className="text-[10px] font-bold">Audio Series</span>
-                          </button>
-                          <button onClick={() => setActiveTab('CONTENT_MCQ')} className="p-3 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600 hover:text-purple-600 hover:shadow-md transition-all flex flex-col items-center gap-2">
-                              <div className="p-2 bg-purple-50 text-purple-600 rounded-full"><CheckCircle size={20} /></div>
-                              <span className="text-[10px] font-bold">MCQ & Tests</span>
-                          </button>
-                          <button onClick={() => setActiveTab('TOPIC_NOTES_MANAGER')} className="p-3 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600 hover:text-cyan-600 hover:shadow-md transition-all flex flex-col items-center gap-2">
-                              <div className="p-2 bg-cyan-50 text-cyan-600 rounded-full"><BookOpen size={20} /></div>
-                              <span className="text-[10px] font-bold">Topic Notes</span>
-                          </button>
-                          <button onClick={() => setActiveTab('BULK_UPLOAD')} className="p-3 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600 hover:text-orange-600 hover:shadow-md transition-all flex flex-col items-center gap-2">
-                              <div className="p-2 bg-orange-50 text-orange-600 rounded-full"><LayersIcon size={20} /></div>
-                              <span className="text-[10px] font-bold">Bulk Import</span>
-                          </button>
-                      </div>
-                  </div>
-                  )}
-
-                  {currentUser?.role === 'ADMIN' && <DashboardCard icon={ListChecks} label="Syllabus Manager" onClick={() => setActiveTab('SYLLABUS_MANAGER')} color="indigo" />}
-                  {currentUser?.role === 'ADMIN' && <DashboardCard icon={Megaphone} label="Notify Users" onClick={() => setActiveTab('NOTIFY_USERS')} color="pink" />}
-                  
-                  <div className="col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-6 h-px bg-slate-100 my-2"></div>
-
-                  {(hasPermission('MANAGE_SETTINGS') || currentUser?.role === 'ADMIN') && (
-                      <>
-                          <DashboardCard icon={Calendar} label="Event Manager" onClick={() => setActiveTab('EVENT_MANAGER')} color="rose" />
-                          <DashboardCard icon={Monitor} label="General" onClick={() => setActiveTab('CONFIG_GENERAL')} color="blue" />
-                          <DashboardCard icon={ShieldCheck} label="Security" onClick={() => setActiveTab('CONFIG_SECURITY')} color="red" />
-                          {/* <DashboardCard icon={Zap} label="App Power Manager" onClick={() => setActiveTab('POWER_MANAGER')} color="amber" />  REMOVED "Mistry Button" (Power Manager) as primary entry */}
-                          <DashboardCard icon={Eye} label="Visibility & Watermark" onClick={() => setActiveTab('CONFIG_VISIBILITY')} color="amber" />
-                          <DashboardCard icon={Settings} label="Advanced Settings" onClick={() => setActiveTab('POWER_MANAGER')} color="slate" />
-                          {currentUser?.role === 'ADMIN' && <DashboardCard icon={PenTool} label="Blogger Hub" onClick={() => setActiveTab('BLOGGER_HUB')} color="orange" />}
-                          <DashboardCard icon={Gamepad2} label="Game Config" onClick={() => setActiveTab('CONFIG_GAME')} color="orange" />
-                          <DashboardCard icon={Banknote} label="Payment Config" onClick={() => setActiveTab('CONFIG_PAYMENT')} color="emerald" />
-                          <DashboardCard icon={Globe} label="External Apps" onClick={() => setActiveTab('CONFIG_EXTERNAL_APPS')} color="indigo" />
-                          <DashboardCard icon={Gift} label="Engagement Rewards" onClick={() => setActiveTab('CONFIG_REWARDS')} color="rose" />
-                          <DashboardCard icon={Trophy} label="Prize Settings" onClick={() => setActiveTab('CONFIG_PRIZES')} color="yellow" />
-                          <DashboardCard icon={Bell} label="Popup Config" onClick={() => setActiveTab('CONFIG_POPUPS')} color="orange" />
-                          <DashboardCard icon={Trophy} label="Challenge Config" onClick={() => setActiveTab('CONFIG_CHALLENGE')} color="red" />
-                          <DashboardCard icon={RotateCcw} label="Revision Logic" onClick={() => setActiveTab('REVISION_LOGIC')} color="indigo" />
-                          <DashboardCard icon={Rocket} label="Challenge 2.0" onClick={() => setActiveTab('CHALLENGE_CREATOR_20')} color="violet" />
-                          <DashboardCard icon={LayoutGrid} label="Feature Access" onClick={() => setActiveTab('FEATURE_ACCESS')} color="cyan" />
-                          <DashboardCard icon={Video} label="Universal Playlist" onClick={() => setActiveTab('UNIVERSAL_PLAYLIST')} color="rose" />
-                      </>
-                  )}
-                  
-                  <div className="col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-6 h-px bg-slate-100 my-2"></div>
-
-                  {currentUser?.role === 'ADMIN' && <DashboardCard icon={Cloud} label="Deploy App" onClick={() => setActiveTab('DEPLOY')} color="sky" />}
-                  {currentUser?.role === 'ADMIN' && <DashboardCard icon={Database} label="Database" onClick={() => setActiveTab('DATABASE')} color="gray" />}
-                  {currentUser?.role === 'ADMIN' && <DashboardCard icon={Trash2} label="Recycle Bin" onClick={() => setActiveTab('RECYCLE')} color="red" count={recycleBin.length} />}
-                  <DashboardCard icon={LogOut} label="Exit" onClick={() => onNavigate('STUDENT_DASHBOARD')} color="slate" />
+              <FeatureGroupList
+                  activeTab={activeTab}
+                  onNavigate={(tab) => {
+                      if (tab === 'EXIT') onNavigate('STUDENT_DASHBOARD');
+                      else setActiveTab(tab as AdminTab);
+                  }}
+                  counts={{
+                      'ADMIN_USERS': users.length,
+                      'ADMIN_SUB_ADMINS': users.filter(u => u.role === 'SUB_ADMIN').length,
+                      'ADMIN_DEMANDS': demands.length,
+                      'ADMIN_ACCESS': recoveryRequests.filter(r => r.status === 'PENDING').length,
+                      'ADMIN_RECYCLE': recycleBin.length
+                  }}
+                  hasPermission={hasPermission}
+                  userRole={currentUser?.role || 'STUDENT'}
+              />
+              <div className="mt-4 flex justify-end">
+                  <button onClick={() => onNavigate('STUDENT_DASHBOARD')} className="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-md">
+                      <LogOut size={20} /> Exit Admin Panel
+                  </button>
               </div>
           </div>
       )}

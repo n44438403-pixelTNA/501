@@ -1,212 +1,674 @@
-export type FeatureGroup = 'CORE' | 'REVISION' | 'AI' | 'ANALYTICS' | 'GAME' | 'ADMIN' | 'ADVANCED' | 'CONTENT';
-export type SubscriptionTier = 'FREE' | 'BASIC' | 'ULTRA';
-export type SurfaceLevel = 1 | 2 | 3; // 1 = Dashboard, 2 = Tools, 3 = Drawer/Hidden
 
-export interface AppFeatureDef {
+export type FeatureGroup = 'CORE' | 'ANALYSIS' | 'AI' | 'GAME' | 'ADMIN' | 'ADVANCED' | 'CONTENT' | 'TOOLS' | 'REVISION';
+
+export interface Feature {
     id: string;
     label: string;
     group: FeatureGroup;
-    surfaceLevel: SurfaceLevel;
-    requiredSubscription: SubscriptionTier;
-    adminVisible: boolean; // Can Admin toggle this?
+    surfaceLevel: 1 | 2 | 3; // 1 = Dashboard, 2 = Tools/Expandable, 3 = Drawer/Hidden
+    requiredSubscription?: 'FREE' | 'BASIC' | 'ULTRA';
+    adminVisible: boolean;
     isExperimental?: boolean;
     description?: string;
-    defaultEnabled: boolean;
+    icon?: string; // Lucide icon name
+    adminTab?: string; // Corresponds to AdminTab in AdminDashboard.tsx
+    color?: string; // Tailwind color name (e.g., 'blue', 'red')
+    path?: string; // Navigation path for Student Dashboard
+    requiredPermission?: string; // Admin Permission ID
+    requiresSuperAdmin?: boolean; // Only for Role === 'ADMIN'
 }
 
-export const ALL_FEATURES: AppFeatureDef[] = [
-    // --- CORE ---
+export const ALL_FEATURES: Feature[] = [
+    // --- CORE (Layer 1: Daily Core Actions - Max 6) ---
     {
-        id: 'COURSES',
-        label: 'My Courses (Video/Notes)',
+        id: 'START_STUDY',
+        label: 'Start Study',
         group: 'CORE',
         surfaceLevel: 1,
-        requiredSubscription: 'FREE',
-        adminVisible: true,
-        defaultEnabled: true,
-        description: 'Access to Subject, Chapter, Video, and Notes selection.'
+        adminVisible: false,
+        path: 'COURSES',
+        icon: 'Book',
+        description: 'Access your main courses and subjects.'
     },
     {
         id: 'MCQ_PRACTICE',
         label: 'MCQ Practice',
         group: 'CORE',
         surfaceLevel: 1,
-        requiredSubscription: 'FREE',
-        adminVisible: true,
-        defaultEnabled: true
+        adminVisible: false,
+        path: 'MCQ',
+        icon: 'CheckSquare',
+        description: 'Practice unlimited questions.'
     },
-    {
-        id: 'WEEKLY_TEST',
-        label: 'Weekly Tests',
-        group: 'CORE',
-        surfaceLevel: 2,
-        requiredSubscription: 'FREE',
-        adminVisible: true,
-        defaultEnabled: true
-    },
-
-    // --- REVISION ---
     {
         id: 'REVISION_HUB',
         label: 'Revision Hub',
-        group: 'REVISION',
+        group: 'CORE',
         surfaceLevel: 1,
-        requiredSubscription: 'FREE', // Hub itself is free, content varies
-        adminVisible: true,
-        defaultEnabled: true,
-        description: 'Central hub for spaced repetition and pending tasks.'
-    },
-    {
-        id: 'MCQ_REVIEW',
-        label: 'Mistake Review',
-        group: 'REVISION',
-        surfaceLevel: 2,
         requiredSubscription: 'BASIC',
-        adminVisible: true,
-        defaultEnabled: true
-    },
-
-    // --- AI ---
-    {
-        id: 'AI_CHAT',
-        label: 'Student AI Assistant',
-        group: 'AI',
-        surfaceLevel: 2,
-        requiredSubscription: 'BASIC',
-        adminVisible: true,
-        defaultEnabled: true
+        adminVisible: false,
+        path: 'REVISION',
+        icon: 'BrainCircuit',
+        description: 'Smart revision based on your weak topics.'
     },
     {
-        id: 'AI_NOTES',
-        label: 'AI Notes Generator',
-        group: 'AI',
-        surfaceLevel: 2,
-        requiredSubscription: 'BASIC',
-        adminVisible: true,
-        defaultEnabled: true
-    },
-    {
-        id: 'AI_DEEP_ANALYSIS',
-        label: 'Deep Analysis (Ultra)',
-        group: 'AI',
-        surfaceLevel: 2,
-        requiredSubscription: 'ULTRA',
-        adminVisible: true,
-        defaultEnabled: true
-    },
-
-    // --- ANALYTICS ---
-    {
-        id: 'ANALYTICS_DASHBOARD',
+        id: 'MY_ANALYSIS',
         label: 'My Analysis',
-        group: 'ANALYTICS',
+        group: 'CORE',
         surfaceLevel: 1,
-        requiredSubscription: 'FREE',
-        adminVisible: true,
-        defaultEnabled: true
+        adminVisible: false,
+        path: 'ANALYTICS',
+        icon: 'BarChart3',
+        description: 'Track your progress and performance.'
+    },
+    {
+        id: 'WEAK_TOPICS',
+        label: 'Weak Topics',
+        group: 'CORE',
+        surfaceLevel: 1,
+        requiredSubscription: 'BASIC',
+        adminVisible: false,
+        path: 'REVISION', // Deep link logic to be handled
+        icon: 'AlertCircle',
+        description: 'Focus instantly on your weakest areas.'
+    },
+    {
+        id: 'CONTINUE_LAST',
+        label: 'Continue Last',
+        group: 'CORE',
+        surfaceLevel: 1,
+        adminVisible: false,
+        path: 'CONTINUE', // Special handler
+        icon: 'PlayCircle',
+        description: 'Resume exactly where you left off.'
+    },
+
+    // --- SECONDARY (Layer 2: Tools & Exploration) ---
+    {
+        id: 'AI_CENTER',
+        label: 'AI Center',
+        group: 'AI',
+        surfaceLevel: 2,
+        requiredSubscription: 'BASIC',
+        adminVisible: false,
+        path: 'AI_HUB',
+        icon: 'Sparkles',
+        description: 'Central hub for all AI tools.'
+    },
+    {
+        id: 'TOOLS',
+        label: 'Tools',
+        group: 'TOOLS',
+        surfaceLevel: 2,
+        adminVisible: false,
+        path: 'TOOLS', // Expandable section logic
+        icon: 'Wrench',
+        description: 'Calculators, converters, and more.'
+    },
+    {
+        id: 'GAMES',
+        label: 'Game Zone',
+        group: 'GAME',
+        surfaceLevel: 2,
+        adminVisible: false,
+        path: 'GAME',
+        icon: 'Gamepad2',
+        description: 'Relax and earn rewards.'
+    },
+    {
+        id: 'STORE_ACCESS',
+        label: 'Store',
+        group: 'CONTENT',
+        surfaceLevel: 2,
+        adminVisible: false,
+        path: 'STORE',
+        icon: 'ShoppingBag',
+        description: 'Upgrade your plan and buy credits.'
     },
     {
         id: 'LEADERBOARD',
         label: 'Leaderboard',
-        group: 'ANALYTICS',
+        group: 'GAME',
         surfaceLevel: 2,
-        requiredSubscription: 'FREE',
-        adminVisible: true,
-        defaultEnabled: true
+        adminVisible: false,
+        path: 'LEADERBOARD',
+        icon: 'Trophy',
+        description: 'Compete with others globally.'
     },
     {
-        id: 'MARKSHEET',
-        label: 'Official Marksheet',
-        group: 'ANALYTICS',
+        id: 'PREMIUM_ACCESS',
+        label: 'Premium',
+        group: 'CONTENT',
+        surfaceLevel: 2,
+        adminVisible: false,
+        path: 'SUB_HISTORY',
+        icon: 'Crown',
+        description: 'Manage your subscription.'
+    },
+
+    // --- DRAWER / HIDDEN (Layer 3) ---
+    {
+        id: 'ADMIN_PANEL',
+        label: 'Admin Panel',
+        group: 'ADMIN',
         surfaceLevel: 3,
-        requiredSubscription: 'FREE',
         adminVisible: true,
-        defaultEnabled: true
+        path: 'ADMIN_DASHBOARD',
+        icon: 'Shield',
+        requiresSuperAdmin: true
+    },
+    {
+        id: 'REDEEM_CODE',
+        label: 'Redeem Code',
+        group: 'TOOLS',
+        surfaceLevel: 3,
+        adminVisible: false,
+        path: 'REDEEM',
+        icon: 'Gift'
+    },
+    {
+        id: 'LOGS_DEBUG',
+        label: 'Logs & Debug',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: false, // Visible only in dev/admin mode usually
+        path: 'LOGS',
+        icon: 'Terminal'
     },
 
-    // --- GAME ---
+    // --- REVISION SUB-FEATURES (Internal to Revision Hub) ---
     {
-        id: 'SPIN_WHEEL',
-        label: 'Spin & Win',
-        group: 'GAME',
+        id: 'REVISION_AI_PLAN',
+        label: 'AI Study Plan',
+        group: 'REVISION',
         surfaceLevel: 2,
-        requiredSubscription: 'FREE',
-        adminVisible: true,
-        defaultEnabled: true
+        requiredSubscription: 'ULTRA',
+        adminVisible: false,
+        description: 'Generate AI-based study plans.'
     },
     {
-        id: 'DAILY_CHALLENGE',
-        label: 'Daily Challenge',
-        group: 'GAME',
-        surfaceLevel: 1,
-        requiredSubscription: 'FREE',
-        adminVisible: true,
-        defaultEnabled: true
+        id: 'REVISION_MISTAKES',
+        label: 'Mistakes Review',
+        group: 'REVISION',
+        surfaceLevel: 2,
+        adminVisible: false,
+        description: 'Review your past mistakes.'
     },
 
-    // --- CONTENT ---
+    // --- AI SUB-FEATURES ---
+    {
+        id: 'AI_CHAT',
+        label: 'AI Chat Tutor',
+        group: 'AI',
+        surfaceLevel: 2,
+        requiredSubscription: 'ULTRA',
+        adminVisible: false,
+        icon: 'MessageSquare',
+        description: 'Chat with AI for doubt solving.'
+    },
+    {
+        id: 'AI_GENERATOR',
+        label: 'AI Notes Gen',
+        group: 'AI',
+        surfaceLevel: 2,
+        requiredSubscription: 'BASIC',
+        adminVisible: false,
+        icon: 'FileText',
+        description: 'Generate custom notes.'
+    },
+
+    // --- CONTENT SUB-FEATURES ---
+    {
+        id: 'VIDEO_ACCESS',
+        label: 'Video Lectures',
+        group: 'CONTENT',
+        surfaceLevel: 1,
+        adminVisible: false,
+        description: 'Access video content.'
+    },
+    {
+        id: 'NOTES_ACCESS',
+        label: 'Premium Notes',
+        group: 'CONTENT',
+        surfaceLevel: 1,
+        adminVisible: false,
+        description: 'Access PDF and HTML notes.'
+    },
     {
         id: 'AUDIO_LIBRARY',
         label: 'Audio Library',
         group: 'CONTENT',
         surfaceLevel: 2,
-        requiredSubscription: 'BASIC',
-        adminVisible: true,
-        defaultEnabled: true
+        adminVisible: false,
+        description: 'Listen to audio lessons.'
     },
-    {
-        id: 'UNIVERSAL_VIDEO',
-        label: 'Universal Video',
-        group: 'CONTENT',
-        surfaceLevel: 1,
-        requiredSubscription: 'FREE',
-        adminVisible: true,
-        defaultEnabled: true
-    },
-
-    // --- ADVANCED / ADMIN CONTROLLED ---
     {
         id: 'COMPETITION_MODE',
         label: 'Competition Mode',
-        group: 'ADVANCED',
-        surfaceLevel: 3,
+        group: 'CONTENT',
+        surfaceLevel: 2,
         requiredSubscription: 'ULTRA',
-        adminVisible: true,
-        defaultEnabled: true
+        adminVisible: false,
+        description: 'High-level content for exams.'
     },
     {
-        id: 'OFFLINE_DOWNLOAD',
-        label: 'Offline Downloads',
-        group: 'ADVANCED',
-        surfaceLevel: 3,
+        id: 'DOWNLOAD_PDF',
+        label: 'Download PDF',
+        group: 'TOOLS',
+        surfaceLevel: 2,
         requiredSubscription: 'BASIC',
+        adminVisible: false,
+        description: 'Save content offline.'
+    },
+
+    // --- ADMIN DASHBOARD FEATURES (Mapped to Admin Tabs) ---
+    // GROUP: CORE ADMIN
+    {
+        id: 'ADMIN_USERS',
+        label: 'Users',
+        group: 'CORE',
+        surfaceLevel: 3,
         adminVisible: true,
-        defaultEnabled: true
+        adminTab: 'USERS',
+        requiredPermission: 'VIEW_USERS',
+        icon: 'Users',
+        color: 'blue'
     },
     {
-        id: 'REDEEM_SYSTEM',
-        label: 'Redeem Codes',
-        group: 'ADVANCED',
+        id: 'ADMIN_SUB_ADMINS',
+        label: 'Sub-Admins',
+        group: 'CORE',
         surfaceLevel: 3,
-        requiredSubscription: 'FREE',
         adminVisible: true,
-        defaultEnabled: true
+        adminTab: 'SUB_ADMINS',
+        requiredPermission: 'MANAGE_SUB_ADMINS',
+        icon: 'ShieldCheck',
+        color: 'indigo'
     },
     {
-        id: 'PROFILE_EDIT',
-        label: 'Profile Editing',
+        id: 'ADMIN_SUBSCRIPTIONS',
+        label: 'Subscriptions',
+        group: 'CORE',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'SUBSCRIPTION_MANAGER',
+        requiredPermission: 'MANAGE_SUBS',
+        icon: 'CreditCard',
+        color: 'purple'
+    },
+    {
+        id: 'ADMIN_SUBJECTS',
+        label: 'Subjects',
+        group: 'CORE',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'SUBJECTS_MGR',
+        requiredPermission: 'MANAGE_SYLLABUS',
+        icon: 'Book',
+        color: 'emerald'
+    },
+    {
+        id: 'ADMIN_NOTIFY',
+        label: 'Notify Users',
+        group: 'CORE',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'NOTIFY_USERS',
+        requiresSuperAdmin: true,
+        icon: 'Megaphone',
+        color: 'pink'
+    },
+    {
+        id: 'ADMIN_DEMANDS',
+        label: 'Demands',
+        group: 'CORE',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'DEMAND',
+        requiredPermission: 'VIEW_DEMANDS',
+        icon: 'Megaphone', // Reused icon, distinct label
+        color: 'orange'
+    },
+    {
+        id: 'ADMIN_ACCESS',
+        label: 'Login Requests',
+        group: 'CORE',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'ACCESS',
+        requiredPermission: 'APPROVE_LOGIN_REQS',
+        icon: 'Key',
+        color: 'purple'
+    },
+
+    // GROUP: CONTENT / ANALYSIS
+    {
+        id: 'ADMIN_CONTENT_PDF',
+        label: 'Main Notes',
+        group: 'CONTENT',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONTENT_PDF',
+        requiredPermission: 'MANAGE_CONTENT',
+        icon: 'FileText',
+        color: 'blue'
+    },
+    {
+        id: 'ADMIN_CONTENT_VIDEO',
+        label: 'Video Lectures',
+        group: 'CONTENT',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONTENT_VIDEO',
+        requiredPermission: 'MANAGE_CONTENT',
+        icon: 'Video',
+        color: 'red'
+    },
+    {
+        id: 'ADMIN_CONTENT_AUDIO',
+        label: 'Audio Series',
+        group: 'CONTENT',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONTENT_AUDIO',
+        requiredPermission: 'MANAGE_CONTENT',
+        icon: 'Headphones',
+        color: 'pink'
+    },
+    {
+        id: 'ADMIN_CONTENT_MCQ',
+        label: 'MCQ & Tests',
+        group: 'CONTENT',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONTENT_MCQ',
+        requiredPermission: 'MANAGE_CONTENT',
+        icon: 'CheckCircle',
+        color: 'purple'
+    },
+    {
+        id: 'ADMIN_TOPIC_NOTES',
+        label: 'Topic Notes',
+        group: 'CONTENT',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'TOPIC_NOTES_MANAGER',
+        requiredPermission: 'MANAGE_CONTENT',
+        icon: 'BookOpen',
+        color: 'cyan'
+    },
+    {
+        id: 'ADMIN_BULK_UPLOAD',
+        label: 'Bulk Import',
+        group: 'CONTENT',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'BULK_UPLOAD',
+        requiredPermission: 'MANAGE_CONTENT',
+        icon: 'Layers',
+        color: 'orange'
+    },
+    {
+        id: 'ADMIN_SYLLABUS',
+        label: 'Syllabus Manager',
+        group: 'CONTENT',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'SYLLABUS_MANAGER',
+        requiresSuperAdmin: true,
+        icon: 'ListChecks',
+        color: 'indigo'
+    },
+    {
+        id: 'ADMIN_UNIVERSAL_PLAYLIST',
+        label: 'Universal Playlist',
+        group: 'CONTENT',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'UNIVERSAL_PLAYLIST',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Video',
+        color: 'rose'
+    },
+
+    // GROUP: AI (Admin & Student)
+    {
+        id: 'ADMIN_CONFIG_AI',
+        label: 'AI Configuration',
+        group: 'AI',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_AI',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Bot',
+        color: 'teal'
+    },
+
+    // GROUP: GAME
+    {
+        id: 'ADMIN_GAME_CONFIG',
+        label: 'Game Config',
+        group: 'GAME',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_GAME',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Gamepad2',
+        color: 'orange'
+    },
+    {
+        id: 'ADMIN_REWARDS',
+        label: 'Engagement Rewards',
+        group: 'GAME',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_REWARDS',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Gift',
+        color: 'rose'
+    },
+    {
+        id: 'ADMIN_PRIZES',
+        label: 'Prize Settings',
+        group: 'GAME',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_PRIZES',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Trophy',
+        color: 'yellow'
+    },
+    {
+        id: 'ADMIN_CHALLENGE',
+        label: 'Challenge Config',
+        group: 'GAME',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_CHALLENGE',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Trophy',
+        color: 'red'
+    },
+    {
+        id: 'ADMIN_CHALLENGE_20',
+        label: 'Challenge 2.0',
+        group: 'GAME',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CHALLENGE_CREATOR_20',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Rocket',
+        color: 'violet'
+    },
+
+    // GROUP: ADVANCED / CONFIG
+    {
+        id: 'ADMIN_EVENT',
+        label: 'Event Manager',
         group: 'ADVANCED',
         surfaceLevel: 3,
-        requiredSubscription: 'FREE',
         adminVisible: true,
-        defaultEnabled: true
+        adminTab: 'EVENT_MANAGER',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Calendar',
+        color: 'rose'
+    },
+    {
+        id: 'ADMIN_GENERAL',
+        label: 'General Settings',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_GENERAL',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Monitor',
+        color: 'blue'
+    },
+    {
+        id: 'ADMIN_SECURITY',
+        label: 'Security',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_SECURITY',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'ShieldCheck',
+        color: 'red'
+    },
+    {
+        id: 'ADMIN_VISIBILITY',
+        label: 'Visibility & Watermark',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_VISIBILITY',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Eye',
+        color: 'amber'
+    },
+    {
+        id: 'ADMIN_POWER',
+        label: 'Advanced Settings',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'POWER_MANAGER',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Settings',
+        color: 'slate'
+    },
+    {
+        id: 'ADMIN_BLOGGER',
+        label: 'Blogger Hub',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'BLOGGER_HUB',
+        requiresSuperAdmin: true,
+        icon: 'PenTool',
+        color: 'orange'
+    },
+    {
+        id: 'ADMIN_PAYMENT',
+        label: 'Payment Config',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_PAYMENT',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Banknote',
+        color: 'emerald'
+    },
+    {
+        id: 'ADMIN_EXTERNAL',
+        label: 'External Apps',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_EXTERNAL_APPS',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Globe',
+        color: 'indigo'
+    },
+    {
+        id: 'ADMIN_POPUPS',
+        label: 'Popup Config',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CONFIG_POPUPS',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Bell',
+        color: 'orange'
+    },
+    {
+        id: 'ADMIN_REVISION',
+        label: 'Revision Logic',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'REVISION_LOGIC',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'RotateCcw',
+        color: 'indigo'
+    },
+    {
+        id: 'ADMIN_FEATURE_ACCESS',
+        label: 'Feature Access',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'FEATURE_ACCESS',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'LayoutGrid',
+        color: 'cyan'
+    },
+    {
+        id: 'ADMIN_CODES',
+        label: 'Gift Codes',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'CODES',
+        requiredPermission: 'MANAGE_GIFT_CODES',
+        icon: 'Gift',
+        color: 'pink'
+    },
+    {
+        id: 'ADMIN_DEPLOY',
+        label: 'Deploy App',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'DEPLOY',
+        requiresSuperAdmin: true,
+        icon: 'Cloud',
+        color: 'sky'
+    },
+    {
+        id: 'ADMIN_DATABASE',
+        label: 'Database',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'DATABASE',
+        requiresSuperAdmin: true,
+        icon: 'Database',
+        color: 'gray'
+    },
+    {
+        id: 'ADMIN_RECYCLE',
+        label: 'Recycle Bin',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'RECYCLE',
+        requiresSuperAdmin: true,
+        icon: 'Trash2',
+        color: 'red'
     }
 ];
 
-export const getFeaturesByGroup = (group: FeatureGroup) => {
-    return ALL_FEATURES.filter(f => f.group === group);
-};
-
-export const getFeature = (id: string) => {
-    return ALL_FEATURES.find(f => f.id === id);
+export const getFeaturesByGroup = (group: FeatureGroup, onlyAdmin: boolean = false) => {
+    return ALL_FEATURES.filter(f => f.group === group && (!onlyAdmin || f.adminVisible));
 };

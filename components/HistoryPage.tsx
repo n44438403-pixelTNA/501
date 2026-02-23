@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LessonContent, User, SystemSettings, UsageHistoryEntry } from '../types';
+import { LessonContent, User, SystemSettings, UsageHistoryEntry, MCQResult } from '../types';
 import { BookOpen, Calendar, ChevronDown, ChevronUp, Trash2, Search, FileText, CheckCircle2, Lock, AlertCircle, Folder } from 'lucide-react';
 import { LessonView } from './LessonView';
 import { saveUserToLive } from '../firebase';
 import { CustomAlert, CustomConfirm } from './CustomDialogs';
+import { MarksheetCard } from './MarksheetCard';
 
 interface Props {
     user: User;
@@ -18,6 +19,7 @@ export const HistoryPage: React.FC<Props> = ({ user, onUpdateUser, settings }) =
   const [history, setHistory] = useState<LessonContent[]>([]);
   const [search, setSearch] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<LessonContent | null>(null);
+  const [selectedResult, setSelectedResult] = useState<MCQResult | null>(null);
   
   // USAGE HISTORY STATE (ACTIVITY LOG)
   const [usageLog, setUsageLog] = useState<UsageHistoryEntry[]>([]);
@@ -84,13 +86,26 @@ export const HistoryPage: React.FC<Props> = ({ user, onUpdateUser, settings }) =
           localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
           saveUserToLive(updatedUser);
       }
-      setSelectedLesson(item);
+
+      // Check if it's an MCQ to open Marksheet
+      if (item.type === 'MCQ' || item.type === 'MCQ_ANALYSIS' || item.type === 'MCQ_RESULT') {
+          // Try to find the full result in mcqHistory
+          const fullResult = user.mcqHistory?.find(r => r.id === item.id || r.chapterId === (item as any).itemId);
+          if (fullResult) {
+              setSelectedResult(fullResult);
+          } else {
+              // Fallback for old history or missing data
+              setSelectedLesson(item);
+          }
+      } else {
+          setSelectedLesson(item);
+      }
   };
 
   const handleOpenItem = (item: LessonContent) => {
       // 0. Enforce Type Restrictions (User Request)
       // "agar notes hai to notes le agar mcq ka histrionic hai to explanation pe baki sab History tab decebal hoga"
-      const allowedTypes = ['NOTES_SIMPLE', 'NOTES_PREMIUM', 'MCQ_ANALYSIS', 'MCQ_SIMPLE', 'PDF_VIEWER', 'VIDEO_LECTURE', 'PDF', 'VIDEO', 'MCQ'];
+      const allowedTypes = ['NOTES_SIMPLE', 'NOTES_PREMIUM', 'MCQ_ANALYSIS', 'MCQ_SIMPLE', 'MCQ_RESULT', 'PDF_VIEWER', 'VIDEO_LECTURE', 'PDF', 'VIDEO', 'MCQ'];
       if (!allowedTypes.includes(item.type) && !item.type.includes('NOTES') && !item.type.includes('MCQ')) {
           return; // Disable click for others
       }
@@ -140,6 +155,20 @@ export const HistoryPage: React.FC<Props> = ({ user, onUpdateUser, settings }) =
       const s = seconds % 60;
       return `${m}m ${s}s`;
   };
+
+  if (selectedResult) {
+      return (
+          <div className="fixed inset-0 z-[150] bg-white overflow-auto animate-in slide-in-from-right duration-300">
+              <MarksheetCard
+                  result={selectedResult}
+                  user={user}
+                  settings={settings}
+                  onClose={() => setSelectedResult(null)}
+                  mcqMode={user.isPremium ? 'PREMIUM' : 'FREE'}
+              />
+          </div>
+      );
+  }
 
   if (selectedLesson) {
       return (

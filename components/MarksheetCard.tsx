@@ -11,6 +11,8 @@ import { speakText, stopSpeech, getCategorizedVoices, stripHtml } from '../utils
 import { CustomConfirm } from './CustomDialogs'; // Import CustomConfirm
 import { SpeakButton } from './SpeakButton';
 import { renderMathInHtml } from '../utils/mathUtils';
+import { DownloadOptionsModal } from './DownloadOptionsModal';
+import { downloadAsMHTML } from '../utils/downloadUtils';
 
 interface Props {
   result: MCQResult;
@@ -42,6 +44,9 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const [viewingNote, setViewingNote] = useState<any>(null); // New state for HTML Note Modal
   const [comparisonMessage, setComparisonMessage] = useState<string | null>(null);
+
+  // DOWNLOAD MODAL STATE
+  const [downloadModal, setDownloadModal] = useState<{isOpen: boolean, type: 'MARKSHEET' | 'FULL' | null}>({isOpen: false, type: null});
 
   // Comparison Logic (User Req)
   useEffect(() => {
@@ -516,9 +521,18 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   // --- SECTION RENDERERS ---
 
   const generateTeacherRemarks = (percent: number, topic: string) => {
-      if (percent >= 80) return `Excellent work in ${topic}! Your grasp on this topic is strong. Keep practicing to maintain this level.`;
-      if (percent >= 50) return `Good effort in ${topic}. You are doing okay, but a little more revision will help you reach the top level.`;
-      return `You need to focus on ${topic}. Your score is low here. Please read the recommended notes and try again.`;
+      const isHindi = user.board === 'BSEB';
+      if (percent >= 80) return isHindi
+          ? `Shabash! ${topic} me aapne bahut achha kiya hai. Is pakad ko banaye rakhein.`
+          : `Excellent work in ${topic}! Your grasp on this topic is strong. Keep practicing to maintain this level.`;
+
+      if (percent >= 50) return isHindi
+          ? `${topic} me thik hai, par thoda aur sudhar ho sakta hai. Revision karein.`
+          : `Good effort in ${topic}. You are doing okay, but a little more revision will help you reach the top level.`;
+
+      return isHindi
+          ? `${topic} me aapka performance kamzor hai. Kripya notes padhein aur dubara koshish karein.`
+          : `You need to focus on ${topic}. Your score is low here. Please read the recommended notes and try again.`;
   };
 
   const renderWeakAreasSummary = () => {
@@ -1307,13 +1321,13 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                     <Share2 size={20} />
                 </button>
                 <button
-                    onClick={handleDownloadMarksheet}
+                    onClick={() => setDownloadModal({isOpen: true, type: 'MARKSHEET'})}
                     className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors shadow-sm"
                 >
                     <Download size={16} /> Download Marksheet
                 </button>
                 <button
-                    onClick={handleDownloadFullReport}
+                    onClick={() => setDownloadModal({isOpen: true, type: 'FULL'})}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
                 >
                     {isDownloadingAll ? <span className="animate-spin">⏳</span> : <Download size={16} />} Download Full Analysis
@@ -1324,6 +1338,36 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Developed by Nadim Anwar</p>
              </div>
         </div>
+
+        <DownloadOptionsModal
+            isOpen={downloadModal.isOpen}
+            onClose={() => setDownloadModal({isOpen: false, type: null})}
+            title={downloadModal.type === 'MARKSHEET' ? "Download Marksheet" : "Download Full Report"}
+            onDownloadPdf={() => {
+                if (downloadModal.type === 'MARKSHEET') handleDownloadMarksheet();
+                else handleDownloadFullReport();
+            }}
+            onDownloadMhtml={() => {
+                if (downloadModal.type === 'MARKSHEET') {
+                    // Temporarily show the hidden marksheet container if needed, or clone it
+                    // The marksheet is rendered conditionally. We might need to ensure it's in DOM.
+                    // But 'marksheet-style-1' is in render logic. If tab is not OFFICIAL, it might not be there.
+                    // Actually, renderMarksheetStyle1 is called in renderFullReport into a hidden container.
+                    // Let's use the hidden container for Full Report MHTML.
+                    // For Marksheet Only, we should use 'marksheet-style-1' if visible, or re-render it.
+                    // Robust way: Use the 'full-report-print-container' for Full, and ensure 'marksheet-style-1' is available for Marksheet.
+                    // If activeTab !== 'OFFICIAL_MARKSHEET', 'marksheet-style-1' might not be in the visible tree.
+                    // But 'renderFullReport' puts it in a hidden div. So we can grab it from there for Marksheet too?
+                    // 'renderFullReport' calls 'renderMarksheetStyle1'.
+                    // Wait, 'full-report-print-container' is always rendered in the JSX return.
+                    // So we can target elements inside it.
+
+                    downloadAsMHTML('marksheet-style-1', `Marksheet_${user.name}`);
+                } else {
+                    downloadAsMHTML('full-report-print-container', `Full_Analysis_${user.name}`);
+                }
+            }}
+        />
 
         {viewingNote && (
             <div className="fixed inset-0 z-[250] bg-slate-900/90 flex items-center justify-center p-4 animate-in fade-in">

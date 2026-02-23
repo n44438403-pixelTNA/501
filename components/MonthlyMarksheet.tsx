@@ -2,6 +2,9 @@ import React, { useMemo } from 'react';
 import { User, SystemSettings, MCQResult } from '../types';
 import { X, Download, Calendar, Trophy, Target, Award, Crown, Star } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { DownloadOptionsModal } from './DownloadOptionsModal';
+import { downloadAsMHTML } from '../utils/downloadUtils';
 
 interface Props {
   user: User;
@@ -45,15 +48,21 @@ export const MonthlyMarksheet: React.FC<Props> = ({ user, settings, onClose, rep
   const isScholarshipWinner = stats.percentage >= 90 && stats.totalTests > 0;
   const isConsistencyKing = user.streak >= 5;
 
-  const handleDownload = async () => {
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
+
+  const handleDownloadPdf = async () => {
       const element = document.getElementById('monthly-report');
       if (!element) return;
       try {
           const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-          const link = document.createElement('a');
-          link.download = `Monthly_Report_${user.name}_${monthName}.png`;
-          link.href = canvas.toDataURL('image/png');
-          link.click();
+          const imgData = canvas.toDataURL('image/png');
+
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`Monthly_Report_${user.name}.pdf`);
       } catch (e) {
           console.error('Download failed', e);
       }
@@ -77,7 +86,7 @@ export const MonthlyMarksheet: React.FC<Props> = ({ user, settings, onClose, rep
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={handleDownload} className="p-2 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors">
+                    <button onClick={() => setDownloadModalOpen(true)} className="p-2 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors">
                         <Download size={20} />
                     </button>
                     <button onClick={onClose} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
@@ -85,6 +94,14 @@ export const MonthlyMarksheet: React.FC<Props> = ({ user, settings, onClose, rep
                     </button>
                 </div>
             </div>
+
+            <DownloadOptionsModal
+                isOpen={downloadModalOpen}
+                onClose={() => setDownloadModalOpen(false)}
+                title="Download Report"
+                onDownloadPdf={handleDownloadPdf}
+                onDownloadMhtml={() => downloadAsMHTML('monthly-report', `Monthly_Report_${user.name}`)}
+            />
 
             {/* SCROLLABLE CONTENT */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-50">

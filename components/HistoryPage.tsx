@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { LessonContent, User, SystemSettings, UsageHistoryEntry, MCQResult } from '../types';
 import { BookOpen, Calendar, ChevronDown, ChevronUp, Trash2, Search, FileText, CheckCircle2, Lock, AlertCircle, Folder } from 'lucide-react';
 import { LessonView } from './LessonView';
-import { saveUserToLive } from '../firebase';
+import { saveUserToLive, getChapterData } from '../firebase';
 import { CustomAlert, CustomConfirm } from './CustomDialogs';
 import { MarksheetCard } from './MarksheetCard';
 
@@ -20,6 +20,33 @@ export const HistoryPage: React.FC<Props> = ({ user, onUpdateUser, settings }) =
   const [search, setSearch] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<LessonContent | null>(null);
   const [selectedResult, setSelectedResult] = useState<MCQResult | null>(null);
+  const [loadedQuestions, setLoadedQuestions] = useState<any[]>([]);
+
+  useEffect(() => {
+      if (selectedResult) {
+          const loadQs = async () => {
+              const board = user.board || 'CBSE';
+              const cls = selectedResult.classLevel || user.classLevel || '10';
+              const streamKey = (['11','12'].includes(cls) && user.stream) ? `-${user.stream}` : '';
+              const sub = selectedResult.subjectName;
+              const chId = selectedResult.chapterId;
+              const key = `nst_content_${board}_${cls}${streamKey}_${sub}_${chId}`;
+
+              try {
+                  const data = await getChapterData(key);
+                  if (data) {
+                      const qs = data.manualMcqData || data.weeklyTestMcqData || [];
+                      setLoadedQuestions(qs);
+                  }
+              } catch (e) {
+                  console.error("Failed to load history questions", e);
+              }
+          };
+          loadQs();
+      } else {
+          setLoadedQuestions([]);
+      }
+  }, [selectedResult, user.board, user.classLevel, user.stream]);
   
   // USAGE HISTORY STATE (ACTIVITY LOG)
   const [usageLog, setUsageLog] = useState<UsageHistoryEntry[]>([]);
@@ -165,6 +192,7 @@ export const HistoryPage: React.FC<Props> = ({ user, onUpdateUser, settings }) =
                   settings={settings}
                   onClose={() => setSelectedResult(null)}
                   mcqMode={user.isPremium ? 'PREMIUM' : 'FREE'}
+                  questions={loadedQuestions}
               />
           </div>
       );

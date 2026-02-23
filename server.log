@@ -14,3 +14,10 @@ Port 5000 is in use, trying another one...
 4:07:58 AM [vite] (client) hmr update /components/HistoryPage.tsx
 4:47:44 AM [vite] (client) hmr update /components/MarksheetCard.tsx
 4:48:01 AM [vite] (client) hmr update /components/MarksheetCard.tsx
+4:58:59 AM [vite] (client) hmr update /components/MarksheetCard.tsx
+5:01:02 AM [vite] (client) hmr update /components/MonthlyMarksheet.tsx
+5:01:51 AM [vite] (client) hmr update /components/LessonView.tsx
+5:02:59 AM [vite] (client) hmr update /components/StudentDashboard.tsx
+5:03:14 AM [vite] (client) hmr update /components/StudentDashboard.tsx
+5:03:24 AM [vite] (client) hmr update /components/MarksheetCard.tsx
+5:06:40 AM [vite] (client) hmr update /components/HistoryPage.tsx

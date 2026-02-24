@@ -3,9 +3,12 @@ import { ClassLevel, Subject, Stream } from '../types';
 import { getSubjectsList } from '../constants';
 import { Calculator, FlaskConical, Languages, Globe2, BookMarked, History, Binary, TrendingUp, Briefcase, Landmark, Palette, Feather, Home, HeartPulse, Activity, Cpu } from 'lucide-react';
 
+import { Board } from '../types';
+
 interface Props {
   classLevel: ClassLevel;
   stream: Stream | null;
+  board?: Board;
   onSelect: (subject: Subject) => void;
   onBack: () => void;
   hideBack?: boolean; // New prop to hide back button when used in Dashboard
@@ -38,8 +41,8 @@ const SubjectIcon: React.FC<{ icon: string, className?: string }> = ({ icon, cla
     }
 }
 
-export const SubjectSelection: React.FC<Props> = ({ classLevel, stream, onSelect, onBack, hideBack = false }) => {
-  const subjects = getSubjectsList(classLevel, stream);
+export const SubjectSelection: React.FC<Props> = ({ classLevel, stream, board, onSelect, onBack, hideBack = false }) => {
+  const subjects = getSubjectsList(classLevel, stream, board);
 
   return (
     <div className="animate-in fade-in slide-in-from-right-8 duration-500">

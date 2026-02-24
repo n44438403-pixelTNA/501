@@ -30,7 +30,7 @@ export const SyllabusManager: React.FC<Props> = ({ board }) => {
     const [scanning, setScanning] = useState(false);
     const [scanProgress, setScanProgress] = useState(0);
 
-    const subjects = getSubjectsList(selectedClass, selectedStream);
+    const subjects = getSubjectsList(selectedClass, selectedStream, board);
 
     // Initial Load
     useEffect(() => {
@@ -43,7 +43,8 @@ export const SyllabusManager: React.FC<Props> = ({ board }) => {
         setLoading(true);
         try {
             // 1. Fetch Chapter List (Structure)
-            const rawChapters = await fetchChapters(board, selectedClass, selectedStream, subject, 'English');
+            const lang = board === 'BSEB' ? 'Hindi' : 'English';
+            const rawChapters = await fetchChapters(board, selectedClass, selectedStream, subject, lang);
 
             // 2. Initial Map (Status Unknown)
             const statusList: ChapterStatus[] = rawChapters.map(c => ({

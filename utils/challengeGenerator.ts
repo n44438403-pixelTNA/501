@@ -49,7 +49,7 @@ export const generateDailyChallengeQuestions = async (
         targetSubjects.add('Social Science');
     } else {
         // For 11/12, use Stream subjects
-        const subjects = getSubjectsList(classLevel, stream);
+        const subjects = getSubjectsList(classLevel, stream, board);
         subjects.forEach(s => targetSubjects.add(s.name));
     }
 

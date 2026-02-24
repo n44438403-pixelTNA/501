@@ -365,8 +365,10 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                 const uniqueMap = new Map<string, TopicItem>();
                 flattened.forEach(item => {
                     // Use a composite key or just ID if robust
-                    if (!uniqueMap.has(item.id)) {
-                        uniqueMap.set(item.id, item);
+                    const semanticKey = `${item.chapterId}_${item.name.trim().toLowerCase()}`;
+
+                    if (!uniqueMap.has(semanticKey)) {
+                        uniqueMap.set(semanticKey, item);
                     }
                 });
                 const uniqueTopics = Array.from(uniqueMap.values());

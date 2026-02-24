@@ -87,7 +87,7 @@ export const runAutoPilot = async (
 
                 for (const stream of streams) {
                     // Filter subjects based on config
-                    const allSubjects = getSubjectsList(classLevel, stream);
+                    const allSubjects = getSubjectsList(classLevel, stream, board);
                     // If targetSubjects is empty, do ALL
                     const targetSubjects = (config.targetSubjects && config.targetSubjects.length > 0)
                         ? allSubjects.filter(s => config.targetSubjects?.includes(s.name))
@@ -95,7 +95,8 @@ export const runAutoPilot = async (
 
                     for (const subject of targetSubjects) {
                         // Fetch Chapters
-                        const chapters = await fetchChapters(board, classLevel, stream, subject, 'English');
+                        const lang = board === 'BSEB' ? 'Hindi' : 'English';
+                        const chapters = await fetchChapters(board, classLevel, stream, subject, lang);
                         
                         for (const chapter of chapters) {
                              classTasks.push(limit(async () => {
@@ -132,7 +133,7 @@ export const runAutoPilot = async (
                                         stream,
                                         subject,
                                         chapter,
-                                        'English',
+                                        lang,
                                         'NOTES_PREMIUM',
                                         0,
                                         true, 
@@ -230,7 +231,8 @@ export const runCommandMode = async (
         
         // Fetch Chapters
         onLog(`📚 Fetching chapters for ${target.classLevel} ${target.subject.name}...`);
-        const chapters = await fetchChapters(target.board, target.classLevel, target.stream, target.subject, 'English');
+        const lang = target.board === 'BSEB' ? 'Hindi' : 'English';
+        const chapters = await fetchChapters(target.board, target.classLevel, target.stream, target.subject, lang);
         
         if (chapters.length === 0) {
              onLog("❌ No chapters found.");
@@ -274,7 +276,7 @@ export const runCommandMode = async (
                     target.stream,
                     target.subject,
                     chapter,
-                    'English',
+                    lang,
                     'NOTES_PREMIUM', // Target Premium to trigger Dual
                     0,
                     true, 

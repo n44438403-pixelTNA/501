@@ -437,7 +437,7 @@ export const fetchChapters = async (
       if (s) { const p = JSON.parse(s); if(p.aiModel) modelName = p.aiModel; }
   } catch(e){}
 
-  const prompt = `List 15 standard chapters for ${classLevel === 'COMPETITION' ? 'Competitive Exam' : `Class ${classLevel}`} ${stream ? stream : ''} Subject: ${subject.name} (${board}). Return JSON array: [{"title": "...", "description": "..."}].`;
+  const prompt = `List 15 standard chapters for ${classLevel === 'COMPETITION' ? 'Competitive Exam' : `Class ${classLevel}`} ${stream ? stream : ''} Subject: ${subject.name} (${board}). Language: ${language}. Return JSON array: [{"title": "...", "description": "..."}].`;
   try {
     const data = await executeWithRotation(async () => {
         const content = await callGroqApi([

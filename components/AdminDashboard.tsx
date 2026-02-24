@@ -930,13 +930,14 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       }
       setIsAiGenerating(true);
       try {
+          const lang = selBoard === 'BSEB' ? 'Hindi' : 'English';
           const content = await fetchLessonContent(
               selBoard,
               selClass,
               selStream,
               selSubject,
               { id: editingChapterId, title: selChapters.find(c => c.id === editingChapterId)?.title || 'Chapter' },
-              'English',
+              lang,
               'MCQ_SIMPLE',
               0,
               true,
@@ -1784,7 +1785,8 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       setSelSubject(s);
       setIsLoadingChapters(true);
       try {
-          const ch = await fetchChapters(selBoard, selClass, selStream, s, 'English');
+          const lang = selBoard === 'BSEB' ? 'Hindi' : 'English';
+          const ch = await fetchChapters(selBoard, selClass, selStream, s, lang);
           setSelChapters(ch);
           
           if (activeTab === 'BULK_UPLOAD') {
@@ -2512,7 +2514,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           <div className="mb-4">
               <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Select Subject</p>
               <div className="flex flex-wrap gap-2">
-                  {getSubjectsList(selClass, selStream).map(s => {
+                  {getSubjectsList(selClass, selStream, selBoard).map(s => {
                       const isHidden = (localSettings.hiddenSubjects || []).includes(s.id);
                       return (
                       <div key={s.id} className="relative">
@@ -4514,7 +4516,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                       <div className="border-t border-orange-200 pt-4">
                           <p className="font-bold text-orange-700 mb-3">📚 Select Content (Multi-Subject)</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                              {getSubjectsList(testClassLevel, null).map(s => {
+                              {getSubjectsList(testClassLevel, null, selBoard).map(s => {
                                   const isSel = testSelectedSubjects.includes(s.id);
                                   return (
                                       <div key={s.id} className={`p-2 rounded-lg border flex flex-col ${isSel ? 'bg-orange-50 border-orange-300' : 'bg-white border-slate-200'}`}>

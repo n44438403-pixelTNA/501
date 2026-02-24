@@ -115,7 +115,7 @@ export const DEFAULT_SUBJECTS = {
 };
 
 // Helper to get subjects - NOW DYNAMIC
-export const getSubjectsList = (classLevel: string, stream: string | null): Subject[] => {
+export const getSubjectsList = (classLevel: string, stream: string | null, board?: string): Subject[] => {
   const isSenior = ['11', '12'].includes(classLevel);
 
   // 1. Try to load Custom Subjects from LocalStorage
@@ -177,6 +177,33 @@ export const getSubjectsList = (classLevel: string, stream: string | null): Subj
   customKeys.forEach(key => {
       if (pool[key]) selectedSubjects.push(pool[key]);
   });
+
+  // TRANSLATE FOR BSEB (If Board is BSEB)
+  if (board === 'BSEB') {
+      const hindiMap: Record<string, string> = {
+          'Physics': 'भौतिकी',
+          'Chemistry': 'रसायन शास्त्र',
+          'Biology': 'जीव विज्ञान',
+          'Mathematics': 'गणित',
+          'History': 'इतिहास',
+          'Geography': 'भूगोल',
+          'Political Science': 'राजनीति विज्ञान',
+          'Economics': 'अर्थशास्त्र',
+          'Business Studies': 'व्यवसाय अध्ययन',
+          'Accountancy': 'लेखाशास्त्र',
+          'Science': 'विज्ञान',
+          'Social Science': 'सामाजिक विज्ञान',
+          'English': 'अंग्रेजी',
+          'Hindi': 'हिन्दी',
+          'Sanskrit': 'संस्कृत',
+          'Computer Science': 'कंप्यूटर विज्ञान'
+      };
+
+      selectedSubjects = selectedSubjects.map(s => ({
+          ...s,
+          name: hindiMap[s.name] || s.name
+      }));
+  }
 
   return selectedSubjects;
 };

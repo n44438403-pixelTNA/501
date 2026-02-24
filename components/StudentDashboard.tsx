@@ -619,7 +619,8 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       setContentViewStep('CHAPTERS');
       setSelectedChapter(null);
       setLoadingChapters(true);
-      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', subject.id, 'English').then(data => {
+      const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
+      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', subject.id, lang).then(data => {
           setChapters(data);
           setLoadingChapters(false);
       });
@@ -950,13 +951,14 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                       if (type === 'PDF') {
                           setLoadingChapters(true);
                           // We pass null for subject to get all chapters for the class
-                          fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', null, 'English').then(allChapters => {
+                          const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
+                          fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', null, lang).then(allChapters => {
                               const ch = allChapters.find(c => c.id === chapterId);
                               if (ch) {
                                   onTabChange('PDF');
 
                                   // Fix Subject Context
-                                  const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science');
+                                  const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board);
                                   let targetSubject = selectedSubject;
 
                                   if (subjectName) {
@@ -995,13 +997,14 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                   onNavigateContent={(type, chapterId, topicName, subjectName) => {
                       // Navigate to MCQ Player
                       setLoadingChapters(true);
-                      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', null, 'English').then(allChapters => {
+                      const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
+                      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', null, lang).then(allChapters => {
                           const ch = allChapters.find(c => c.id === chapterId);
                           if (ch) {
                               onTabChange('MCQ');
 
                               // Fix Subject Context
-                              const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science');
+                              const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board);
                               let targetSubject = selectedSubject;
 
                               if (subjectName) {
@@ -1028,7 +1031,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       if (activeTab === 'COURSES') {
           // If viewing a specific content type (from drilled down), show it
           // Note: Clicking a subject switches tab to VIDEO/PDF/MCQ, so COURSES just shows the Hub.
-          const visibleSubjects = getSubjectsList(user.classLevel || '10', user.stream || null)
+          const visibleSubjects = getSubjectsList(user.classLevel || '10', user.stream || null, user.board)
                                     .filter(s => !(settings?.hiddenSubjects || []).includes(s.id));
 
           return (
@@ -1822,11 +1825,12 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                           setTopicFilter(topicName);
                           if (type === 'PDF') {
                               setLoadingChapters(true);
-                              fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', null, 'English').then(allChapters => {
+                              const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
+                              fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', null, lang).then(allChapters => {
                                   const ch = allChapters.find(c => c.id === chapterId);
                                   if (ch) {
                                       onTabChange('PDF');
-                                      const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science');
+                                      const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board);
                                       let targetSubject = selectedSubject;
                                       if (subjectName) { targetSubject = subjects.find(s => s.name === subjectName) || subjects[0]; } else if (!targetSubject) { targetSubject = subjects[0]; }
                                       setSelectedSubject(targetSubject);

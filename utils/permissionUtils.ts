@@ -55,38 +55,27 @@ export const checkFeatureAccess = (
 
     // FEED CONTROL (Priority if visible is explicitly TRUE or undefined (default true for new config))
     // Note: If dynamicConfig exists, we check visibility. If it doesn't exist, we fall through.
-    const isFeedControl = dynamicConfig && dynamicConfig.visible !== false;
 
-    if (isFeedControl) {
+    // NOTE: Removed Matrix fallback. Dynamic Config is the single source of truth if it exists.
+    // If dynamicConfig doesn't exist, we fall back to Static Registry defaults.
+
+    if (dynamicConfig) {
+        // Use Granular Dynamic Config
         if (dynamicConfig.allowedTiers && dynamicConfig.allowedTiers.length > 0) {
-            // Use Granular Dynamic Config
             allowedTiers = dynamicConfig.allowedTiers;
         } else if (dynamicConfig.minTier) {
-            // Fallback to Legacy Dynamic MinTier
+            // Fallback to Legacy Dynamic MinTier (Migration support)
             if (dynamicConfig.minTier === 'ULTRA') allowedTiers = ['ULTRA'];
             else if (dynamicConfig.minTier === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
             else allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
         } else {
-             // Fallback to Static Registry if Dynamic Config exists but has no restrictions set (open)
-             // OR check static registry first?
-             if (staticConfig?.requiredSubscription) {
-                if (staticConfig.requiredSubscription === 'ULTRA') allowedTiers = ['ULTRA'];
-                else if (staticConfig.requiredSubscription === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
-                else allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-             } else {
-                allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-             }
-        }
-    }
-    // MATRIX CONTROL (Fallback if visible is FALSE)
-    else if (settings.tierPermissions) {
-        if (settings.tierPermissions.FREE?.includes(featureId)) allowedTiers.push('FREE');
-        if (settings.tierPermissions.BASIC?.includes(featureId)) allowedTiers.push('BASIC');
-        if (settings.tierPermissions.ULTRA?.includes(featureId)) allowedTiers.push('ULTRA');
-
-        // If not found in matrix, fall back to static registry as safety net?
-        // Or assume strictly restricted?
-        if (allowedTiers.length === 0) {
+             // If dynamic config exists but no tiers specified, assume strict or open?
+             // Usually if config is saved, tiers are populated.
+             // If empty, it means "No Access" unless configured otherwise.
+             // But existing behavior might have been "Open". Let's match previous behavior logic:
+             // "Fallback to Static Registry if Dynamic Config exists but has no restrictions set"
+             // But usually dynamic config *should* have restrictions.
+             // Let's rely on what's in the object. If allowedTiers is empty/undefined, we might check static.
              if (staticConfig?.requiredSubscription) {
                 if (staticConfig.requiredSubscription === 'ULTRA') allowedTiers = ['ULTRA'];
                 else if (staticConfig.requiredSubscription === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
@@ -96,7 +85,7 @@ export const checkFeatureAccess = (
              }
         }
     } else {
-        // No Dynamic Config, No Matrix -> Use Static Registry
+        // No Dynamic Config -> Use Static Registry Defaults
         if (staticConfig?.requiredSubscription) {
             if (staticConfig.requiredSubscription === 'ULTRA') allowedTiers = ['ULTRA'];
             else if (staticConfig.requiredSubscription === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];

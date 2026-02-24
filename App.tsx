@@ -32,6 +32,7 @@ import { DailyChallengePopup } from './components/DailyChallengePopup';
 import { UpdatePopup } from './components/UpdatePopup'; // NEW
 import { ErrorBoundary } from './components/ErrorBoundary'; // NEW
 import { generateDailyChallengeQuestions } from './utils/challengeGenerator';
+import { checkFeatureAccess } from './utils/permissionUtils';
 import { BrainCircuit, Globe, LogOut, LayoutDashboard, BookOpen, Headphones, HelpCircle, Newspaper, KeyRound, Lock, X, ShieldCheck, FileText, UserPlus, EyeOff, WifiOff } from 'lucide-react';
 import { SUPPORT_EMAIL, APP_VERSION } from './constants';
 import { StudentTab, PendingReward, MCQResult, SubscriptionHistoryEntry } from './types';
@@ -1503,96 +1504,90 @@ const App: React.FC = () => {
     else if (state.settings.isGlobalFreeMode) {
         hasAccess = true;
     }
-    // 3. Cost is 0 (Free Content)
-    else if (cost === 0) {
-        hasAccess = true;
-    }
-    // 3. Tier/Subscription Permission Check
+    // 3. Feature Access Page Control (Unified Logic)
     else {
-        // DOUBLE CHECK: Even if isPremium is true, validate date
-        const isSubValid = state.user.isPremium && state.user.subscriptionEndDate && new Date(state.user.subscriptionEndDate) > new Date();
+        // Map ContentType to FeatureID
+        let featureId = '';
+        if (type === 'VIDEO_LECTURE') featureId = 'VIDEO_ACCESS';
+        else if (type.startsWith('NOTES') || type.startsWith('PDF')) featureId = 'NOTES_ACCESS';
+        else if (type === 'MCQ_PRACTICE' || type === 'MCQ_SIMPLE') featureId = 'MCQ_PRACTICE';
+        else if (type === 'AUDIO_SERIES' || type.startsWith('AUDIO')) featureId = 'AUDIO_LIBRARY';
+        else if (type === 'AI_CHAT') featureId = 'AI_CHAT';
+        else if (type === 'DEEP_DIVE') featureId = 'DEEP_DIVE';
+        else if (type === 'AUDIO_SLIDE') featureId = 'AUDIO_SLIDE';
 
-        // Auto-Downgrade in memory if invalid but flagged premium (Self-Healing)
-        if (state.user.isPremium && !isSubValid) {
-             console.warn("Detected Expired Premium during Access Check. Treating as FREE.");
-        }
+        // Get Access Result
+        const accessResult = checkFeatureAccess(featureId, state.user, state.settings);
 
-        const userLevel = isSubValid ? (state.user.subscriptionLevel || 'BASIC') : 'FREE';
-        const perms = state.settings.tierPermissions?.[userLevel];
+        // Determine Effective Cost
+        // If onlineContent has a specific price (cost > 0), use it.
+        // If not, use the global cost from Feature Access Page.
+        let finalCost = cost;
+        if (finalCost === 0 && accessResult.cost > 0) finalCost = accessResult.cost;
 
-        if (perms && perms.length > 0) {
-             if (perms.includes('ALL') || perms.includes(type)) {
-                 hasAccess = true;
-             }
-             // MAP GROUP PERMISSIONS (From Admin Power Manager)
-             if (type.startsWith('PDF') && perms.includes('NOTES_ACCESS')) hasAccess = true;
-             if (type.startsWith('NOTES') && perms.includes('NOTES_ACCESS')) hasAccess = true;
-             if (type === 'VIDEO_LECTURE' && perms.includes('VIDEO_ACCESS')) hasAccess = true;
-             if (type.startsWith('AUDIO') && perms.includes('AUDIO_ACCESS')) hasAccess = true;
-             if ((type === 'MCQ_SIMPLE' || type === 'MCQ_PRACTICE') && perms.includes('MCQ_PRACTICE')) hasAccess = true;
-             if (type === 'MCQ_TEST' && perms.includes('MCQ_TEST')) hasAccess = true;
-             if (type === 'AI_CHAT' && perms.includes('AI_CHAT')) hasAccess = true;
-        } else if (isSubValid) {
-            // Fallback Legacy Logic
-            const legacyLevel = state.user.subscriptionLevel || 'BASIC';
-            if (legacyLevel === 'ULTRA') {
+        if (accessResult.hasAccess) {
+            // Tier Allows Access.
+            // If finalCost is 0, they get it for free.
+            if (finalCost === 0) {
                 hasAccess = true;
-            } else if (legacyLevel === 'BASIC') {
-                if (['MCQ_ANALYSIS', 'MCQ_SIMPLE', 'NOTES_HTML_FREE', 'NOTES_HTML_PREMIUM', 'NOTES_PREMIUM', 'NOTES_SIMPLE'].includes(type)) {
-                    hasAccess = true;
-                }
+            }
+            // If finalCost > 0, they still need to pay (Pay-Per-View even for Subs? Usually not unless explicit override).
+            // BUT `cost` (from onlineContent) might be an explicit price override.
+            // If `accessResult.hasAccess` is true, it usually means "Unlimited Access" to the Feature.
+            // If we want to charge Credits even for allowed tiers, we would need a separate "Per Use Cost" setting?
+            // Currently `checkFeatureAccess` returns `cost` which implies cost if NOT allowed?
+            // Or `creditCost` in config is for everyone?
+            // Feature Access Page has "Allowed Tiers" and "Credit Cost".
+            // Logic: If in Allowed Tier -> Free (Cost = 0). If not -> Pay Credit Cost.
+            // So if `hasAccess` is true, we should ignore `accessResult.cost`.
+            // But we should respect `onlineContent.price` (`cost`) if it was explicitly set to non-zero (Specific Premium Item).
+
+            else if (cost > 0) {
+                // Specific content price overrides Subscription
+                // Check if we should charge.
+            } else {
+                hasAccess = true; // Default to free if allowed by tier and no specific price
             }
         }
-    }
 
-    // 4. Credit Deduction (Fallback)
-    if (!hasAccess) {
-        if (state.user.credits >= cost) {
-
-            // NEW: CONFIRMATION CHECK
-            if (!state.user.isAutoDeductEnabled && !forcePay) {
-                 setCreditModal({
-                     isOpen: true,
-                     cost,
-                     title: "Unlock AI Content",
-                     onConfirm: (auto) => {
-                         if (auto) {
-                             const u = { ...state.user!, isAutoDeductEnabled: true };
-                             saveUserToLive(u);
-                             setState(p => ({...p, user: u}));
-                         }
-                         setCreditModal(null);
-                         handleContentGeneration(type, count, true);
-                     }
-                 });
-                 return;
-            }
-
-            // Deduct Credits
-            const updatedUser = { ...state.user, credits: state.user.credits - cost };
-
-            if (!state.originalAdmin) {
-                localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
-
-                // Sync to LocalStorage list
-                const storedUsers = localStorage.getItem('nst_users');
-                if (storedUsers) {
-                    const allUsers = JSON.parse(storedUsers);
-                    const idx = allUsers.findIndex((u:User) => u.id === updatedUser.id);
-                    if (idx !== -1) {
-                        allUsers[idx] = updatedUser;
-                        localStorage.setItem('nst_users', JSON.stringify(allUsers));
+        if (!hasAccess) {
+            if (finalCost > 0) {
+                // Allow Purchase
+                if (state.user.credits >= finalCost) {
+                    if (!state.user.isAutoDeductEnabled && !forcePay) {
+                         setCreditModal({
+                             isOpen: true,
+                             cost: finalCost,
+                             title: "Unlock Content",
+                             onConfirm: (auto) => {
+                                 if (auto) {
+                                     const u = { ...state.user!, isAutoDeductEnabled: true };
+                                     saveUserToLive(u);
+                                     setState(p => ({...p, user: u}));
+                                 }
+                                 setCreditModal(null);
+                                 handleContentGeneration(type, count, true);
+                             }
+                         });
+                         return;
                     }
-                }
-                // Sync to Live
-                saveUserToLive(updatedUser);
-            }
 
-            setState(prev => ({...prev, user: updatedUser}));
-            hasAccess = true; // Access Granted via Credits
-        } else {
-            setAlertConfig({isOpen: true, message: `Insufficient Credits! This content costs ${cost} credits.\n\nTip: Upgrade to Subscription to access unlimited content.`});
-            return;
+                    const updatedUser = { ...state.user, credits: state.user.credits - finalCost };
+                    if (!state.originalAdmin) {
+                        localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
+                        saveUserToLive(updatedUser);
+                    }
+                    setState(prev => ({...prev, user: updatedUser}));
+                    hasAccess = true;
+                } else {
+                    setAlertConfig({isOpen: true, message: `Insufficient Credits! This content costs ${finalCost} credits.`});
+                    return;
+                }
+            } else {
+                // LOCKED (Cost 0 + No Tier Access)
+                setAlertConfig({isOpen: true, message: "🔒 This feature is locked for your current plan. Please upgrade to access."});
+                return;
+            }
         }
     }
 

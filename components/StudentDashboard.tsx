@@ -1365,10 +1365,11 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
                       {/* Video Section */}
                       {settings?.contentVisibility?.VIDEO !== false && (
-                          <div className="bg-gradient-to-br from-red-50 to-rose-100 p-6 rounded-3xl border border-red-200 shadow-sm">
+                          <div className={`bg-gradient-to-br from-red-50 to-rose-100 p-6 rounded-3xl border border-red-200 shadow-sm ${!hasPermission('VIDEO_ACCESS') ? 'opacity-80' : ''}`}>
                               <h3 className="font-black text-red-900 flex items-center gap-2 mb-4 text-lg">
                                   <div className="p-2 bg-white rounded-full shadow-sm text-red-600"><Youtube size={20} /></div>
                                   Video Lectures
+                                  {!hasPermission('VIDEO_ACCESS') && <Lock size={16} className="text-red-500 ml-auto" />}
                               </h3>
                               <div className="grid grid-cols-2 gap-3">
                                   {visibleSubjects.map(s => (
@@ -1383,10 +1384,11 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
                       {/* Notes Section */}
                       {settings?.contentVisibility?.PDF !== false && (
-                          <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-3xl border border-blue-200 shadow-sm">
+                          <div className={`bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-3xl border border-blue-200 shadow-sm ${!hasPermission('NOTES_ACCESS') ? 'opacity-80' : ''}`}>
                               <h3 className="font-black text-blue-900 flex items-center gap-2 mb-4 text-lg">
                                   <div className="p-2 bg-white rounded-full shadow-sm text-blue-600"><FileText size={20} /></div>
                                   Notes Library
+                                  {!hasPermission('NOTES_ACCESS') && <Lock size={16} className="text-blue-500 ml-auto" />}
                               </h3>
                               <div className="grid grid-cols-2 gap-3">
                                   {visibleSubjects.map(s => (
@@ -1401,11 +1403,12 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
                       {/* MCQ Section */}
                       {settings?.contentVisibility?.MCQ !== false && (
-                          <div className={`bg-gradient-to-br from-purple-50 to-fuchsia-100 p-6 rounded-3xl border border-purple-200 shadow-sm relative overflow-hidden`}>
+                          <div className={`bg-gradient-to-br from-purple-50 to-fuchsia-100 p-6 rounded-3xl border border-purple-200 shadow-sm relative overflow-hidden ${!hasPermission('MCQ_PRACTICE') ? 'opacity-80' : ''}`}>
                               <div className="flex justify-between items-center mb-4">
                                   <h3 className="font-black text-purple-900 flex items-center gap-2 text-lg">
                                       <div className="p-2 bg-white rounded-full shadow-sm text-purple-600"><CheckSquare size={20} /></div>
                                       MCQ Practice
+                                      {!hasPermission('MCQ_PRACTICE') && <Lock size={16} className="text-purple-500 ml-auto" />}
                                   </h3>
                               </div>
                               <div className="grid grid-cols-2 gap-3">
@@ -1427,10 +1430,13 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
                       {/* Audio/Podcast Section */}
                       {settings?.contentVisibility?.AUDIO !== false && (
-                          <div className={`bg-gradient-to-r from-slate-900 to-slate-800 p-4 rounded-2xl shadow-lg border border-slate-700 relative overflow-hidden`}>
+                          <div className={`bg-gradient-to-r from-slate-900 to-slate-800 p-4 rounded-2xl shadow-lg border border-slate-700 relative overflow-hidden ${!hasPermission('AUDIO_LIBRARY') ? 'opacity-80' : ''}`}>
                               <div className="flex justify-between items-center mb-2 relative z-10">
-                                  <h3 className="font-bold text-white flex items-center gap-2"><Headphones className="text-pink-500" /> Audio Library</h3>
-                                  <span className="text-[10px] font-black bg-pink-600 text-white px-2 py-0.5 rounded-full">NEW</span>
+                                  <h3 className="font-bold text-white flex items-center gap-2">
+                                      <Headphones className="text-pink-500" /> Audio Library
+                                      {!hasPermission('AUDIO_LIBRARY') && <Lock size={16} className="text-pink-500 ml-auto" />}
+                                  </h3>
+                                  {!hasPermission('AUDIO_LIBRARY') ? null : <span className="text-[10px] font-black bg-pink-600 text-white px-2 py-0.5 rounded-full">NEW</span>}
                               </div>
                               <p className="text-xs text-slate-400 mb-3 relative z-10">Listen to high-quality audio lectures and podcasts.</p>
                               <div className="grid grid-cols-2 gap-2 relative z-10">

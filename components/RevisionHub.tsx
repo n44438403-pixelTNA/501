@@ -72,6 +72,23 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toDateString();
 
+    const pendingNotes = useMemo(() => {
+        return topics.filter(t => t.nextRevision && new Date(t.nextRevision) <= now);
+    }, [topics]);
+
+    const pendingMcqs = useMemo(() => {
+        return topics.filter(t => t.mcqDueDate && new Date(t.mcqDueDate) <= now);
+    }, [topics]);
+
+    const handleGenerateAiPlan = () => {
+        setAlertConfig({
+            isOpen: true,
+            type: 'INFO',
+            title: 'AI Study Plan',
+            message: 'AI Personalized Plans are coming soon! Stay tuned.'
+        });
+    };
+
     // Memoize History Processing to prevent Infinite Loops / Auto Refresh
     const processedTopics = useMemo(() => {
         try {

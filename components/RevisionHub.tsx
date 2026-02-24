@@ -566,6 +566,16 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
         }
     };
 
+    // NEW: Handle AI Plan Generation (Placeholder for now)
+    const handleGenerateAiPlan = () => {
+        setAlertConfig({
+            isOpen: true,
+            type: 'INFO',
+            title: 'AI Study Plan',
+            message: 'AI Personalized Plans are coming soon! Stay tuned.'
+        });
+    };
+
     // SUBSCRIPTION LOGIC
     const isFreeUser = user.subscriptionTier === 'FREE';
     // For Hub Access logic:

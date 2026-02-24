@@ -16,6 +16,7 @@ export interface Feature {
     path?: string; // Navigation path for Student Dashboard
     requiredPermission?: string; // Admin Permission ID
     requiresSuperAdmin?: boolean; // Only for Role === 'ADMIN'
+    isDummy?: boolean; // NEW: Explicitly mark as Dummy/Placeholder
 }
 
 export const ALL_FEATURES: Feature[] = [
@@ -68,9 +69,10 @@ export const ALL_FEATURES: Feature[] = [
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',
         adminVisible: false,
-        path: 'REVISION', // Deep link logic to be handled
+        path: 'REVISION',
         icon: 'AlertCircle',
-        description: 'Focus instantly on your weakest areas.'
+        description: 'Focus instantly on your weakest areas.',
+        isDummy: true // Integrated in Revision Hub
     },
     {
         id: 'CONTINUE_LAST',
@@ -78,9 +80,10 @@ export const ALL_FEATURES: Feature[] = [
         group: 'CORE',
         surfaceLevel: 1,
         adminVisible: false,
-        path: 'CONTINUE', // Special handler
+        path: 'CONTINUE',
         icon: 'PlayCircle',
-        description: 'Resume exactly where you left off.'
+        description: 'Resume exactly where you left off.',
+        isDummy: true // Not implemented
     },
 
     // --- SECONDARY (Layer 2: Tools & Exploration) ---
@@ -101,9 +104,10 @@ export const ALL_FEATURES: Feature[] = [
         group: 'TOOLS',
         surfaceLevel: 2,
         adminVisible: false,
-        path: 'TOOLS', // Expandable section logic
+        path: 'TOOLS',
         icon: 'Wrench',
-        description: 'Calculators, converters, and more.'
+        description: 'Calculators, converters, and more.',
+        isDummy: true // Placeholder
     },
     {
         id: 'GAMES',
@@ -171,9 +175,10 @@ export const ALL_FEATURES: Feature[] = [
         label: 'Logs & Debug',
         group: 'ADVANCED',
         surfaceLevel: 3,
-        adminVisible: false, // Visible only in dev/admin mode usually
+        adminVisible: false,
         path: 'LOGS',
-        icon: 'Terminal'
+        icon: 'Terminal',
+        isDummy: true
     },
 
     // --- REVISION SUB-FEATURES (Internal to Revision Hub) ---
@@ -184,7 +189,8 @@ export const ALL_FEATURES: Feature[] = [
         surfaceLevel: 2,
         requiredSubscription: 'ULTRA',
         adminVisible: false,
-        description: 'Generate AI-based study plans.'
+        description: 'Generate AI-based study plans.',
+        isDummy: true // Integrated Logic
     },
     {
         id: 'REVISION_MISTAKES',
@@ -192,7 +198,8 @@ export const ALL_FEATURES: Feature[] = [
         group: 'REVISION',
         surfaceLevel: 2,
         adminVisible: false,
-        description: 'Review your past mistakes.'
+        description: 'Review your past mistakes.',
+        isDummy: true // Integrated Logic
     },
 
     // --- AI SUB-FEATURES ---
@@ -344,7 +351,7 @@ export const ALL_FEATURES: Feature[] = [
         adminVisible: true,
         adminTab: 'DEMAND',
         requiredPermission: 'VIEW_DEMANDS',
-        icon: 'Megaphone', // Reused icon, distinct label
+        icon: 'Megaphone',
         color: 'orange'
     },
     {
@@ -661,7 +668,8 @@ export const ALL_FEATURES: Feature[] = [
         adminTab: 'DEPLOY',
         requiresSuperAdmin: true,
         icon: 'Cloud',
-        color: 'sky'
+        color: 'sky',
+        isDummy: true
     },
     {
         id: 'ADMIN_DATABASE',

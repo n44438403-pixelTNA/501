@@ -898,37 +898,64 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                 {/* MAIN ACTION BUTTONS (RESTORED OLD LAYOUT) */}
                 <DashboardSectionWrapper id="section_main_actions" label="Main Actions" settings={settings} isLayoutEditing={isLayoutEditing} onToggleVisibility={toggleLayoutVisibility}>
                     <div className="grid grid-cols-2 gap-4">
-                        <button
-                            onClick={() => { onTabChange('COURSES'); setContentViewStep('SUBJECTS'); }}
-                            className="col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl shadow-lg shadow-blue-200 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all relative overflow-hidden h-32"
-                        >
-                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <Book size={32} className="text-white mb-1" />
-                            <span className="font-black text-white text-lg tracking-wide uppercase">My Courses</span>
-                        </button>
+                        {(() => {
+                             const access = checkFeatureAccess('START_STUDY', user, settings || {});
+                             const isLocked = !access.hasAccess;
+                             return (
+                                <button
+                                    onClick={() => {
+                                        if (isLocked) { showAlert("🔒 This feature is locked by Admin.", "ERROR"); return; }
+                                        onTabChange('COURSES'); setContentViewStep('SUBJECTS');
+                                    }}
+                                    className={`col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl shadow-lg shadow-blue-200 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all relative overflow-hidden h-32 ${isLocked ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                                >
+                                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <Book size={32} className="text-white mb-1" />
+                                    <span className="font-black text-white text-lg tracking-wide uppercase">My Courses</span>
+                                    {isLocked && <div className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"><Lock size={16} /></div>}
+                                </button>
+                             );
+                        })()}
 
-                        <button
-                            onClick={() => {
-                                onTabChange('ANALYTICS');
-                            }}
-                            className={`bg-white border-2 border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-blue-200 h-32 relative overflow-hidden`}
-                        >
-                            <BarChart3 size={28} className="text-blue-600 mb-1" />
-                            <span className="font-black text-slate-700 text-sm tracking-wide uppercase text-center">My Analysis</span>
-                        </button>
+                        {(() => {
+                            const access = checkFeatureAccess('MY_ANALYSIS', user, settings || {});
+                            const isLocked = !access.hasAccess;
+                            return (
+                                <button
+                                    onClick={() => {
+                                        if (isLocked) { showAlert("🔒 Analysis is locked by Admin.", "ERROR"); return; }
+                                        onTabChange('ANALYTICS');
+                                    }}
+                                    className={`bg-white border-2 border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-blue-200 h-32 relative overflow-hidden ${isLocked ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                                >
+                                    <BarChart3 size={28} className="text-blue-600 mb-1" />
+                                    <span className="font-black text-slate-700 text-sm tracking-wide uppercase text-center">My Analysis</span>
+                                    {isLocked && <div className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"><Lock size={12} /></div>}
+                                </button>
+                            );
+                        })()}
 
-                        <button
-                            onClick={() => {
-                                onTabChange('UNIVERSAL_VIDEO');
-                            }}
-                            className={`bg-white border-2 border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-rose-200 h-32 relative overflow-hidden`}
-                        >
-                            <div className="relative">
-                                <Video size={28} className="text-rose-600 mb-1" />
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-white"></div>
-                            </div>
-                            <span className="font-black text-slate-700 text-sm tracking-wide uppercase text-center">Universal Video</span>
-                        </button>
+                        {(() => {
+                            // Using VIDEO_ACCESS as proxy for Universal Video as it's the closest content type
+                            const access = checkFeatureAccess('VIDEO_ACCESS', user, settings || {});
+                            const isLocked = !access.hasAccess;
+                            return (
+                                <button
+                                    onClick={() => {
+                                        if (isLocked) { showAlert("🔒 Video content is locked by Admin.", "ERROR"); return; }
+                                        onTabChange('UNIVERSAL_VIDEO');
+                                    }}
+                                    className={`bg-white border-2 border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-rose-200 h-32 relative overflow-hidden ${isLocked ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                                >
+                                    <div className="relative">
+                                        <Video size={28} className="text-rose-600 mb-1" />
+                                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-white"></div>
+                                    </div>
+                                    <span className="font-black text-slate-700 text-sm tracking-wide uppercase text-center">Universal Video</span>
+                                    {isLocked && <div className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"><Lock size={12} /></div>}
+                                </button>
+                            );
+                        })()}
                     </div>
                 </DashboardSectionWrapper>
               </div>

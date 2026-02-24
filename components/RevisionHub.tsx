@@ -28,12 +28,6 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     const userLevel = user.level || 1;
     const levelConfig = settings?.levelConfig || LEVEL_UP_CONFIG;
     // Find if REVISION_HUB is unlocked
-    // In DEFAULT_CONFIG, REVISION_HUB is at level 20. But we respect dynamic settings.
-    // We check if any level <= userLevel unlocks 'REVISION_HUB'
-    // Actually, simpler: check if the feature is in the list of unlocked features for current level logic
-    // But since logic is "Level X unlocks Feature Y", we check if userLevel >= Level X where Feature Y is.
-    // Let's assume standard config for now or minimal level 1.
-    // User requested "level system se itna sara chijh control hoga".
     const requiredLevel = levelConfig.find(l => l.featureId === 'REVISION_HUB')?.level || 1;
     const isLevelLocked = settings?.isLevelSystemEnabled && userLevel < requiredLevel;
 
@@ -64,9 +58,19 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     const [showTodayMcqSession, setShowTodayMcqSession] = useState(false);
     const [sessionResult, setSessionResult] = useState<any>(null); // For Marksheet
     const [showCompletedHistory, setShowCompletedHistory] = useState(false);
+    const [showYesterdayHistory, setShowYesterdayHistory] = useState(false);
 
     // Custom Alert State
     const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, type: 'SUCCESS'|'ERROR'|'INFO', title?: string, message: string}>({isOpen: false, type: 'INFO', message: ''});
+
+    // Calculate Today's Counts (Midnight Comparison)
+    const now = new Date();
+    const todayStr = now.toDateString();
+
+    // Calculate Yesterday's Date
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
 
     // Memoize History Processing to prevent Infinite Loops / Auto Refresh
     const processedTopics = useMemo(() => {
@@ -421,100 +425,6 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
         return cleanName || topicName;
     };
 
-    // Calculate Today's Counts (Midnight Comparison)
-    const now = new Date();
-    const todayStr = now.toDateString();
-
-    // AUTO AI PLAN (Simulated Logic based on Weakest Topics)
-    const handleGenerateAiPlan = () => {
-        const weakTopics = topics.filter(t => t.status === 'WEAK').sort((a, b) => a.score - b.score).slice(0, 5);
-        if (weakTopics.length === 0) {
-            setAlertConfig({isOpen: true, type: 'INFO', title: 'You are doing great!', message: 'No critical weak topics found to schedule.'});
-            return;
-        }
-
-        let planMessage = "📅 **Recommended Study Plan**\n\n";
-        weakTopics.forEach((t, i) => {
-            planMessage += `${i+1}. **${t.name}** (${t.subjectName})\n   - Review Notes (15 mins)\n   - Practice 10 MCQs\n\n`;
-        });
-
-        setAlertConfig({isOpen: true, type: 'INFO', title: 'AI Study Plan Generated', message: planMessage});
-    };
-
-    const handleDownloadHubData = () => {
-        // Cost 10 (Optional: Remove cost if requested "free pdf")
-        // User said "download ye pdf me hoga ab revision hub me bhi pdf me download hoga".
-        // Didn't explicitly say remove cost, but often these are free. I'll keep logic but maybe just warn.
-
-        // Generate PDF using jsPDF
-        const pdf = new jsPDF();
-
-        // Header
-        pdf.setFillColor(240, 240, 240);
-        pdf.rect(0, 0, 210, 40, 'F');
-        pdf.setTextColor(40, 40, 40);
-        pdf.setFontSize(22);
-        pdf.text("Revision Hub Report", 14, 20);
-        pdf.setFontSize(10);
-        pdf.text(`Student: ${user.name} | Date: ${new Date().toLocaleDateString()}`, 14, 30);
-        pdf.text(`7-Day Performance Summary`, 14, 35);
-
-        let y = 50;
-
-        // Table Header
-        pdf.setFillColor(230, 230, 250);
-        pdf.rect(14, y-5, 180, 8, 'F');
-        pdf.setFontSize(10);
-        pdf.setTextColor(0, 0, 0);
-        pdf.font = 'helvetica';
-        pdf.setFont('helvetica', 'bold');
-
-        pdf.text("Topic", 16, y);
-        pdf.text("Status", 110, y);
-        pdf.text("Score", 140, y);
-        pdf.text("Due", 170, y);
-
-        y += 10;
-        pdf.setFont('helvetica', 'normal');
-
-        topics.forEach((t) => {
-            if (y > 280) {
-                pdf.addPage();
-                y = 20;
-            }
-            const name = t.name.length > 50 ? t.name.substring(0, 47) + '...' : t.name;
-            pdf.text(name, 16, y);
-
-            // Color coding status
-            if (t.status === 'WEAK') pdf.setTextColor(200, 0, 0);
-            else if (t.status === 'STRONG' || t.status === 'EXCELLENT') pdf.setTextColor(0, 150, 0);
-            else pdf.setTextColor(0, 0, 0);
-
-            pdf.text(t.status, 110, y);
-            pdf.setTextColor(0, 0, 0);
-
-            pdf.text(`${Math.round(t.score)}%`, 140, y);
-            const date = new Date(t.nextRevision || t.mcqDueDate || t.lastAttempt).toLocaleDateString();
-            pdf.text(date, 170, y);
-
-            // Divider
-            pdf.setDrawColor(240, 240, 240);
-            pdf.line(14, y+2, 194, y+2);
-
-            y += 8;
-        });
-
-        // Footer
-        pdf.setFontSize(8);
-        pdf.setTextColor(150);
-        pdf.text("Generated by NST AI Assistant", 105, 290, { align: 'center' });
-
-        pdf.save(`RevisionHub_${user.name}.pdf`);
-    };
-
-    const pendingNotes = topics.filter(t => t.nextRevision && new Date(t.nextRevision) <= now);
-    const pendingMcqs = topics.filter(t => t.mcqDueDate && new Date(t.mcqDueDate) <= now);
-
     const completedToday = useMemo(() => {
         const rawList = (user.mcqHistory || [])
             .filter(h => new Date(h.date).toDateString() === todayStr && (h as any).type === 'REVISION_NOTES')
@@ -547,6 +457,37 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
         }
         return uniqueCompleted;
     }, [user.mcqHistory, todayStr]);
+
+    const completedYesterday = useMemo(() => {
+        const rawList = (user.mcqHistory || [])
+            .filter(h => new Date(h.date).toDateString() === yesterdayStr && (h as any).type === 'REVISION_NOTES')
+            .map(h => {
+                let name = h.chapterTitle || 'Topic';
+                if (h.ultraAnalysisReport) {
+                    try {
+                        const parsed = JSON.parse(h.ultraAnalysisReport);
+                        if (parsed.topics && parsed.topics.length > 0) name = parsed.topics[0].name;
+                    } catch(e) {}
+                }
+                return {
+                    name,
+                    chapterId: h.chapterId,
+                    chapterTitle: h.chapterTitle,
+                    subjectName: h.subjectName
+                };
+            });
+
+        const uniqueCompleted = [];
+        const seen = new Set();
+        for (const item of rawList) {
+            const key = `${item.chapterId}_${item.name}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                uniqueCompleted.push(item);
+            }
+        }
+        return uniqueCompleted;
+    }, [user.mcqHistory, yesterdayStr]);
 
     // WEEKLY BREAKDOWN GROUPING (New Request)
     const getWeeklyBreakdown = (filteredTopics: TopicItem[]) => {
@@ -1027,38 +968,6 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                                         <h4 className="text-lg font-black text-slate-800 mb-2">Practice List</h4>
                                         <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                                             {pendingMcqs.map((t, i) => {
-                                                // Check for missing content logic
-                                                // If we have access to metadata (e.g. mcqCount), we use it.
-                                                // Since metadata is loaded in `expandTopics`, we need to ensure `t` has it.
-                                                // `expandTopics` populates `notesCount` but not `mcqCount` explicitly yet.
-                                                // However, we can try to guess or use a fallback.
-                                                // For now, let's assume if it's in the list, it's valid, unless flagged.
-                                                // BUT, the requirement is "jo topic ka notes mcq nahi hai... list ban jayega coming soon".
-                                                // This implies we DO know.
-                                                // Let's use `t.notesCount` as a proxy for "has content" if applicable,
-                                                // or strictly check if we added an `mcqCount` to `TopicItem`. We didn't yet.
-                                                // To solve this properly without a schema migration, we can rely on `notesCount` (often they go together)
-                                                // OR, we assume "Coming Soon" applies if we detect it empty during session and flag it?
-                                                // No, needs to be in list.
-
-                                                // WORKAROUND: We will report missing content when they TRY to start the session if it's empty.
-                                                // But for the visual badge, we need data.
-                                                // Let's assume we can't know for sure without fetching.
-                                                // We will render standard, but if they click start and it's empty, we report.
-
-                                                // Wait, we can check `t.isSubTopic`. If it was created from history, it MUST have had MCQs once?
-                                                // Yes! `processedTopics` comes from `mcqHistory`.
-                                                // So if it's in `pendingMcqs`, the user HAS taken an MCQ for it before.
-                                                // Therefore, MCQs MUST exist (unless deleted).
-                                                // So "Coming Soon" only applies to NEW topics added from Syllabus that haven't been attempted?
-                                                // `RevisionHub` mostly shows topics FROM HISTORY.
-                                                // EXCEPT `expandTopics` adds chapters/subtopics from CONTENT if they match.
-                                                // If `expandTopics` adds a topic that has `topicNotes` but NO `manualMcqData`, then it's "Coming Soon" for MCQ.
-
-                                                // Let's assume `t.mcqCount` might be passed if we update `expandTopics`.
-                                                // Since I can't easily change `expandTopics` (it's complex), I will use `notesCount` as a hint or default to available.
-                                                // The `TodayMcqSession` will handle the actual skip and reporting.
-
                                                 return (
                                                     <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                                                         <div>
@@ -1121,6 +1030,37 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                                             >
                                                 Undo
                                             </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* YESTERDAY REPORT (Premium Only) */}
+                    {completedYesterday.length > 0 && hubMode === 'PREMIUM' && (
+                        <div className="bg-slate-50 rounded-3xl border border-slate-200 p-5 transition-all mt-4">
+                            <div
+                                onClick={() => setShowYesterdayHistory(!showYesterdayHistory)}
+                                className="flex justify-between items-center cursor-pointer"
+                            >
+                                <h3 className="font-black text-slate-600 text-sm flex items-center gap-2">
+                                    <Clock size={16} className="text-orange-500" /> Yesterday's Report ({completedYesterday.length})
+                                </h3>
+                                {showYesterdayHistory ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                            </div>
+
+                            {showYesterdayHistory && (
+                                <div className="space-y-2 mt-3 animate-in fade-in slide-in-from-top-2">
+                                    {completedYesterday.map((t, i) => (
+                                        <div key={i} className="bg-white p-2 rounded-xl border border-slate-100 flex items-center justify-between opacity-75">
+                                            <div>
+                                                <h4 className="font-bold text-slate-700 text-xs">{getCleanDisplayName(t.name, t.chapterTitle || '', t.subjectName)}</h4>
+                                                <p className="text-[9px] text-slate-400">{t.subjectName}</p>
+                                            </div>
+                                            <div className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+                                                Done
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

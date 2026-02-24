@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, SystemSettings, StudentTab } from '../types';
 import { Bot, Sparkles, BrainCircuit, FileText, Zap } from 'lucide-react';
 import { CustomAlert } from './CustomDialogs';
+import { BannerCarousel } from './BannerCarousel';
 
 interface Props {
     user: User;
@@ -11,9 +12,111 @@ interface Props {
 
 export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
     const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, type: 'SUCCESS'|'ERROR'|'INFO', title?: string, message: string}>({isOpen: false, type: 'INFO', message: ''});
+    const [discountStatus, setDiscountStatus] = useState<'WAITING' | 'ACTIVE' | 'NONE'>('NONE');
+    const [showDiscountBanner, setShowDiscountBanner] = useState(false);
+
+    useEffect(() => {
+        const evt = settings?.specialDiscountEvent;
+        const checkStatus = () => {
+             if (!evt?.enabled) { setShowDiscountBanner(false); setDiscountStatus('NONE'); return; }
+             const now = Date.now();
+             const startsAt = evt.startsAt ? new Date(evt.startsAt).getTime() : now;
+             const endsAt = evt.endsAt ? new Date(evt.endsAt).getTime() : now;
+             if (now < startsAt) {
+                 setDiscountStatus('WAITING'); setShowDiscountBanner(true);
+             } else if (now < endsAt) {
+                 setDiscountStatus('ACTIVE'); setShowDiscountBanner(true);
+             } else {
+                 setDiscountStatus('NONE'); setShowDiscountBanner(false);
+             }
+        };
+        checkStatus();
+        if (evt?.enabled) { const interval = setInterval(checkStatus, 1000); return () => clearInterval(interval); }
+        else { setShowDiscountBanner(false); setDiscountStatus('NONE'); }
+    }, [settings?.specialDiscountEvent]);
+
+    const getEventSlides = () => {
+        const slides: any[] = [];
+
+        if (settings?.activeEvents) {
+            settings.activeEvents.forEach(evt => {
+                if (evt.enabled) {
+                    slides.push({
+                        id: `evt-${evt.title}`,
+                        image: evt.imageUrl || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=800',
+                        title: evt.title,
+                        subtitle: evt.subtitle,
+                        link: evt.actionUrl
+                    });
+                }
+            });
+        }
+
+        if (settings?.exploreBanners) {
+             settings.exploreBanners.forEach(b => {
+                 if (b.enabled && b.priority > 5) {
+                     slides.push({
+                         id: b.id,
+                         image: b.imageUrl || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=800',
+                         title: b.title,
+                         subtitle: b.subtitle,
+                         link: b.actionUrl
+                     });
+                 }
+             });
+        }
+
+        if (slides.length === 0) {
+            slides.push({
+                id: 'default-welcome',
+                image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=800',
+                title: `Welcome, ${user.name}!`,
+                subtitle: 'Start your learning journey today.',
+                link: 'COURSES'
+            });
+        }
+
+        return slides;
+    };
+
+    const eventSlides = getEventSlides();
 
     return (
         <div className="space-y-6 pb-24 p-4 animate-in fade-in">
+             {/* EVENT BANNERS */}
+             {eventSlides.length > 0 && (
+                <div className="h-48 shadow-lg rounded-2xl overflow-hidden">
+                    <BannerCarousel
+                        slides={eventSlides}
+                        autoPlay={true}
+                        interval={4000}
+                        onBannerClick={(link) => {
+                            if (link === 'STORE') onTabChange('STORE');
+                            else if (link) window.open(link, '_blank');
+                        }}
+                    />
+                </div>
+            )}
+
+            {/* DISCOUNT BANNER */}
+            {showDiscountBanner && discountStatus === 'ACTIVE' && (
+                <button
+                    onClick={() => onTabChange('STORE')}
+                    className="w-full bg-gradient-to-r from-red-600 to-pink-600 p-4 rounded-xl text-white shadow-lg flex items-center justify-between animate-pulse"
+                >
+                    <div className="flex items-center gap-3">
+                        <span className="text-2xl">🎉</span>
+                        <div className="text-left">
+                            <p className="font-black text-sm uppercase">{settings?.specialDiscountEvent?.eventName || 'Special Offer'} is Live!</p>
+                            <p className="text-xs opacity-90">Get {settings?.specialDiscountEvent?.discountPercent}% OFF on all plans.</p>
+                        </div>
+                    </div>
+                    <div className="bg-white text-red-600 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
+                        CLAIM NOW
+                    </div>
+                </button>
+            )}
+
             {/* HEADER */}
             <div className="bg-gradient-to-br from-indigo-900 to-slate-900 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden">
                 <div className="relative z-10">

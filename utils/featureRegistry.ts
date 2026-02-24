@@ -260,6 +260,24 @@ export const ALL_FEATURES: Feature[] = [
         adminVisible: false,
         description: 'Save content offline.'
     },
+    {
+        id: 'DEEP_DIVE',
+        label: 'Deep Dive Notes',
+        group: 'CONTENT',
+        surfaceLevel: 2,
+        requiredSubscription: 'BASIC',
+        adminVisible: false,
+        description: 'Detailed HTML notes with audio.'
+    },
+    {
+        id: 'AUDIO_SLIDE',
+        label: 'Audio Slides',
+        group: 'CONTENT',
+        surfaceLevel: 2,
+        requiredSubscription: 'ULTRA',
+        adminVisible: false,
+        description: 'Synchronized audio and visual slides.'
+    },
 
     // --- ADMIN DASHBOARD FEATURES (Mapped to Admin Tabs) ---
     // GROUP: CORE ADMIN

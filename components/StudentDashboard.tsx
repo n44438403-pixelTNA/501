@@ -6,6 +6,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { ref, query, limitToLast, onValue } from 'firebase/database';
 import { getSubjectsList, DEFAULT_APP_FEATURES, ALL_APP_FEATURES, LEVEL_UNLOCKABLE_FEATURES, LEVEL_UP_CONFIG } from '../constants';
 import { ALL_FEATURES } from '../utils/featureRegistry';
+import { checkFeatureAccess } from '../utils/permissionUtils';
 import { SubscriptionEngine } from '../utils/engines/subscriptionEngine';
 import { RewardEngine } from '../utils/engines/rewardEngine';
 import { Button } from './ui/Button'; // Design System
@@ -122,28 +123,10 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   const analysisLogs = JSON.parse(localStorage.getItem('nst_universal_analysis_logs') || '[]');
 
   const hasPermission = (featureId: string) => {
-      // 1. DUAL CONTROL: Check Feature Feed (Admin > Feature Access)
-      // User Logic: "Feed ON -> Feed Control (Min Tier). Feed OFF -> Plan Matrix Control."
-      const feedConfig = settings?.featureConfig?.[featureId];
-      if (feedConfig && feedConfig.visible) {
-          const requiredTier = feedConfig.minTier || 'FREE';
-          return SubscriptionEngine.checkAccess(user, requiredTier);
-      }
-
-      // 2. FALLBACK: Plan Matrix (Legacy Permissions)
-      if (!settings?.tierPermissions) return true;
-
-      let userTier: 'FREE' | 'BASIC' | 'ULTRA' = 'FREE';
-      if (user.isPremium) {
-          if (user.subscriptionLevel === 'ULTRA') userTier = 'ULTRA';
-          else if (user.subscriptionLevel === 'BASIC') userTier = 'BASIC';
-      }
-      if (user.subscriptionTier === 'LIFETIME' || user.subscriptionTier === 'YEARLY') {
-           if (!user.subscriptionLevel) userTier = 'ULTRA';
-      }
-
-      const allowedFeatures = settings.tierPermissions[userTier] || [];
-      return allowedFeatures.includes(featureId);
+      // Use the new centralized helper which handles Feed vs Matrix control
+      if (!settings) return true; // Default allow if settings missing (fallback to static)
+      const { hasAccess } = checkFeatureAccess(featureId, user, settings);
+      return hasAccess;
   };
 
   // --- LEVEL SYSTEM CHECK (REMOVED) ---
@@ -1177,12 +1160,17 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                     </div>
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => onTabChange('UPDATES')}
-                            className="bg-white p-2 rounded-full border border-slate-200 text-slate-600 hover:text-blue-600 active:scale-95 transition-all relative"
+                            onClick={() => {
+                                onTabChange('UPDATES');
+                                // Clear notification dot immediately
+                                setHasNewUpdate(false);
+                                localStorage.setItem('nst_last_read_update', Date.now().toString());
+                            }}
+                            className="bg-white p-1.5 rounded-full border border-slate-200 text-slate-600 hover:text-blue-600 active:scale-95 transition-all relative"
                         >
-                            <Bell size={20} />
+                            <Bell size={16} />
                             {hasNewUpdate && (
-                                <span className="absolute top-0 right-0 w-3 h-3 bg-red-600 rounded-full border-2 border-white animate-pulse"></span>
+                                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white animate-pulse"></span>
                             )}
                         </button>
                         <button

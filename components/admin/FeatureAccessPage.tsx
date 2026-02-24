@@ -22,7 +22,7 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
         }
     }, [settings.featureConfig]);
 
-    const handleToggle = (id: string, field: 'visible' | 'isNew' | 'isUpdated') => {
+    const handleToggle = (id: string, field: 'visible' | 'isNew' | 'isUpdated' | 'isDummy') => {
         setLocalConfig(prev => {
             const current = prev[id] || {};
             return {
@@ -32,12 +32,33 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
         });
     };
 
-    const handleTierChange = (id: string, tier: 'FREE' | 'BASIC' | 'ULTRA') => {
+    // NEW: Handle Multiple Tiers via Checkboxes
+    const handleTierToggle = (id: string, tier: 'FREE' | 'BASIC' | 'ULTRA') => {
+        setLocalConfig(prev => {
+            const current = prev[id] || {};
+            // Default to ALL tiers if allowedTiers is missing
+            const currentTiers = current.allowedTiers || ['FREE', 'BASIC', 'ULTRA'];
+
+            let newTiers;
+            if (currentTiers.includes(tier)) {
+                newTiers = currentTiers.filter((t: string) => t !== tier);
+            } else {
+                newTiers = [...currentTiers, tier];
+            }
+
+            return {
+                ...prev,
+                [id]: { ...current, allowedTiers: newTiers }
+            };
+        });
+    };
+
+    const handleCostChange = (id: string, cost: number) => {
         setLocalConfig(prev => {
             const current = prev[id] || {};
             return {
                 ...prev,
-                [id]: { ...current, minTier: tier }
+                [id]: { ...current, creditCost: cost }
             };
         });
     };
@@ -56,7 +77,10 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
             visible: conf.visible !== false, // Default true
             isNew: conf.isNew || false,
             isUpdated: conf.isUpdated || false,
-            minTier: conf.minTier || 'FREE'
+            isDummy: conf.isDummy || false,
+            // Migrate minTier to allowedTiers if needed, or use existing allowedTiers
+            allowedTiers: conf.allowedTiers || (conf.minTier === 'ULTRA' ? ['ULTRA'] : conf.minTier === 'BASIC' ? ['BASIC', 'ULTRA'] : ['FREE', 'BASIC', 'ULTRA']),
+            creditCost: conf.creditCost !== undefined ? conf.creditCost : 0
         };
     });
 
@@ -159,24 +183,48 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
                                 >
                                     <RefreshCw size={12} /> UPDATED
                                 </button>
+                                <button
+                                    onClick={() => handleToggle(feature.id, 'isDummy')}
+                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border flex items-center justify-center gap-1 ${feature.isDummy ? 'bg-gray-800 text-white border-gray-900' : 'bg-white text-slate-400 border-slate-200'}`}
+                                    title="Mark as Dummy Feature"
+                                >
+                                    {feature.isDummy ? 'DUMMY' : 'REAL'}
+                                </button>
                             </div>
 
+                            {/* Credit Cost */}
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Credit Cost</label>
+                                <input
+                                    type="number"
+                                    value={feature.creditCost}
+                                    onChange={(e) => handleCostChange(feature.id, Number(e.target.value))}
+                                    className="w-full p-2 text-xs border rounded-lg font-bold text-slate-700"
+                                    min="0"
+                                />
+                            </div>
+
+                            {/* Allowed Tiers Checkboxes */}
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><Lock size={10} /> Minimum Tier</p>
-                                <div className="flex gap-1">
-                                    {['FREE', 'BASIC', 'ULTRA'].map((tier) => (
-                                        <button
-                                            key={tier}
-                                            onClick={() => handleTierChange(feature.id, tier as any)}
-                                            className={`flex-1 py-1 rounded text-[9px] font-black transition-colors ${
-                                                feature.minTier === tier
-                                                ? (tier === 'FREE' ? 'bg-green-500 text-white' : tier === 'BASIC' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white')
-                                                : 'bg-white border border-slate-200 text-slate-400 hover:bg-slate-100'
-                                            }`}
-                                        >
-                                            {tier}
-                                        </button>
-                                    ))}
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><Lock size={10} /> Allowed Tiers</p>
+                                <div className="flex gap-2">
+                                    {['FREE', 'BASIC', 'ULTRA'].map((tier) => {
+                                        const isSelected = feature.allowedTiers.includes(tier);
+                                        return (
+                                            <button
+                                                key={tier}
+                                                onClick={() => handleTierToggle(feature.id, tier as any)}
+                                                className={`flex-1 py-1.5 rounded text-[9px] font-black transition-colors flex items-center justify-center gap-1 ${
+                                                    isSelected
+                                                    ? (tier === 'FREE' ? 'bg-green-100 text-green-700 border border-green-200' : tier === 'BASIC' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-purple-100 text-purple-700 border border-purple-200')
+                                                    : 'bg-white border border-slate-200 text-slate-300 hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                {isSelected ? <CheckCircle size={10} /> : <div className="w-2.5 h-2.5 rounded-full border border-slate-300"></div>}
+                                                {tier}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>

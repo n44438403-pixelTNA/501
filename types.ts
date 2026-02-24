@@ -304,6 +304,8 @@ export interface FeatureAccessConfig {
     featureId: string;
     label: string;
     allowedTiers: ('FREE' | 'BASIC' | 'ULTRA')[];
+    creditCost?: number; // Global override cost
+    isDummy?: boolean; // Visual indicator if feature is implemented or placeholder
 }
 
 export interface FeatureCostConfig {

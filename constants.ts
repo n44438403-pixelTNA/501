@@ -321,6 +321,9 @@ export const ALL_APP_FEATURES = [
     { id: 'MISTAKES_PAGE', title: 'Mistakes Page', enabled: true },
     { id: 'RECENT_TESTS', title: 'Recent Tests', enabled: true },
 
+    { id: 'DEEP_DIVE', title: 'Deep Dive Notes', enabled: true },
+    { id: 'AUDIO_SLIDE', title: 'Audio Slides', enabled: true },
+
     // --- AUDIO & TTS ---
     { id: 'AUDIO_LIB', title: 'Audio Library', enabled: true },
     { id: 'TTS_FEATURE', title: 'Text-to-Speech (TTS)', enabled: true },

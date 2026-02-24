@@ -310,75 +310,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       }
   }, [user.dailyRoutine?.date, user.mcqHistory?.length]);
 
-  const [discountTimer, setDiscountTimer] = useState<string | null>(null);
-  const [discountStatus, setDiscountStatus] = useState<'WAITING' | 'ACTIVE' | 'NONE'>('NONE');
-  const [showDiscountBanner, setShowDiscountBanner] = useState(false);
-  const [morningBanner, setMorningBanner] = useState<any>(null);
-
-  useEffect(() => {
-      const loadMorningInsight = async () => {
-          const now = new Date();
-          if (now.getHours() >= 10) {
-              const today = now.toDateString();
-              const savedBanner = localStorage.getItem('nst_morning_banner');
-              if (savedBanner) {
-                  const parsed = JSON.parse(savedBanner);
-                  if (parsed.date === today) {
-                      setMorningBanner(parsed);
-                      return;
-                  }
-              }
-              const isGen = localStorage.getItem(`nst_insight_gen_${today}`);
-              if (!isGen) {
-                  localStorage.setItem(`nst_insight_gen_${today}`, 'true');
-                  try {
-                      const logs = JSON.parse(localStorage.getItem('nst_universal_analysis_logs') || '[]');
-                      if (logs.length === 0) return;
-                      await generateMorningInsight(
-                          logs, 
-                          settings, 
-                          (banner) => {
-                              localStorage.setItem('nst_morning_banner', JSON.stringify(banner));
-                              setMorningBanner(banner);
-                          }
-                      );
-                  } catch (e) {
-                      console.error("Insight Gen Failed", e);
-                      localStorage.removeItem(`nst_insight_gen_${today}`);
-                  }
-              }
-          }
-      };
-      loadMorningInsight();
-  }, [user.role, settings]);
-
-  useEffect(() => {
-     const evt = settings?.specialDiscountEvent;
-     const formatDiff = (diff: number) => {
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const s = Math.floor((diff % (1000 * 60)) / 1000);
-        return `${d>0?d+'d ':''}${h.toString().padStart(2,'0')}h ${m.toString().padStart(2,'0')}m ${s.toString().padStart(2,'0')}s`;
-     };
-     const checkStatus = () => {
-         if (!evt?.enabled) { setShowDiscountBanner(false); setDiscountStatus('NONE'); setDiscountTimer(null); return; }
-         const now = Date.now();
-         const startsAt = evt.startsAt ? new Date(evt.startsAt).getTime() : now;
-         const endsAt = evt.endsAt ? new Date(evt.endsAt).getTime() : now;
-         if (now < startsAt) {
-             setDiscountStatus('WAITING'); setShowDiscountBanner(true); setDiscountTimer(formatDiff(startsAt - now));
-         } else if (now < endsAt) {
-             setDiscountStatus('ACTIVE'); setShowDiscountBanner(true); setDiscountTimer(formatDiff(endsAt - now));
-         } else {
-             setDiscountStatus('NONE'); setShowDiscountBanner(false); setDiscountTimer(null);
-         }
-     };
-     checkStatus();
-     if (evt?.enabled) { const interval = setInterval(checkStatus, 1000); return () => clearInterval(interval); }
-     else { setShowDiscountBanner(false); setDiscountStatus('NONE'); }
-  }, [settings?.specialDiscountEvent]);
-
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const handleAiNotesGeneration = async () => {
@@ -645,102 +576,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       }
   };
 
-  const getEventSlides = () => {
-      const slides: any[] = [];
-
-      // Requested Feature Banners
-      const featureBanners = [
-          {
-              id: 'feat-sub',
-              title: 'Unlock Premium Subscription',
-              subtitle: 'Access everything with Ultra Plan.',
-              image: 'https://images.unsplash.com/photo-1555421689-491a97ff2040?auto=format&fit=crop&q=80&w=800',
-              link: 'STORE'
-          },
-          {
-              id: 'feat-notes-deep',
-              title: 'Ultra Notes Deep Dive',
-              subtitle: 'Detailed notes with audio explanations.',
-              image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&q=80&w=800',
-              link: 'PDF'
-          },
-          {
-              id: 'feat-slide',
-              title: 'Ultra Slide',
-              subtitle: 'Visual learning with audio sync.',
-              image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=800',
-              link: 'PDF'
-          },
-          {
-              id: 'feat-video',
-              title: 'Ultra Video Lectures',
-              subtitle: 'High-quality video content.',
-              image: 'https://images.unsplash.com/photo-1492619879851-f42b0416955d?auto=format&fit=crop&q=80&w=800',
-              link: 'VIDEO'
-          },
-          {
-              id: 'feat-mcq',
-              title: 'Premium MCQ Practice',
-              subtitle: 'Unlimited tests and analysis.',
-              image: 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&q=80&w=800',
-              link: 'MCQ'
-          },
-          {
-              id: 'feat-audio',
-              title: 'Premium Audio Library',
-              subtitle: 'Learn on the go with podcasts.',
-              image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=800',
-              link: 'AUDIO'
-          },
-          {
-              id: 'feat-rev',
-              title: 'Premium Revision Hub',
-              subtitle: 'Smart revision based on your weak topics.',
-              image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800',
-              link: 'REVISION'
-          },
-          {
-              id: 'feat-ai',
-              title: 'AI Hub Ultra Analysis',
-              subtitle: 'Deep insights powered by AI.',
-              image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=800',
-              link: 'AI_HUB'
-          }
-      ];
-
-      slides.push(...featureBanners);
-
-      if (settings?.activeEvents) {
-          settings.activeEvents.forEach(evt => {
-              if (evt.enabled) {
-                  slides.push({
-                      id: `evt-${evt.title}`,
-                      image: evt.imageUrl || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=800',
-                      title: evt.title,
-                      subtitle: evt.subtitle,
-                      link: evt.actionUrl
-                  });
-              }
-          });
-      }
-
-      if (settings?.exploreBanners) {
-           settings.exploreBanners.forEach(b => {
-               if (b.enabled && b.priority > 5) {
-                   slides.push({
-                       id: b.id,
-                       image: b.imageUrl || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=800',
-                       title: b.title,
-                       subtitle: b.subtitle,
-                       link: b.actionUrl
-                   });
-               }
-           });
-      }
-
-      return slides;
-  };
-
   const renderContentSection = (type: 'VIDEO' | 'PDF' | 'MCQ' | 'AUDIO') => {
       const goBack = () => {
           if (contentViewStep === 'PLAYER') {
@@ -840,25 +675,8 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   const renderMainContent = () => {
       // 1. HOME TAB
       if (activeTab === 'HOME') {
-          const eventSlides = getEventSlides();
-
           return (
               <div className="space-y-4 pb-24">
-                {/* EVENT BANNERS */}
-                {eventSlides.length > 0 && (
-                    <div className="mx-4 mt-4 h-48 shadow-lg rounded-2xl overflow-hidden">
-                        <BannerCarousel
-                            slides={eventSlides}
-                            autoPlay={true}
-                            interval={3000}
-                            onBannerClick={(link) => {
-                                if (link === 'STORE') onTabChange('STORE');
-                                else if (link) window.open(link, '_blank');
-                            }}
-                        />
-                    </div>
-                )}
-
                 {/* NEW HEADER DESIGN */}
                 <div className="bg-white p-4 rounded-b-3xl shadow-sm border-b border-slate-200 mb-2 flex items-center justify-between sticky top-0 z-40">
                     <div className="flex items-center gap-3">
@@ -877,15 +695,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 <h2 className="text-lg font-black text-slate-800 leading-none">
                                     {settings?.appName || 'Student App'}
                                 </h2>
-                                {/* DISCOUNT BADGE */}
-                                {discountStatus === 'ACTIVE' && (
-                                    <button
-                                        onClick={() => onTabChange('STORE')}
-                                        className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse shadow-sm"
-                                    >
-                                        {settings?.specialDiscountEvent?.discountPercent || 50}% OFF
-                                    </button>
-                                )}
                             </div>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded">{user.displayId || user.id.slice(0,6)}</span>
@@ -920,30 +729,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                         )}
                     </div>
                 </div>
-
-                {/* DISCOUNT BANNER */}
-                {showDiscountBanner && discountTimer && (
-                    <button
-                        onClick={() => onTabChange('STORE')}
-                        className={`w-full mx-auto my-4 bg-gradient-to-r ${discountStatus === 'ACTIVE' ? 'from-red-600 to-pink-600' : 'from-blue-600 to-indigo-600'} p-4 rounded-xl text-white shadow-lg flex items-center justify-between animate-pulse`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <span className="text-2xl">{discountStatus === 'ACTIVE' ? '🎉' : '⏳'}</span>
-                            <div className="text-left">
-                                <p className="font-black text-sm uppercase">
-                                    {discountStatus === 'ACTIVE'
-                                        ? `${settings?.specialDiscountEvent?.eventName || 'Special Offer'} Ends In:`
-                                        : `${settings?.specialDiscountEvent?.eventName || 'Special Offer'} Starts In:`
-                                    }
-                                </p>
-                                <p className="text-lg font-mono font-bold">{discountTimer}</p>
-                            </div>
-                        </div>
-                        <div className="bg-white text-red-600 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
-                            {discountStatus === 'ACTIVE' ? 'CLAIM NOW' : 'WAIT FOR IT'}
-                        </div>
-                    </button>
-                )}
 
                 {/* PERFORMANCE GRAPH */}
                 <DashboardSectionWrapper id="section_performance" label="Performance" settings={settings} isLayoutEditing={isLayoutEditing} onToggleVisibility={toggleLayoutVisibility}>

@@ -12,6 +12,7 @@ import { CreditConfirmationModal } from './CreditConfirmationModal';
 import { AiInterstitial } from './AiInterstitial';
 import { InfoPopup } from './InfoPopup';
 import { DEFAULT_CONTENT_INFO_CONFIG } from '../constants';
+import { checkFeatureAccess } from '../utils/permissionUtils';
 
 interface Props {
   chapter: Chapter;
@@ -288,13 +289,13 @@ export const PdfView: React.FC<Props> = ({
           price = contentData?.ultraPdfPrice !== undefined ? contentData.ultraPdfPrice : 10;
       } else if (type === 'DEEP_DIVE') {
           htmlContent = contentData?.deepDiveNotesHtml || '';
-          price = settings?.deepDiveCost !== undefined ? settings.deepDiveCost : 5;
+          // price = settings?.deepDiveCost !== undefined ? settings.deepDiveCost : 5; // Use checkFeatureAccess
       } else if (type === 'AUDIO_SLIDE') {
           // Visual: Premium PDF (Slides)
           link = contentData?.schoolPdfPremiumLink || contentData?.premiumLink || contentData?.competitionPdfPremiumLink;
           // Audio: Deep Dive Text (TTS)
           ttsContent = (contentData?.deepDiveNotesHtml || '').replace(/<[^>]*>?/gm, ' '); // Strip HTML for TTS
-          price = settings?.audioSlideCost !== undefined ? settings.audioSlideCost : 10;
+          // price = settings?.audioSlideCost !== undefined ? settings.audioSlideCost : 10; // Use checkFeatureAccess
       }
 
       // Prioritize Link, but allow HTML if link is missing
@@ -318,6 +319,37 @@ export const PdfView: React.FC<Props> = ({
           return;
       }
 
+      // NEW: Centralized Access Check
+      if (type === 'DEEP_DIVE' || type === 'AUDIO_SLIDE') {
+          const featureId = type === 'DEEP_DIVE' ? 'DEEP_DIVE' : 'AUDIO_SLIDE';
+          const access = checkFeatureAccess(featureId, user, settings || {});
+
+          if (access.isDummy) {
+               setAlertConfig({isOpen: true, message: "Coming Soon! This feature is in preview mode."});
+               return;
+          }
+
+          if (access.hasAccess) {
+              triggerInterstitial(targetContent, ttsContent);
+              return;
+          }
+
+          // Not accessed by Tier, check Credit Cost
+          if (access.cost > 0) {
+              if (user.isAutoDeductEnabled) {
+                  processPaymentAndOpen(targetContent, access.cost, false, ttsContent);
+              } else {
+                  setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
+              }
+              return;
+          }
+
+          // No Access and No Price (Locked)
+          setAlertConfig({isOpen: true, message: `🔒 Locked! Upgrade your plan to access ${type === 'DEEP_DIVE' ? 'Deep Dive Notes' : 'Audio Slides'}.`});
+          return;
+      }
+
+      // LEGACY LOGIC FOR FREE/PREMIUM/ULTRA (Can be migrated later or kept for now)
       if (price === 0) {
           triggerInterstitial(targetContent, ttsContent);
           return;
@@ -332,8 +364,7 @@ export const PdfView: React.FC<Props> = ({
               return;
           }
           
-          if (type === 'ULTRA' || type === 'AUDIO_SLIDE' || type === 'DEEP_DIVE') {
-              // Ultra/Deep features usually for Ultra users
+          if (type === 'ULTRA') {
               if (user.subscriptionLevel === 'ULTRA') {
                   triggerInterstitial(targetContent, ttsContent);
                   return;
@@ -846,7 +877,14 @@ export const PdfView: React.FC<Props> = ({
                            {/* PRICE or LOCK */}
                            <div className="flex flex-col items-end">
                                <span className="text-xs font-black text-teal-700">
-                                   {settings?.deepDiveCost !== undefined ? settings.deepDiveCost : 5} CR
+                                   {(() => {
+                                       const access = checkFeatureAccess('DEEP_DIVE', user, settings || {});
+                                       // Fallback to legacy setting if cost is 0 (assuming default not set in new config)
+                                       // OR strictly use new config. Let's use strict new config but with safe fallback if not set at all?
+                                       // Actually, checkFeatureAccess defaults to 0. If user wants it to be costed, they must set it in Feature Access.
+                                       // To be safe during migration, we can fallback to legacy if new is 0.
+                                       return access.cost > 0 ? access.cost : (settings?.deepDiveCost || 5);
+                                   })()} CR
                                </span>
                                <span className="text-[10px] text-slate-400">Unlock</span>
                            </div>
@@ -875,7 +913,10 @@ export const PdfView: React.FC<Props> = ({
                            {/* PRICE or LOCK */}
                            <div className="flex flex-col items-end">
                                <span className="text-xs font-black text-rose-700">
-                                   {settings?.audioSlideCost !== undefined ? settings.audioSlideCost : 10} CR
+                                   {(() => {
+                                       const access = checkFeatureAccess('AUDIO_SLIDE', user, settings || {});
+                                       return access.cost > 0 ? access.cost : (settings?.audioSlideCost || 10);
+                                   })()} CR
                                </span>
                                <span className="text-[10px] text-slate-400">Unlock</span>
                            </div>

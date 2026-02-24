@@ -190,7 +190,7 @@ export const ALL_FEATURES: Feature[] = [
         requiredSubscription: 'ULTRA',
         adminVisible: false,
         description: 'Generate AI-based study plans.',
-        isDummy: true // Integrated Logic
+        isDummy: true // Integrated Logic (Non-Switchable)
     },
     {
         id: 'REVISION_MISTAKES',
@@ -199,7 +199,7 @@ export const ALL_FEATURES: Feature[] = [
         surfaceLevel: 2,
         adminVisible: false,
         description: 'Review your past mistakes.',
-        isDummy: true // Integrated Logic
+        isDummy: true // Integrated Logic (Non-Switchable)
     },
 
     // --- AI SUB-FEATURES ---
@@ -692,7 +692,24 @@ export const ALL_FEATURES: Feature[] = [
         requiresSuperAdmin: true,
         icon: 'Trash2',
         color: 'red'
-    }
+    },
+
+    // --- ANALYSIS DUMMIES (Not switchable individually) ---
+    { id: 'ACCURACY_STAT', label: 'Accuracy Stat', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'SPEED_STAT', label: 'Speed Stat', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'PERF_TREND', label: 'Performance Trend', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'STRONG_AREA', label: 'Strong Areas', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'AREA_IMPROVING', label: 'Area Improving', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'FOCUS_NEEDED', label: 'Focus Needed', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'OFFICIAL_MARKSHEET', label: 'Official Marksheet', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'OMR_SHEET', label: 'OMR Sheet', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'PROGRESS_DELTA', label: 'Progress Delta', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'MISTAKE_PATTERN', label: 'Mistake Pattern', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'TOPIC_BREAKDOWN', label: 'Topic Breakdown', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'TOPIC_DIST', label: 'Topic Distribution', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'DOWNLOAD_ANALYSIS', label: 'Download Analysis', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'AI_INSIGHT_MAP', label: 'AI Insight Map', group: 'AI', surfaceLevel: 2, adminVisible: false, isDummy: true },
+    { id: 'PREMIUM_ANALYSIS', label: 'Premium Analysis', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },
 ];
 
 export const getFeaturesByGroup = (group: FeatureGroup, onlyAdmin: boolean = false) => {

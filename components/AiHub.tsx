@@ -14,20 +14,28 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
     const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, type: 'SUCCESS'|'ERROR'|'INFO', title?: string, message: string}>({isOpen: false, type: 'INFO', message: ''});
     const [discountStatus, setDiscountStatus] = useState<'WAITING' | 'ACTIVE' | 'NONE'>('NONE');
     const [showDiscountBanner, setShowDiscountBanner] = useState(false);
+    const [discountTimer, setDiscountTimer] = useState<string | null>(null);
 
     useEffect(() => {
         const evt = settings?.specialDiscountEvent;
+        const formatDiff = (diff: number) => {
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            return `${d > 0 ? d + 'd ' : ''}${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
+        };
         const checkStatus = () => {
-             if (!evt?.enabled) { setShowDiscountBanner(false); setDiscountStatus('NONE'); return; }
+             if (!evt?.enabled) { setShowDiscountBanner(false); setDiscountStatus('NONE'); setDiscountTimer(null); return; }
              const now = Date.now();
              const startsAt = evt.startsAt ? new Date(evt.startsAt).getTime() : now;
              const endsAt = evt.endsAt ? new Date(evt.endsAt).getTime() : now;
              if (now < startsAt) {
-                 setDiscountStatus('WAITING'); setShowDiscountBanner(true);
+                 setDiscountStatus('WAITING'); setShowDiscountBanner(true); setDiscountTimer(formatDiff(startsAt - now));
              } else if (now < endsAt) {
-                 setDiscountStatus('ACTIVE'); setShowDiscountBanner(true);
+                 setDiscountStatus('ACTIVE'); setShowDiscountBanner(true); setDiscountTimer(formatDiff(endsAt - now));
              } else {
-                 setDiscountStatus('NONE'); setShowDiscountBanner(false);
+                 setDiscountStatus('NONE'); setShowDiscountBanner(false); setDiscountTimer(null);
              }
         };
         checkStatus();
@@ -161,20 +169,25 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
             )}
 
             {/* DISCOUNT BANNER */}
-            {showDiscountBanner && discountStatus === 'ACTIVE' && (
+            {showDiscountBanner && discountTimer && (
                 <button
                     onClick={() => onTabChange('STORE')}
-                    className="w-full bg-gradient-to-r from-red-600 to-pink-600 p-4 rounded-xl text-white shadow-lg flex items-center justify-between animate-pulse"
+                    className={`w-full bg-gradient-to-r ${discountStatus === 'ACTIVE' ? 'from-red-600 to-pink-600' : 'from-blue-600 to-indigo-600'} p-4 rounded-xl text-white shadow-lg flex items-center justify-between animate-pulse`}
                 >
                     <div className="flex items-center gap-3">
-                        <span className="text-2xl">🎉</span>
+                        <span className="text-2xl">{discountStatus === 'ACTIVE' ? '🎉' : '⏳'}</span>
                         <div className="text-left">
-                            <p className="font-black text-sm uppercase">{settings?.specialDiscountEvent?.eventName || 'Special Offer'} is Live!</p>
-                            <p className="text-xs opacity-90">Get {settings?.specialDiscountEvent?.discountPercent}% OFF on all plans.</p>
+                            <p className="font-black text-sm uppercase">
+                                {discountStatus === 'ACTIVE'
+                                    ? `${settings?.specialDiscountEvent?.eventName || 'Special Offer'} Ends In:`
+                                    : `${settings?.specialDiscountEvent?.eventName || 'Special Offer'} Starts In:`
+                                }
+                            </p>
+                            <p className="text-lg font-mono font-bold">{discountTimer}</p>
                         </div>
                     </div>
                     <div className="bg-white text-red-600 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
-                        CLAIM NOW
+                        {discountStatus === 'ACTIVE' ? 'CLAIM NOW' : 'WAIT FOR IT'}
                     </div>
                 </button>
             )}

@@ -1,6 +1,6 @@
 
 import { ClassLevel, Subject, Chapter, LessonContent, Language, Board, Stream, ContentType, MCQItem, SystemSettings } from "../types";
-import { STATIC_SYLLABUS } from "../constants";
+import { STATIC_SYLLABUS, DEFAULT_SUBJECTS } from "../constants";
 import { getChapterData, getCustomSyllabus, incrementApiUsage, getApiUsage, rtdb, getSystemSettings } from "../firebase";
 import { ref, get } from "firebase/database";
 import { storage } from "../utils/storage";
@@ -419,8 +419,18 @@ export const fetchChapters = async (
 
   if (chapterCache[cacheKey]) return chapterCache[cacheKey];
 
-  const staticKey = `${board}-${classLevel}-${subject.name}`; 
-  const staticList = STATIC_SYLLABUS[staticKey];
+  const staticKey = `${board}-${classLevel}-${subject.name}`;
+  let staticList = STATIC_SYLLABUS[staticKey];
+
+  // FALLBACK: If direct lookup fails (e.g. Hindi subject name), try English lookup via ID
+  if (!staticList) {
+      const defaultSub = Object.values(DEFAULT_SUBJECTS).find(s => s.id === subject.id);
+      if (defaultSub) {
+          const fallbackKey = `${board}-${classLevel}-${defaultSub.name}`;
+          staticList = STATIC_SYLLABUS[fallbackKey];
+      }
+  }
+
   if (staticList && staticList.length > 0) {
       const chapters: Chapter[] = staticList.map((title, idx) => ({
           id: `static-${idx + 1}`,

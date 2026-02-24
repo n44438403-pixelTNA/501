@@ -863,11 +863,16 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                     topics={pendingMcqs}
                     onClose={() => setShowTodayMcqSession(false)}
                     onComplete={(results) => {
-                        const updatedHistory = [...(user.mcqHistory || []), ...results];
-                        const updatedUser = { ...user, mcqHistory: updatedHistory };
-                        if (onUpdateUser) {
-                            onUpdateUser(updatedUser);
-                            saveUserToLive(updatedUser);
+                        try {
+                            const updatedHistory = [...(user.mcqHistory || []), ...results];
+                            const updatedUser = { ...user, mcqHistory: updatedHistory };
+                            if (onUpdateUser) {
+                                onUpdateUser(updatedUser);
+                                // Fire and forget save to avoid UI blocking
+                                saveUserToLive(updatedUser).catch(e => console.error("Save Error:", e));
+                            }
+                        } catch (e) {
+                            console.error("Completion Error:", e);
                         }
                         setShowTodayMcqSession(false);
 

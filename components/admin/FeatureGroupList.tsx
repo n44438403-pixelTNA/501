@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Feature, FeatureGroup, ALL_FEATURES } from '../../utils/featureRegistry';
+import { SystemSettings } from '../../types';
 import * as LucideIcons from 'lucide-react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
@@ -10,6 +11,7 @@ interface Props {
     counts?: Record<string, number>;
     hasPermission: (perm: string) => boolean;
     userRole: string;
+    settings?: SystemSettings; // NEW: To check defaultAdminPermissions
 }
 
 const GROUPS: { key: FeatureGroup; label: string; icon: keyof typeof LucideIcons; color: string }[] = [
@@ -21,7 +23,7 @@ const GROUPS: { key: FeatureGroup; label: string; icon: keyof typeof LucideIcons
     { key: 'ADVANCED', label: 'Advanced Settings', icon: 'Settings', color: 'slate' },
 ];
 
-export const FeatureGroupList: React.FC<Props> = ({ onNavigate, activeTab, counts, hasPermission, userRole }) => {
+export const FeatureGroupList: React.FC<Props> = ({ onNavigate, activeTab, counts, hasPermission, userRole, settings }) => {
     // Default open the group that contains the active tab, or CORE
     const findGroupForTab = (tab: string) => {
         const feature = ALL_FEATURES.find(f => f.adminTab === tab);
@@ -52,9 +54,21 @@ export const FeatureGroupList: React.FC<Props> = ({ onNavigate, activeTab, count
                 const groupFeatures = ALL_FEATURES.filter(f => {
                     if (f.group !== group.key || !f.adminVisible || !f.adminTab) return false;
 
-                    // Permission Check
-                    if (f.requiresSuperAdmin) return userRole === 'ADMIN';
-                    if (f.requiredPermission) return hasPermission(f.requiredPermission) || userRole === 'ADMIN';
+                    // 1. Super Admin Check
+                    if (f.requiresSuperAdmin && userRole !== 'ADMIN') return false;
+
+                    // 2. Sub-Admin Global Master Switch (Feature Access Page Control)
+                    // If user is SUB_ADMIN, we check if the feature ID is in defaultAdminPermissions (which acts as the "Allowed List" toggled by Shield)
+                    // Note: If defaultAdminPermissions is undefined/empty, we might fallback to requiredPermission logic,
+                    // BUT the user explicitely wants "control". So if list exists, we enforce it.
+                    if (userRole === 'SUB_ADMIN' && settings?.defaultAdminPermissions) {
+                        if (!settings.defaultAdminPermissions.includes(f.id)) return false;
+                    }
+
+                    // 3. Granular Permission Check (Legacy/Specific)
+                    if (f.requiredPermission) {
+                        return hasPermission(f.requiredPermission) || userRole === 'ADMIN';
+                    }
 
                     return true;
                 });

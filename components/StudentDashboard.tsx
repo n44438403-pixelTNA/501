@@ -1160,20 +1160,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                     </div>
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => {
-                                onTabChange('UPDATES');
-                                // Clear notification dot immediately
-                                setHasNewUpdate(false);
-                                localStorage.setItem('nst_last_read_update', Date.now().toString());
-                            }}
-                            className="bg-white p-1.5 rounded-full border border-slate-200 text-slate-600 hover:text-blue-600 active:scale-95 transition-all relative"
-                        >
-                            <Bell size={16} />
-                            {hasNewUpdate && (
-                                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white animate-pulse"></span>
-                            )}
-                        </button>
-                        <button
                             onClick={() => onTabChange('STORE')}
                             className="flex flex-col items-end group active:scale-95 transition-transform"
                         >
@@ -2332,6 +2318,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                         {/* REORDERED MENU as per request */}
                         {[
                             { id: 'INBOX', label: 'Inbox', icon: Mail, color: 'indigo', action: () => { setShowInbox(true); setShowSidebar(false); } },
+                            { id: 'UPDATES', label: 'Notifications', icon: Bell, color: 'red', action: () => { onTabChange('UPDATES'); setHasNewUpdate(false); localStorage.setItem('nst_last_read_update', Date.now().toString()); setShowSidebar(false); } },
                             { id: 'ANALYTICS', label: 'Analytics', icon: BarChart3, color: 'blue', action: () => { onTabChange('ANALYTICS'); setShowSidebar(false); } },
                             { id: 'MARKSHEET', label: 'Marksheet', icon: FileText, color: 'green', action: () => { setShowMonthlyReport(true); setShowSidebar(false); } },
                             { id: 'HISTORY', label: 'History', icon: History, color: 'slate', action: () => { onTabChange('HISTORY'); setShowSidebar(false); } },

@@ -2652,6 +2652,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                   }}
                   hasPermission={hasPermission}
                   userRole={currentUser?.role || 'STUDENT'}
+                  settings={localSettings}
               />
               <div className="mt-4 flex justify-end">
                   <button onClick={() => onNavigate('STUDENT_DASHBOARD')} className="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-md">
@@ -4956,10 +4957,16 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                       These notes will be read aloud in "Audio Slide" mode.
                                   </p>
                                   <textarea
-                                      value={editConfig.deepDiveNotesHtml || ''}
-                                      onChange={e => setEditConfig({...editConfig, deepDiveNotesHtml: e.target.value})}
+                                      value={syllabusMode === 'SCHOOL' ? (editConfig.deepDiveNotesHtml || '') : (editConfig.competitionDeepDiveNotesHtml || '')}
+                                      onChange={e => {
+                                          if (syllabusMode === 'SCHOOL') {
+                                              setEditConfig({...editConfig, deepDiveNotesHtml: e.target.value});
+                                          } else {
+                                              setEditConfig({...editConfig, competitionDeepDiveNotesHtml: e.target.value});
+                                          }
+                                      }}
                                       className="w-full p-3 border border-cyan-200 rounded-xl text-sm h-40 focus:ring-2 focus:ring-cyan-500 outline-none font-mono"
-                                      placeholder="Paste text for Deep Dive (TTS) here..."
+                                      placeholder={`Paste text for ${syllabusMode} Deep Dive (TTS) here...`}
                                   />
                               </div>
 

@@ -620,7 +620,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       setSelectedChapter(null);
       setLoadingChapters(true);
       const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
-      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', subject.id, lang).then(data => {
+      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', subject, lang).then(data => {
           setChapters(data);
           setLoadingChapters(false);
       });
@@ -720,10 +720,18 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       }
 
       if (contentViewStep === 'PLAYER' && selectedChapter) {
-          if (type === 'VIDEO') return <VideoPlaylistView chapter={selectedChapter} onBack={goBack} user={user} />;
-          if (type === 'PDF') return <PdfView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} />;
-          if (type === 'MCQ') return <McqView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} />;
-          if (type === 'AUDIO') return <AudioPlaylistView chapter={selectedChapter} onBack={goBack} user={user} onPlayTrack={setCurrentAudioTrack} />;
+          const contentProps = {
+              subject: selectedSubject || {id: 'all', name: 'All Subjects', icon: 'Book', color: 'bg-slate-100'},
+              board: user.board || 'CBSE',
+              classLevel: user.classLevel || '10',
+              stream: user.stream || 'Science',
+              onUpdateUser: handleUserUpdate
+          };
+
+          if (type === 'VIDEO') return <VideoPlaylistView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} {...contentProps} />;
+          if (type === 'PDF') return <PdfView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} {...contentProps} />;
+          if (type === 'MCQ') return <McqView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} {...contentProps} />;
+          if (type === 'AUDIO') return <AudioPlaylistView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} onPlayAudio={setCurrentAudioTrack} {...contentProps} />;
       }
 
       return null;
@@ -950,23 +958,23 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
                       if (type === 'PDF') {
                           setLoadingChapters(true);
-                          // We pass null for subject to get all chapters for the class
                           const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
-                          fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', null, lang).then(allChapters => {
+
+                          // Fix Subject Context FIRST
+                          const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board);
+                          let targetSubject = selectedSubject;
+
+                          if (subjectName) {
+                              targetSubject = subjects.find(s => s.name === subjectName) || subjects[0];
+                          } else if (!targetSubject) {
+                              targetSubject = subjects[0];
+                          }
+
+                          // Now call fetchChapters with targetSubject
+                          fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', targetSubject, lang).then(allChapters => {
                               const ch = allChapters.find(c => c.id === chapterId);
                               if (ch) {
                                   onTabChange('PDF');
-
-                                  // Fix Subject Context
-                                  const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board);
-                                  let targetSubject = selectedSubject;
-
-                                  if (subjectName) {
-                                      targetSubject = subjects.find(s => s.name === subjectName) || subjects[0];
-                                  } else if (!targetSubject) {
-                                      targetSubject = subjects[0];
-                                  }
-
                                   setSelectedSubject(targetSubject);
                                   setSelectedChapter(ch);
                                   setContentViewStep('PLAYER');
@@ -998,21 +1006,21 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                       // Navigate to MCQ Player
                       setLoadingChapters(true);
                       const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
-                      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', null, lang).then(allChapters => {
+
+                      // Fix Subject Context FIRST
+                      const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board);
+                      let targetSubject = selectedSubject;
+
+                      if (subjectName) {
+                          targetSubject = subjects.find(s => s.name === subjectName) || subjects[0];
+                      } else if (!targetSubject) {
+                          targetSubject = subjects[0];
+                      }
+
+                      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', targetSubject, lang).then(allChapters => {
                           const ch = allChapters.find(c => c.id === chapterId);
                           if (ch) {
                               onTabChange('MCQ');
-
-                              // Fix Subject Context
-                              const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board);
-                              let targetSubject = selectedSubject;
-
-                              if (subjectName) {
-                                  targetSubject = subjects.find(s => s.name === subjectName) || subjects[0];
-                              } else if (!targetSubject) {
-                                  targetSubject = subjects[0];
-                              }
-
                               setSelectedSubject(targetSubject);
                               setSelectedChapter(ch);
                               setContentViewStep('PLAYER');

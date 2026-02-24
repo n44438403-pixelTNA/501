@@ -10,7 +10,7 @@ export interface FeatureAccessResult {
     allowedTiers: UserTier[];
     userTier: UserTier;
     isDummy: boolean;
-    reason?: 'TIER_RESTRICTED' | 'CREDIT_LOCKED' | 'DUMMY_FEATURE' | 'GRANTED';
+    reason?: 'TIER_RESTRICTED' | 'CREDIT_LOCKED' | 'DUMMY_FEATURE' | 'GRANTED' | 'FEED_LOCKED';
 }
 
 /**
@@ -44,7 +44,7 @@ export const checkFeatureAccess = (
 ): FeatureAccessResult => {
     const userTier = getUserTier(user);
 
-    // 1. Get Dynamic Config from Settings
+    // 1. Get Dynamic Config from Settings (FEED)
     const dynamicConfig = settings.featureConfig?.[featureId];
 
     // 2. Get Static Config from Registry
@@ -52,40 +52,52 @@ export const checkFeatureAccess = (
 
     // 3. Determine Allowed Tiers
     let allowedTiers: UserTier[] = [];
+    let isFeedControl = false;
 
-    // FEED CONTROL (Priority if visible is explicitly TRUE or undefined (default true for new config))
-    // Note: If dynamicConfig exists, we check visibility. If it doesn't exist, we fall through.
-    const isFeedControl = dynamicConfig && dynamicConfig.visible !== false;
+    // --- STRICT FEED CONTROL LOGIC ---
+    // If a configuration exists in Feature Access (Feed), it overrides EVERYTHING.
+    if (dynamicConfig) {
+        isFeedControl = true;
 
-    if (isFeedControl) {
-        if (dynamicConfig.allowedTiers && dynamicConfig.allowedTiers.length > 0) {
-            // Use Granular Dynamic Config
-            allowedTiers = dynamicConfig.allowedTiers;
-        } else if (dynamicConfig.minTier) {
-            // Fallback to Legacy Dynamic MinTier
-            if (dynamicConfig.minTier === 'ULTRA') allowedTiers = ['ULTRA'];
-            else if (dynamicConfig.minTier === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
-            else allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
+        // If visible is explicitly FALSE, it's locked for everyone (unless overridden by tiers?)
+        // The previous logic said "if visible is FALSE, fallback to Matrix".
+        // User requested: "plan Matrix nahibkarega Future lock unlock... sab control karega Future access page".
+        // This implies if it's in Feed, Feed rules apply 100%.
+
+        if (dynamicConfig.visible === false) {
+            // Strictly Locked via Feed? Or does toggle OFF mean "Use Matrix"?
+            // User said: "Future access me no access hai to wo Future wo tired wale use nahi kar oayenge".
+            // And "agar Future access me lock karne ka option hoga user ko lock kiya hua Future pe lock dikhega".
+            // The toggle on Admin UI says "FEED" vs "MATRIX".
+            // If toggle is FEED (visible=true), we use Feed rules.
+            // If toggle is MATRIX (visible=false), we use Matrix rules.
+            isFeedControl = false;
         } else {
-             // Fallback to Static Registry if Dynamic Config exists but has no restrictions set (open)
-             // OR check static registry first?
-             if (staticConfig?.requiredSubscription) {
-                if (staticConfig.requiredSubscription === 'ULTRA') allowedTiers = ['ULTRA'];
-                else if (staticConfig.requiredSubscription === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
+            // FEED MODE IS ACTIVE
+            if (dynamicConfig.allowedTiers && dynamicConfig.allowedTiers.length > 0) {
+                allowedTiers = dynamicConfig.allowedTiers;
+            } else if (dynamicConfig.minTier) {
+                // Legacy support
+                if (dynamicConfig.minTier === 'ULTRA') allowedTiers = ['ULTRA'];
+                else if (dynamicConfig.minTier === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
                 else allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-             } else {
-                allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-             }
+            } else {
+                // If config exists but no tiers specified, assume NO ACCESS (Strict) or FULL ACCESS?
+                // Admin UI defaults to all selected. If empty, it means none selected.
+                allowedTiers = [];
+            }
         }
     }
-    // MATRIX CONTROL (Fallback if visible is FALSE)
-    else if (settings.tierPermissions) {
-        if (settings.tierPermissions.FREE?.includes(featureId)) allowedTiers.push('FREE');
-        if (settings.tierPermissions.BASIC?.includes(featureId)) allowedTiers.push('BASIC');
-        if (settings.tierPermissions.ULTRA?.includes(featureId)) allowedTiers.push('ULTRA');
 
-        // If not found in matrix, fall back to static registry as safety net?
-        // Or assume strictly restricted?
+    // --- MATRIX FALLBACK (Only if Feed is NOT active) ---
+    if (!isFeedControl) {
+        if (settings.tierPermissions) {
+            if (settings.tierPermissions.FREE?.includes(featureId)) allowedTiers.push('FREE');
+            if (settings.tierPermissions.BASIC?.includes(featureId)) allowedTiers.push('BASIC');
+            if (settings.tierPermissions.ULTRA?.includes(featureId)) allowedTiers.push('ULTRA');
+        }
+
+        // Final Fallback to Static Registry if Matrix is empty/missing
         if (allowedTiers.length === 0) {
              if (staticConfig?.requiredSubscription) {
                 if (staticConfig.requiredSubscription === 'ULTRA') allowedTiers = ['ULTRA'];
@@ -95,26 +107,17 @@ export const checkFeatureAccess = (
                 allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
              }
         }
-    } else {
-        // No Dynamic Config, No Matrix -> Use Static Registry
-        if (staticConfig?.requiredSubscription) {
-            if (staticConfig.requiredSubscription === 'ULTRA') allowedTiers = ['ULTRA'];
-            else if (staticConfig.requiredSubscription === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
-            else allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-        } else {
-            allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-        }
     }
 
-    // 4. Determine Cost
-    const cost = dynamicConfig?.creditCost !== undefined ? dynamicConfig.creditCost : 0;
+    // 4. Determine Cost (Feed Only)
+    const cost = (isFeedControl && dynamicConfig?.creditCost !== undefined) ? dynamicConfig.creditCost : 0;
 
-    // 5. Determine Dummy Status
-    const isDummy = dynamicConfig?.isDummy === true;
+    // 5. Determine Dummy Status (Feed overrides)
+    const isDummy = (isFeedControl && dynamicConfig?.isDummy !== undefined) ? dynamicConfig.isDummy : (staticConfig?.isDummy || false);
 
-    // 6. Determine Limit
+    // 6. Determine Limit (Feed Only)
     let limit: number | undefined;
-    if (dynamicConfig?.limits) {
+    if (isFeedControl && dynamicConfig?.limits) {
         if (userTier === 'FREE') limit = dynamicConfig.limits.free;
         else if (userTier === 'BASIC') limit = dynamicConfig.limits.basic;
         else if (userTier === 'ULTRA') limit = dynamicConfig.limits.ultra;
@@ -125,8 +128,11 @@ export const checkFeatureAccess = (
 
     let reason: FeatureAccessResult['reason'] = hasAccess ? 'GRANTED' : 'TIER_RESTRICTED';
 
+    if (!hasAccess && isFeedControl) {
+        reason = 'FEED_LOCKED'; // Explicitly blocked by Feed
+    }
+
     if (isDummy) {
-        // Dummy features might be visible but not interactive, or handled by UI
         reason = 'DUMMY_FEATURE';
     }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SystemSettings, AppFeature } from '../../types';
-import { ALL_APP_FEATURES } from '../../constants';
+import { ALL_FEATURES } from '../../utils/featureRegistry';
 import { Search, Save, Eye, EyeOff, Tag, Star, Lock, CheckCircle, RefreshCw, LayoutGrid, List, Sparkles, ToggleLeft, ToggleRight, Plus, Trash2, Shield, Settings } from 'lucide-react';
 
 interface Props {
@@ -147,17 +147,25 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
     };
 
     // Combine static features with any custom ones found in config
-    const coreFeatureIds = new Set(ALL_APP_FEATURES.map(f => f.id));
+    const coreFeatureIds = new Set(ALL_FEATURES.map(f => f.id));
     const customFeatureIds = Object.keys(localConfig).filter(id => !coreFeatureIds.has(id));
 
+    // Map ALL_FEATURES (Registry) to expected Format
     const combinedFeatures = [
-        ...ALL_APP_FEATURES,
+        ...ALL_FEATURES.map(f => ({
+            id: f.id,
+            title: f.label,
+            category: f.group,
+            enabled: true,
+            isDummy: f.isDummy // Preserve Dummy Status from Registry
+        })),
         ...customFeatureIds.map(id => ({
             id,
             title: localConfig[id].label || id,
             enabled: true,
             order: 999,
-            category: localConfig[id].customCategory || 'CUSTOM'
+            category: localConfig[id].customCategory || 'CUSTOM',
+            isDummy: false
         }))
     ];
 
@@ -169,7 +177,7 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
             visible: conf.visible !== false,
             isNew: conf.isNew || false,
             isUpdated: conf.isUpdated || false,
-            isDummy: conf.isDummy || false,
+            isDummy: conf.isDummy !== undefined ? conf.isDummy : (f.isDummy || false), // Respect Registry Default
             allowedTiers: conf.allowedTiers || (conf.minTier === 'ULTRA' ? ['ULTRA'] : conf.minTier === 'BASIC' ? ['BASIC', 'ULTRA'] : ['FREE', 'BASIC', 'ULTRA']),
             creditCost: conf.creditCost !== undefined ? conf.creditCost : 0,
             limits: conf.limits || {},

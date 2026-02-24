@@ -6,6 +6,7 @@ export type UserTier = 'FREE' | 'BASIC' | 'ULTRA';
 export interface FeatureAccessResult {
     hasAccess: boolean;
     cost: number;
+    limit?: number; // Limit for current tier
     allowedTiers: UserTier[];
     userTier: UserTier;
     isDummy: boolean;
@@ -111,7 +112,15 @@ export const checkFeatureAccess = (
     // 5. Determine Dummy Status
     const isDummy = dynamicConfig?.isDummy === true;
 
-    // 6. Check Access
+    // 6. Determine Limit
+    let limit: number | undefined;
+    if (dynamicConfig?.limits) {
+        if (userTier === 'FREE') limit = dynamicConfig.limits.free;
+        else if (userTier === 'BASIC') limit = dynamicConfig.limits.basic;
+        else if (userTier === 'ULTRA') limit = dynamicConfig.limits.ultra;
+    }
+
+    // 7. Check Access
     const hasAccess = allowedTiers.includes(userTier);
 
     let reason: FeatureAccessResult['reason'] = hasAccess ? 'GRANTED' : 'TIER_RESTRICTED';
@@ -124,6 +133,7 @@ export const checkFeatureAccess = (
     return {
         hasAccess,
         cost,
+        limit,
         allowedTiers,
         userTier,
         isDummy,

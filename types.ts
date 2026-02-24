@@ -306,6 +306,11 @@ export interface FeatureAccessConfig {
     allowedTiers: ('FREE' | 'BASIC' | 'ULTRA')[];
     creditCost?: number; // Global override cost
     isDummy?: boolean; // Visual indicator if feature is implemented or placeholder
+    limits?: {
+        free?: number;
+        basic?: number;
+        ultra?: number;
+    };
 }
 
 export interface FeatureCostConfig {
@@ -651,6 +656,7 @@ export interface AppFeature {
   title: string;
   enabled: boolean;
   order: number;
+  category?: string; // Analysis, MCQ, Revision, etc.
 }
 
 export interface SpinReward {
@@ -936,6 +942,7 @@ export interface LessonContent {
   competitionPremiumNotesHtml?: string;
 
   deepDiveNotesHtml?: string; // NEW: Deep Dive Notes (TTS Source)
+  competitionDeepDiveNotesHtml?: string; // NEW: Competition Mode Deep Dive Notes
 
   // NEW TOPIC BASED CONTENT
   topicNotes?: { id: string, title: string, content: string, isPremium: boolean, topic: string }[];

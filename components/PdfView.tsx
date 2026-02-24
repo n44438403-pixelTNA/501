@@ -288,13 +288,14 @@ export const PdfView: React.FC<Props> = ({
           link = contentData?.ultraPdfLink;
           price = contentData?.ultraPdfPrice !== undefined ? contentData.ultraPdfPrice : 10;
       } else if (type === 'DEEP_DIVE') {
-          htmlContent = contentData?.deepDiveNotesHtml || '';
+          htmlContent = syllabusMode === 'SCHOOL' ? (contentData?.deepDiveNotesHtml || '') : (contentData?.competitionDeepDiveNotesHtml || '');
           // price = settings?.deepDiveCost !== undefined ? settings.deepDiveCost : 5; // Use checkFeatureAccess
       } else if (type === 'AUDIO_SLIDE') {
           // Visual: Premium PDF (Slides)
-          link = contentData?.schoolPdfPremiumLink || contentData?.premiumLink || contentData?.competitionPdfPremiumLink;
+          link = syllabusMode === 'SCHOOL' ? (contentData?.schoolPdfPremiumLink || contentData?.premiumLink) : contentData?.competitionPdfPremiumLink;
           // Audio: Deep Dive Text (TTS)
-          ttsContent = (contentData?.deepDiveNotesHtml || '').replace(/<[^>]*>?/gm, ' '); // Strip HTML for TTS
+          const rawTts = syllabusMode === 'SCHOOL' ? (contentData?.deepDiveNotesHtml || '') : (contentData?.competitionDeepDiveNotesHtml || '');
+          ttsContent = rawTts.replace(/<[^>]*>?/gm, ' '); // Strip HTML for TTS
           // price = settings?.audioSlideCost !== undefined ? settings.audioSlideCost : 10; // Use checkFeatureAccess
       }
 

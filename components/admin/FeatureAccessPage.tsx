@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SystemSettings, AppFeature } from '../../types';
 import { ALL_APP_FEATURES } from '../../constants';
-import { Search, Save, Eye, EyeOff, Tag, Star, Lock, CheckCircle, RefreshCw, LayoutGrid, List, Sparkles, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Search, Save, Eye, EyeOff, Tag, Star, Lock, CheckCircle, RefreshCw, LayoutGrid, List, Sparkles, ToggleLeft, ToggleRight, Plus, Trash2, Shield, Settings } from 'lucide-react';
 
 interface Props {
     settings: SystemSettings;
@@ -11,16 +11,25 @@ interface Props {
 
 export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings, onBack }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState<'ALL' | 'HIDDEN' | 'NEW' | 'UPDATED'>('ALL');
+    const [activeCategory, setActiveCategory] = useState<string>('ALL');
     const [localConfig, setLocalConfig] = useState<Record<string, any>>(settings.featureConfig || {});
+    const [subAdminPermissions, setSubAdminPermissions] = useState<string[]>(settings.defaultAdminPermissions || []);
     const [viewMode, setViewMode] = useState<'GRID' | 'LIST'>('GRID');
+
+    // Add Feature Modal State
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newFeature, setNewFeature] = useState({ id: '', title: '', category: 'CUSTOM' });
+    const [customCategory, setCustomCategory] = useState('');
 
     // Initialize config from settings if empty, but respect existing
     useEffect(() => {
         if (settings.featureConfig) {
             setLocalConfig(settings.featureConfig);
         }
-    }, [settings.featureConfig]);
+        if (settings.defaultAdminPermissions) {
+            setSubAdminPermissions(settings.defaultAdminPermissions);
+        }
+    }, [settings.featureConfig, settings.defaultAdminPermissions]);
 
     const handleToggle = (id: string, field: 'visible' | 'isNew' | 'isUpdated' | 'isDummy') => {
         setLocalConfig(prev => {
@@ -32,11 +41,10 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
         });
     };
 
-    // NEW: Handle Multiple Tiers via Checkboxes
+    // Handle Multiple Tiers via Checkboxes
     const handleTierToggle = (id: string, tier: 'FREE' | 'BASIC' | 'ULTRA') => {
         setLocalConfig(prev => {
             const current = prev[id] || {};
-            // Default to ALL tiers if allowedTiers is missing
             const currentTiers = current.allowedTiers || ['FREE', 'BASIC', 'ULTRA'];
 
             let newTiers;
@@ -53,6 +61,38 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
         });
     };
 
+    const handleLimitChange = (id: string, tier: 'free' | 'basic' | 'ultra', value: string) => {
+        setLocalConfig(prev => {
+            const current = prev[id] || {};
+            const currentLimits = current.limits || {};
+            // If value is empty, remove the limit key
+            const newLimits = {
+                ...currentLimits,
+                [tier]: value === '' ? undefined : Number(value)
+            };
+            // Clean up undefined values
+            if (value === '') delete newLimits[tier];
+
+            return {
+                ...prev,
+                [id]: {
+                    ...current,
+                    limits: newLimits
+                }
+            };
+        });
+    };
+
+    const handleSubAdminToggle = (id: string) => {
+        setSubAdminPermissions(prev => {
+            if (prev.includes(id)) {
+                return prev.filter(p => p !== id);
+            } else {
+                return [...prev, id];
+            }
+        });
+    };
+
     const handleCostChange = (id: string, cost: number) => {
         setLocalConfig(prev => {
             const current = prev[id] || {};
@@ -63,34 +103,91 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
         });
     };
 
-    const saveChanges = () => {
-        const updatedSettings = { ...settings, featureConfig: localConfig };
-        onUpdateSettings(updatedSettings);
-        alert("Feature configurations saved successfully!");
+    const handleAddFeature = () => {
+        if (!newFeature.id || !newFeature.title) {
+            alert("ID and Title are required");
+            return;
+        }
+
+        const finalCategory = newFeature.category === 'NEW_CATEGORY' ? customCategory : newFeature.category;
+
+        // Add to localConfig (this implicitly 'creates' it for the merged list)
+        setLocalConfig(prev => ({
+            ...prev,
+            [newFeature.id]: {
+                label: newFeature.title,
+                visible: true,
+                allowedTiers: ['FREE', 'BASIC', 'ULTRA'],
+                customCategory: finalCategory || 'CUSTOM' // Store category if needed
+            }
+        }));
+        setShowAddModal(false);
+        setNewFeature({ id: '', title: '', category: 'CUSTOM' });
+        setCustomCategory('');
     };
 
-    // Merge static list with local config state
-    const mergedFeatures = ALL_APP_FEATURES.map(f => {
+    const handleDeleteFeature = (id: string) => {
+        if (window.confirm(`Are you sure you want to delete feature "${id}"? This will remove its configuration.`)) {
+            setLocalConfig(prev => {
+                const newState = { ...prev };
+                delete newState[id];
+                return newState;
+            });
+        }
+    };
+
+    const saveChanges = () => {
+        const updatedSettings = {
+            ...settings,
+            featureConfig: localConfig,
+            defaultAdminPermissions: subAdminPermissions
+        };
+        onUpdateSettings(updatedSettings);
+        alert("Feature configurations and Sub-Admin permissions saved successfully!");
+    };
+
+    // Combine static features with any custom ones found in config
+    const coreFeatureIds = new Set(ALL_APP_FEATURES.map(f => f.id));
+    const customFeatureIds = Object.keys(localConfig).filter(id => !coreFeatureIds.has(id));
+
+    const combinedFeatures = [
+        ...ALL_APP_FEATURES,
+        ...customFeatureIds.map(id => ({
+            id,
+            title: localConfig[id].label || id,
+            enabled: true,
+            order: 999,
+            category: localConfig[id].customCategory || 'CUSTOM'
+        }))
+    ];
+
+    // Merge with config state
+    const mergedFeatures = combinedFeatures.map(f => {
         const conf = localConfig[f.id] || {};
         return {
             ...f,
-            visible: conf.visible !== false, // Default true
+            visible: conf.visible !== false,
             isNew: conf.isNew || false,
             isUpdated: conf.isUpdated || false,
             isDummy: conf.isDummy || false,
-            // Migrate minTier to allowedTiers if needed, or use existing allowedTiers
             allowedTiers: conf.allowedTiers || (conf.minTier === 'ULTRA' ? ['ULTRA'] : conf.minTier === 'BASIC' ? ['BASIC', 'ULTRA'] : ['FREE', 'BASIC', 'ULTRA']),
-            creditCost: conf.creditCost !== undefined ? conf.creditCost : 0
+            creditCost: conf.creditCost !== undefined ? conf.creditCost : 0,
+            limits: conf.limits || {},
+            isSubAdminAccessible: subAdminPermissions.includes(f.id),
+            // Use config category if available (override), else default
+            category: conf.customCategory || f.category || 'OTHER'
         };
     });
+
+    // Extract Categories
+    const categories = ['ALL', ...Array.from(new Set(mergedFeatures.map(f => f.category))).sort()];
 
     const filteredFeatures = mergedFeatures.filter(f => {
         const matchesSearch = f.title.toLowerCase().includes(searchTerm.toLowerCase()) || f.id.toLowerCase().includes(searchTerm.toLowerCase());
         if (!matchesSearch) return false;
 
-        if (filter === 'HIDDEN') return !f.visible;
-        if (filter === 'NEW') return f.isNew;
-        if (filter === 'UPDATED') return f.isUpdated;
+        if (activeCategory !== 'ALL' && f.category !== activeCategory) return false;
+
         return true;
     });
 
@@ -110,6 +207,12 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
 
                 <div className="flex gap-2 w-full md:w-auto">
                     <button
+                        onClick={() => setShowAddModal(true)}
+                        className="px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 flex items-center gap-2"
+                    >
+                        <Plus size={20} /> Add Feature
+                    </button>
+                    <button
                         onClick={() => setViewMode(viewMode === 'GRID' ? 'LIST' : 'GRID')}
                         className="p-3 bg-white text-slate-600 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50"
                     >
@@ -124,113 +227,231 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center">
-                <div className="relative flex-1 w-full">
-                    <Search className="absolute left-3 top-3.5 text-slate-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search features..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
-                    />
+            {/* Categories & Search */}
+            <div className="space-y-4 mb-6">
+                <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
+                    <div className="relative flex-1 w-full">
+                        <Search className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search features..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-3 bg-transparent outline-none font-bold text-slate-700"
+                        />
+                    </div>
                 </div>
-                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-                    {['ALL', 'HIDDEN', 'NEW', 'UPDATED'].map((f) => (
+
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {categories.map((cat) => (
                         <button
-                            key={f}
-                            onClick={() => setFilter(f as any)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors border ${filter === f ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                            key={cat}
+                            onClick={() => setActiveCategory(cat)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors border ${
+                                activeCategory === cat
+                                ? 'bg-slate-800 text-white border-slate-800'
+                                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                            }`}
                         >
-                            {f}
+                            {cat}
                         </button>
                     ))}
                 </div>
             </div>
 
             {/* Grid/List View */}
-            <div className={`grid ${viewMode === 'GRID' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'} gap-4`}>
-                {filteredFeatures.map(feature => (
-                    <div key={feature.id} className={`bg-white p-4 rounded-xl border-2 transition-all ${feature.visible ? 'border-slate-200 shadow-sm' : 'border-slate-100 opacity-60 bg-slate-50'}`}>
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <h3 className="font-bold text-slate-800 text-sm">{feature.title}</h3>
-                                <p className="text-[10px] text-slate-400 font-mono">{feature.id}</p>
-                            </div>
-                            <button
-                                onClick={() => handleToggle(feature.id, 'visible')}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors font-bold text-xs ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
-                                title={feature.visible ? "Feed Control Active" : "Matrix Control (Fallback)"}
-                            >
-                                {feature.visible ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-                                {feature.visible ? 'FEED CONTROL' : 'MATRIX CONTROL'}
-                            </button>
-                        </div>
+            <div className={`grid ${viewMode === 'GRID' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1'} gap-4`}>
+                {filteredFeatures.map(feature => {
+                    const isCustom = !coreFeatureIds.has(feature.id);
+                    return (
+                        <div key={feature.id} className={`bg-white p-4 rounded-xl border-2 transition-all relative ${feature.visible ? 'border-slate-200 shadow-sm' : 'border-slate-100 opacity-60 bg-slate-50'}`}>
 
-                        {/* Controls */}
-                        <div className="space-y-3">
-                            <div className="flex gap-2">
+                            {/* Delete Button for Custom Features */}
+                            {isCustom && (
                                 <button
-                                    onClick={() => handleToggle(feature.id, 'isNew')}
-                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border flex items-center justify-center gap-1 ${feature.isNew ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-400 border-slate-200'}`}
+                                    onClick={() => handleDeleteFeature(feature.id)}
+                                    className="absolute top-2 right-2 p-1.5 text-red-400 hover:bg-red-50 rounded-lg z-10"
+                                    title="Delete Feature"
                                 >
-                                    <Sparkles size={12} /> NEW
+                                    <Trash2 size={14} />
                                 </button>
-                                <button
-                                    onClick={() => handleToggle(feature.id, 'isUpdated')}
-                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border flex items-center justify-center gap-1 ${feature.isUpdated ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-white text-slate-400 border-slate-200'}`}
-                                >
-                                    <RefreshCw size={12} /> UPDATED
-                                </button>
-                                <button
-                                    onClick={() => handleToggle(feature.id, 'isDummy')}
-                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border flex items-center justify-center gap-1 ${feature.isDummy ? 'bg-gray-800 text-white border-gray-900' : 'bg-white text-slate-400 border-slate-200'}`}
-                                    title="Mark as Dummy Feature"
-                                >
-                                    {feature.isDummy ? 'DUMMY' : 'REAL'}
-                                </button>
+                            )}
+
+                            <div className="flex justify-between items-start mb-3 pr-8">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-bold text-slate-800 text-sm">{feature.title}</h3>
+                                        {feature.category && <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 uppercase tracking-wider">{feature.category}</span>}
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{feature.id}</p>
+                                </div>
                             </div>
 
-                            {/* Credit Cost */}
-                            <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Credit Cost</label>
-                                <input
-                                    type="number"
-                                    value={feature.creditCost}
-                                    onChange={(e) => handleCostChange(feature.id, Number(e.target.value))}
-                                    className="w-full p-2 text-xs border rounded-lg font-bold text-slate-700"
-                                    min="0"
-                                />
+                            {/* Main Toggles */}
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                <button
+                                    onClick={() => handleToggle(feature.id, 'visible')}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold text-[10px] flex-1 justify-center whitespace-nowrap ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
+                                >
+                                    {feature.visible ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                                    {feature.visible ? 'FEED' : 'MATRIX'}
+                                </button>
+
+                                <button
+                                    onClick={() => handleSubAdminToggle(feature.id)}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold text-[10px] flex-1 justify-center whitespace-nowrap ${feature.isSubAdminAccessible ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
+                                >
+                                    <Shield size={14} />
+                                    {feature.isSubAdminAccessible ? 'SUB-ADMIN' : 'NO ACCESS'}
+                                </button>
                             </div>
 
-                            {/* Allowed Tiers Checkboxes */}
-                            <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><Lock size={10} /> Allowed Tiers</p>
-                                <div className="flex gap-2">
+                            {/* Status Flags */}
+                            <div className="flex gap-1 mb-4">
+                                <button onClick={() => handleToggle(feature.id, 'isNew')} className={`flex-1 py-1 rounded text-[9px] font-bold border ${feature.isNew ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-300 border-slate-100'}`}>NEW</button>
+                                <button onClick={() => handleToggle(feature.id, 'isUpdated')} className={`flex-1 py-1 rounded text-[9px] font-bold border ${feature.isUpdated ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-white text-slate-300 border-slate-100'}`}>UPDATED</button>
+                                <button onClick={() => handleToggle(feature.id, 'isDummy')} className={`flex-1 py-1 rounded text-[9px] font-bold border ${feature.isDummy ? 'bg-gray-800 text-white border-gray-900' : 'bg-white text-slate-300 border-slate-100'}`}>DUMMY</button>
+                            </div>
+
+                            {/* Limits & Access Config */}
+                            <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                <div className="grid grid-cols-3 divide-x divide-slate-200 border-b border-slate-200">
+                                    {['FREE', 'BASIC', 'ULTRA'].map(tier => (
+                                        <div key={tier} className="p-2 text-center bg-slate-100">
+                                            <span className="text-[9px] font-black text-slate-500">{tier}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-3 divide-x divide-slate-200">
                                     {['FREE', 'BASIC', 'ULTRA'].map((tier) => {
-                                        const isSelected = feature.allowedTiers.includes(tier);
+                                        const t = tier as 'FREE' | 'BASIC' | 'ULTRA';
+                                        const isAllowed = feature.allowedTiers.includes(t);
+                                        const limitVal = feature.limits?.[t.toLowerCase() as 'free'|'basic'|'ultra'] ?? '';
+
                                         return (
-                                            <button
-                                                key={tier}
-                                                onClick={() => handleTierToggle(feature.id, tier as any)}
-                                                className={`flex-1 py-1.5 rounded text-[9px] font-black transition-colors flex items-center justify-center gap-1 ${
-                                                    isSelected
-                                                    ? (tier === 'FREE' ? 'bg-green-100 text-green-700 border border-green-200' : tier === 'BASIC' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-purple-100 text-purple-700 border border-purple-200')
-                                                    : 'bg-white border border-slate-200 text-slate-300 hover:bg-slate-50'
-                                                }`}
-                                            >
-                                                {isSelected ? <CheckCircle size={10} /> : <div className="w-2.5 h-2.5 rounded-full border border-slate-300"></div>}
-                                                {tier}
-                                            </button>
+                                            <div key={tier} className="p-2 flex flex-col gap-2 items-center">
+                                                <button
+                                                    onClick={() => handleTierToggle(feature.id, t)}
+                                                    className={`w-full py-1 rounded text-[9px] font-bold flex items-center justify-center gap-1 transition-colors ${
+                                                        isAllowed
+                                                        ? (t === 'FREE' ? 'bg-green-100 text-green-700' : t === 'BASIC' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700')
+                                                        : 'bg-white border border-slate-200 text-slate-300'
+                                                    }`}
+                                                >
+                                                    {isAllowed ? <CheckCircle size={10} /> : <div className="w-2.5 h-2.5 rounded-full border border-slate-300"></div>}
+                                                    {isAllowed ? 'ON' : 'OFF'}
+                                                </button>
+
+                                                {isAllowed && (
+                                                    <div className="w-full relative">
+                                                        <Settings size={10} className="absolute left-1.5 top-1.5 text-slate-400" />
+                                                        <input
+                                                            type="number"
+                                                            placeholder="∞"
+                                                            value={limitVal}
+                                                            onChange={(e) => handleLimitChange(feature.id, t.toLowerCase() as any, e.target.value)}
+                                                            className="w-full pl-5 pr-1 py-1 text-[10px] font-bold border border-slate-200 rounded text-center focus:ring-1 focus:ring-blue-500 outline-none"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
                                         );
                                     })}
                                 </div>
                             </div>
+
+                            {/* Global Cost Override */}
+                            <div className="mt-3 flex items-center gap-2">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Credit Cost:</label>
+                                <input
+                                    type="number"
+                                    value={feature.creditCost}
+                                    onChange={(e) => handleCostChange(feature.id, Number(e.target.value))}
+                                    className="flex-1 p-1 text-xs border border-slate-200 rounded font-bold text-slate-700"
+                                    min="0"
+                                />
+                            </div>
+
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Add Feature Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-black text-slate-800">Add Custom Feature</h2>
+                            <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Feature ID (Unique)</label>
+                                <input
+                                    type="text"
+                                    value={newFeature.id}
+                                    onChange={(e) => setNewFeature({...newFeature, id: e.target.value.toUpperCase().replace(/\s+/g, '_')})}
+                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="MY_FEATURE_ID"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Feature Title</label>
+                                <input
+                                    type="text"
+                                    value={newFeature.title}
+                                    onChange={(e) => setNewFeature({...newFeature, title: e.target.value})}
+                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="My Feature Name"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Category</label>
+                                <select
+                                    value={newFeature.category}
+                                    onChange={(e) => setNewFeature({...newFeature, category: e.target.value})}
+                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none mb-2"
+                                >
+                                    <option value="CUSTOM">Custom</option>
+                                    {categories.filter(c => c !== 'ALL' && c !== 'CUSTOM').map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                    <option value="NEW_CATEGORY">Create New...</option>
+                                </select>
+
+                                {newFeature.category === 'NEW_CATEGORY' && (
+                                    <input
+                                        type="text"
+                                        value={customCategory}
+                                        onChange={(e) => setCustomCategory(e.target.value)}
+                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        placeholder="Enter Category Name"
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-8">
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddFeature}
+                                className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700"
+                            >
+                                Add Feature
+                            </button>
                         </div>
                     </div>
-                ))}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

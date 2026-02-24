@@ -4,10 +4,16 @@
 
 Port 5000 is in use, trying another one...
 Port 5001 is in use, trying another one...
+Port 5002 is in use, trying another one...
 
-  VITE v6.4.1  ready in 851 ms
+  VITE v6.4.1  ready in 315 ms
 
-  ➜  Local:   http://localhost:5002/
-  ➜  Network: http://192.168.0.2:5002/
+  ➜  Local:   http://localhost:5003/
+  ➜  Network: http://192.168.0.2:5003/
 [BABEL] Note: The code generator has deoptimised the styling of /app/components/AdminDashboard.tsx as it exceeds the max of 500KB.
-2:53:34 AM [vite] (client) hmr update /components/PdfView.tsx
+3:18:43 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/PdfView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureAccessPage.tsx
+3:20:40 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/PdfView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureAccessPage.tsx
+3:22:32 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/PdfView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureAccessPage.tsx
+ntDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/PdfView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureAccessPage.tsx
+3:20:40 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/PdfView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureAccessPage.tsx
+3:22:32 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/PdfView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureAccessPage.tsx

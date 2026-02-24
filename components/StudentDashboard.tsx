@@ -620,7 +620,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       setSelectedChapter(null);
       setLoadingChapters(true);
       const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
-      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', subject.id, lang).then(data => {
+      fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', subject, lang).then(data => {
           setChapters(data);
           setLoadingChapters(false);
       });

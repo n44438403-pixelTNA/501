@@ -403,11 +403,12 @@ export const fetchChapters = async (
   board: Board,
   classLevel: ClassLevel, 
   stream: Stream | null,
-  subject: Subject,
+  subject: Subject | string | null,
   language: Language
 ): Promise<Chapter[]> => {
+  const subjectName = (typeof subject === 'object' && subject?.name) ? subject.name : (typeof subject === 'string' ? subject : 'General');
   const streamKey = (classLevel === '11' || classLevel === '12') && stream ? `-${stream}` : '';
-  const cacheKey = `${board}-${classLevel}${streamKey}-${subject.name}-${language}`;
+  const cacheKey = `${board}-${classLevel}${streamKey}-${subjectName}-${language}`;
   
   const firebaseChapters = await getCustomSyllabus(cacheKey);
   if (firebaseChapters && firebaseChapters.length > 0) {
@@ -419,7 +420,7 @@ export const fetchChapters = async (
 
   if (chapterCache[cacheKey]) return chapterCache[cacheKey];
 
-  const staticKey = `${board}-${classLevel}-${subject.name}`; 
+  const staticKey = `${board}-${classLevel}-${subjectName}`;
   const staticList = STATIC_SYLLABUS[staticKey];
   if (staticList && staticList.length > 0) {
       const chapters: Chapter[] = staticList.map((title, idx) => ({
@@ -437,7 +438,7 @@ export const fetchChapters = async (
       if (s) { const p = JSON.parse(s); if(p.aiModel) modelName = p.aiModel; }
   } catch(e){}
 
-  const prompt = `List 15 standard chapters for ${classLevel === 'COMPETITION' ? 'Competitive Exam' : `Class ${classLevel}`} ${stream ? stream : ''} Subject: ${subject.name} (${board}). Language: ${language}. Return JSON array: [{"title": "...", "description": "..."}].`;
+  const prompt = `List 15 standard chapters for ${classLevel === 'COMPETITION' ? 'Competitive Exam' : `Class ${classLevel}`} ${stream ? stream : ''} Subject: ${subjectName} (${board}). Language: ${language}. Return JSON array: [{"title": "...", "description": "..."}].`;
   try {
     const data = await executeWithRotation(async () => {
         const content = await callGroqApi([

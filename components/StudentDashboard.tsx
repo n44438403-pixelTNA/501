@@ -720,10 +720,18 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       }
 
       if (contentViewStep === 'PLAYER' && selectedChapter) {
-          if (type === 'VIDEO') return <VideoPlaylistView chapter={selectedChapter} onBack={goBack} user={user} />;
-          if (type === 'PDF') return <PdfView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} />;
-          if (type === 'MCQ') return <McqView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} />;
-          if (type === 'AUDIO') return <AudioPlaylistView chapter={selectedChapter} onBack={goBack} user={user} onPlayTrack={setCurrentAudioTrack} />;
+          const contentProps = {
+              subject: selectedSubject || {id: 'all', name: 'All Subjects', icon: 'Book', color: 'bg-slate-100'},
+              board: user.board || 'CBSE',
+              classLevel: user.classLevel || '10',
+              stream: user.stream || 'Science',
+              onUpdateUser: handleUserUpdate
+          };
+
+          if (type === 'VIDEO') return <VideoPlaylistView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} {...contentProps} />;
+          if (type === 'PDF') return <PdfView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} {...contentProps} />;
+          if (type === 'MCQ') return <McqView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} {...contentProps} />;
+          if (type === 'AUDIO') return <AudioPlaylistView chapter={selectedChapter} onBack={goBack} user={user} settings={settings} onPlayAudio={setCurrentAudioTrack} {...contentProps} />;
       }
 
       return null;

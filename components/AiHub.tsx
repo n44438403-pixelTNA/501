@@ -38,6 +38,68 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
     const getEventSlides = () => {
         const slides: any[] = [];
 
+        // Requested Feature Banners
+        const featureBanners = [
+            {
+                id: 'feat-sub',
+                title: 'Unlock Premium Subscription',
+                subtitle: 'Access everything with Ultra Plan.',
+                image: 'https://images.unsplash.com/photo-1555421689-491a97ff2040?auto=format&fit=crop&q=80&w=800',
+                link: 'STORE'
+            },
+            {
+                id: 'feat-notes-deep',
+                title: 'Ultra Notes Deep Dive',
+                subtitle: 'Detailed notes with audio explanations.',
+                image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&q=80&w=800',
+                link: 'PDF'
+            },
+            {
+                id: 'feat-slide',
+                title: 'Ultra Slide',
+                subtitle: 'Visual learning with audio sync.',
+                image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=800',
+                link: 'PDF'
+            },
+            {
+                id: 'feat-video',
+                title: 'Ultra Video Lectures',
+                subtitle: 'High-quality video content.',
+                image: 'https://images.unsplash.com/photo-1492619879851-f42b0416955d?auto=format&fit=crop&q=80&w=800',
+                link: 'VIDEO'
+            },
+            {
+                id: 'feat-mcq',
+                title: 'Premium MCQ Practice',
+                subtitle: 'Unlimited tests and analysis.',
+                image: 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&q=80&w=800',
+                link: 'MCQ'
+            },
+            {
+                id: 'feat-audio',
+                title: 'Premium Audio Library',
+                subtitle: 'Learn on the go with podcasts.',
+                image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=800',
+                link: 'AUDIO'
+            },
+            {
+                id: 'feat-rev',
+                title: 'Premium Revision Hub',
+                subtitle: 'Smart revision based on your weak topics.',
+                image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800',
+                link: 'REVISION'
+            },
+            {
+                id: 'feat-ai',
+                title: 'AI Hub Ultra Analysis',
+                subtitle: 'Deep insights powered by AI.',
+                image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=800',
+                link: 'AI_HUB'
+            }
+        ];
+
+        slides.push(...featureBanners);
+
         if (settings?.activeEvents) {
             settings.activeEvents.forEach(evt => {
                 if (evt.enabled) {

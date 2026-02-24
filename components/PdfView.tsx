@@ -5,7 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Chapter, User, Subject, SystemSettings, HtmlModule, PremiumNoteSlot } from '../types';
-import { FileText, Lock, ArrowLeft, Crown, Star, CheckCircle, AlertCircle, Globe, Maximize, Layers, HelpCircle, Minus, Plus, Volume2, Square, Zap } from 'lucide-react';
+import { FileText, Lock, ArrowLeft, Crown, Star, CheckCircle, AlertCircle, Globe, Maximize, Layers, HelpCircle, Minus, Plus, Volume2, Square, Zap, Headphones, BookOpen, Music } from 'lucide-react';
 import { CustomAlert } from './CustomDialogs';
 import { getChapterData, saveUserToLive } from '../firebase';
 import { CreditConfirmationModal } from './CreditConfirmationModal';
@@ -35,7 +35,8 @@ export const PdfView: React.FC<Props> = ({
   const [syllabusMode, setSyllabusMode] = useState<'SCHOOL' | 'COMPETITION'>(initialSyllabusMode || 'SCHOOL');
   const [activePdf, setActivePdf] = useState<string | null>(null);
   const [activeLang, setActiveLang] = useState<'ENGLISH' | 'HINDI'>('ENGLISH'); // NEW: Language State
-  const [pendingPdf, setPendingPdf] = useState<{type: string, price: number, link: string} | null>(null);
+  const [pendingPdf, setPendingPdf] = useState<{type: string, price: number, link: string, tts?: string} | null>(null);
+  const [ttsSource, setTtsSource] = useState<string | null>(null); // NEW: Dedicated TTS Content
   
   // ZOOM STATE
   const [zoom, setZoom] = useState(1);
@@ -59,6 +60,7 @@ export const PdfView: React.FC<Props> = ({
     return () => {
         window.speechSynthesis.cancel();
         setIsSpeaking(false);
+        setTtsSource(null); // Reset TTS Source
     };
   }, [activePdf]);
 
@@ -96,7 +98,8 @@ export const PdfView: React.FC<Props> = ({
   };
 
   const handleSpeak = () => {
-      if (!activePdf || activePdf.startsWith('http')) return;
+      // Allow if activePdf is text OR if ttsSource is present (even if activePdf is http link)
+      if ((!activePdf || activePdf.startsWith('http')) && !ttsSource) return;
       
       if (isSpeaking) {
           window.speechSynthesis.cancel();
@@ -104,8 +107,11 @@ export const PdfView: React.FC<Props> = ({
           return;
       }
 
+      // Determine Source
+      const source = ttsSource || activePdf || '';
+
       // Strip HTML/Markdown for reading
-      let textToRead = activePdf.replace(/<[^>]*>?/gm, ' '); // Remove HTML tags
+      let textToRead = source.replace(/<[^>]*>?/gm, ' '); // Remove HTML tags
       textToRead = textToRead.replace(/&nbsp;/g, ' '); // Decode non-breaking space
       textToRead = textToRead.replace(/[#*\-]/g, ''); // Remove simple markdown chars
       textToRead = textToRead.replace(/\s+/g, ' ').trim(); // Normalize spaces
@@ -247,10 +253,11 @@ export const PdfView: React.FC<Props> = ({
     fetchData();
   }, [chapter.id, board, classLevel, stream, subject.name, directResource]);
 
-  const handlePdfClick = (type: 'FREE' | 'PREMIUM' | 'ULTRA') => {
+  const handlePdfClick = (type: 'FREE' | 'PREMIUM' | 'ULTRA' | 'DEEP_DIVE' | 'AUDIO_SLIDE') => {
       let link = '';
       let htmlContent = ''; // Support for AI Notes
       let price = 0;
+      let ttsContent: string | undefined = undefined;
 
       if (type === 'FREE') {
           // STRICT MODE SEPARATION
@@ -279,6 +286,15 @@ export const PdfView: React.FC<Props> = ({
       } else if (type === 'ULTRA') {
           link = contentData?.ultraPdfLink;
           price = contentData?.ultraPdfPrice !== undefined ? contentData.ultraPdfPrice : 10;
+      } else if (type === 'DEEP_DIVE') {
+          htmlContent = contentData?.deepDiveNotesHtml || '';
+          price = settings?.deepDiveCost !== undefined ? settings.deepDiveCost : 5;
+      } else if (type === 'AUDIO_SLIDE') {
+          // Visual: Premium PDF (Slides)
+          link = contentData?.schoolPdfPremiumLink || contentData?.premiumLink || contentData?.competitionPdfPremiumLink;
+          // Audio: Deep Dive Text (TTS)
+          ttsContent = (contentData?.deepDiveNotesHtml || '').replace(/<[^>]*>?/gm, ' '); // Strip HTML for TTS
+          price = settings?.audioSlideCost !== undefined ? settings.audioSlideCost : 10;
       }
 
       // Prioritize Link, but allow HTML if link is missing
@@ -291,19 +307,19 @@ export const PdfView: React.FC<Props> = ({
 
       // Access Check
       if (user.role === 'ADMIN') {
-          triggerInterstitial(targetContent);
+          triggerInterstitial(targetContent, ttsContent);
           return;
       }
 
       // CHECK IF UNLOCKED VIA REDEEM CODE
       // Note: Chapter ID is used as the key for redeem codes
       if (user.unlockedContent && user.unlockedContent.includes(chapter.id)) {
-          triggerInterstitial(targetContent);
+          triggerInterstitial(targetContent, ttsContent);
           return;
       }
 
       if (price === 0) {
-          triggerInterstitial(targetContent);
+          triggerInterstitial(targetContent, ttsContent);
           return;
       }
 
@@ -312,21 +328,20 @@ export const PdfView: React.FC<Props> = ({
       if (isSubscribed) {
           // ULTRA content logic: 1 Year and Life Time.
           if (user.subscriptionTier === 'YEARLY' || user.subscriptionTier === 'LIFETIME') {
-              triggerInterstitial(targetContent);
+              triggerInterstitial(targetContent, ttsContent);
               return;
           }
           
-          if (type === 'ULTRA') {
-              // Ultra PDF specifically for 1yr/Lifetime
-              // If not that, they need to pay or have Ultra Monthly (if allowed)
-              if (user.subscriptionLevel === 'ULTRA' && user.subscriptionTier !== 'WEEKLY') {
-                  triggerInterstitial(targetContent);
+          if (type === 'ULTRA' || type === 'AUDIO_SLIDE' || type === 'DEEP_DIVE') {
+              // Ultra/Deep features usually for Ultra users
+              if (user.subscriptionLevel === 'ULTRA') {
+                  triggerInterstitial(targetContent, ttsContent);
                   return;
               }
           } else {
               // PREMIUM/FREE
               if (user.subscriptionLevel === 'ULTRA' || user.subscriptionLevel === 'BASIC') {
-                  triggerInterstitial(targetContent);
+                  triggerInterstitial(targetContent, ttsContent);
                   return;
               }
           }
@@ -334,9 +349,9 @@ export const PdfView: React.FC<Props> = ({
 
       // Coin Deduction
       if (user.isAutoDeductEnabled) {
-          processPaymentAndOpen(targetContent, price);
+          processPaymentAndOpen(targetContent, price, false, ttsContent);
       } else {
-          setPendingPdf({ type, price, link: targetContent });
+          setPendingPdf({ type, price, link: targetContent, tts: ttsContent });
       }
   };
 
@@ -390,7 +405,7 @@ export const PdfView: React.FC<Props> = ({
       setAlertConfig({isOpen: true, message: `🔒 Locked! You need ${slot.access} Subscription to access this note.`});
   };
 
-  const processPaymentAndOpen = (targetContent: string, price: number, enableAuto: boolean = false) => {
+  const processPaymentAndOpen = (targetContent: string, price: number, enableAuto: boolean = false, ttsContent?: string) => {
       if (user.credits < price) {
           setAlertConfig({isOpen: true, message: `Insufficient Credits! You need ${price} coins.`});
           return;
@@ -406,12 +421,15 @@ export const PdfView: React.FC<Props> = ({
       saveUserToLive(updatedUser);
       onUpdateUser(updatedUser);
       
-      triggerInterstitial(targetContent);
+      triggerInterstitial(targetContent, ttsContent);
       setPendingPdf(null);
   };
 
-  const triggerInterstitial = (link: string) => {
+  const [pendingTts, setPendingTts] = useState<string | null>(null);
+
+  const triggerInterstitial = (link: string, tts?: string) => {
       setPendingLink(link);
+      setPendingTts(tts || null);
       setShowInterstitial(true);
   };
 
@@ -419,7 +437,18 @@ export const PdfView: React.FC<Props> = ({
       setShowInterstitial(false);
       if (pendingLink) {
           setActivePdf(pendingLink);
+          if (pendingTts) {
+              setTtsSource(pendingTts);
+              // Auto-start TTS for Audio Slide
+              setTimeout(() => {
+                  if (!isSpeaking) {
+                      const btn = document.querySelector('[data-tts-trigger]');
+                      if (btn instanceof HTMLElement) btn.click();
+                  }
+              }, 500);
+          }
           setPendingLink(null);
+          setPendingTts(null);
       }
   };
 
@@ -497,10 +526,11 @@ export const PdfView: React.FC<Props> = ({
                </div>
            )}
 
-           {/* TTS CONTROLS (Only for Text Content) */}
-           {activePdf && !activePdf.startsWith('http') && (
+           {/* TTS CONTROLS (Text Content OR Audio Slide) */}
+           {activePdf && (!activePdf.startsWith('http') || ttsSource) && (
                <div className="flex items-center gap-1 mr-2">
                    <button 
+                       data-tts-trigger="true"
                        onClick={handleSpeak} 
                        className={`p-2 rounded-full transition-all ${isSpeaking ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                    >
@@ -792,6 +822,64 @@ export const PdfView: React.FC<Props> = ({
                                <HelpCircle size={18} />
                            </button>
                        )}
+                   </div>
+
+                   {/* DEEP DIVE NOTES (TEAL BADGE) */}
+                   <div className="relative group">
+                       <button
+                           onClick={() => handlePdfClick('DEEP_DIVE')}
+                           className="w-full p-5 rounded-2xl border-2 border-teal-200 bg-gradient-to-r from-teal-50 to-white hover:border-teal-300 flex items-center gap-4 transition-all relative overflow-hidden"
+                       >
+                           {/* BADGE */}
+                           <div className="absolute top-3 right-3 flex items-center gap-1 bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full text-[10px] font-bold border border-teal-200">
+                               <Headphones size={10} /> TTS ENABLED
+                           </div>
+
+                           <div className="w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center border border-teal-200">
+                               <BookOpen size={24} />
+                           </div>
+                           <div className="flex-1 text-left">
+                               <h4 className="font-bold text-slate-800">Deep Dive Notes</h4>
+                               <p className="text-xs text-slate-500">Audio-Enhanced Detailed Notes</p>
+                           </div>
+
+                           {/* PRICE or LOCK */}
+                           <div className="flex flex-col items-end">
+                               <span className="text-xs font-black text-teal-700">
+                                   {settings?.deepDiveCost !== undefined ? settings.deepDiveCost : 5} CR
+                               </span>
+                               <span className="text-[10px] text-slate-400">Unlock</span>
+                           </div>
+                       </button>
+                   </div>
+
+                   {/* AUDIO SLIDE (ROSE BADGE) */}
+                   <div className="relative group">
+                       <button
+                           onClick={() => handlePdfClick('AUDIO_SLIDE')}
+                           className="w-full p-5 rounded-2xl border-2 border-rose-200 bg-gradient-to-r from-rose-50 to-white hover:border-rose-300 flex items-center gap-4 transition-all relative overflow-hidden"
+                       >
+                           {/* BADGE */}
+                           <div className="absolute top-3 right-3 flex items-center gap-1 bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full text-[10px] font-bold border border-rose-200">
+                               <Music size={10} /> AUDIO SLIDE
+                           </div>
+
+                           <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center border border-rose-200">
+                               <Layers size={24} />
+                           </div>
+                           <div className="flex-1 text-left">
+                               <h4 className="font-bold text-slate-800">Audio Slides</h4>
+                               <p className="text-xs text-slate-500">Listen & View Premium Slides</p>
+                           </div>
+
+                           {/* PRICE or LOCK */}
+                           <div className="flex flex-col items-end">
+                               <span className="text-xs font-black text-rose-700">
+                                   {settings?.audioSlideCost !== undefined ? settings.audioSlideCost : 10} CR
+                               </span>
+                               <span className="text-[10px] text-slate-400">Unlock</span>
+                           </div>
+                       </button>
                    </div>
 
                    {/* HTML MODULES */}

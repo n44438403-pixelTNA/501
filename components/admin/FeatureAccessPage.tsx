@@ -174,7 +174,7 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
         const conf = localConfig[f.id] || {};
         return {
             ...f,
-            visible: conf.visible !== false,
+            visible: true, // Force VISIBLE as Feed/Matrix toggle is removed
             isNew: conf.isNew || false,
             isUpdated: conf.isUpdated || false,
             isDummy: conf.isDummy !== undefined ? conf.isDummy : (f.isDummy || false), // Respect Registry Default
@@ -297,14 +297,6 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
 
                             {/* Main Toggles */}
                             <div className="flex flex-wrap gap-2 mb-4">
-                                <button
-                                    onClick={() => handleToggle(feature.id, 'visible')}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold text-[10px] flex-1 justify-center whitespace-nowrap ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
-                                >
-                                    {feature.visible ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                                    {feature.visible ? 'FEED' : 'MATRIX'}
-                                </button>
-
                                 <button
                                     onClick={() => handleSubAdminToggle(feature.id)}
                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold text-[10px] flex-1 justify-center whitespace-nowrap ${feature.isSubAdminAccessible ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}

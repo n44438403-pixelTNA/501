@@ -155,30 +155,15 @@ export const AdminPowerManager: React.FC<Props> = ({ settings, onUpdate }) => {
                                     onChangeUltra={(v: any) => updateSetting('spinLimitUltra', Number(v))}
                                 />
 
-                                {/* PERMISSIONS (CHECKBOXES) */}
-                                {[
-                                    { id: 'NOTES_ACCESS', label: 'PDF Notes Access' },
-                                    { id: 'VIDEO_ACCESS', label: 'Video Lectures Access' },
-                                    { id: 'AUDIO_ACCESS', label: 'Audio / Podcast Access' },
-                                    { id: 'MCQ_PRACTICE', label: 'MCQ Practice Mode' },
-                                    { id: 'MCQ_TEST', label: 'MCQ Test Mode' },
-                                    { id: 'REVISION_HUB', label: 'Revision Hub Access' },
-                                    { id: 'AI_CHAT', label: 'AI Tutor Chat' },
-                                    { id: 'DOWNLOAD', label: 'Offline Downloads' },
-                                    { id: 'NO_ADS', label: 'Ad-Free Experience' },
-                                ].map(feat => (
-                                    <GridRow
-                                        key={feat.id}
-                                        label={feat.label}
-                                        type="checkbox"
-                                        free={localSettings.tierPermissions?.FREE?.includes(feat.id)}
-                                        basic={localSettings.tierPermissions?.BASIC?.includes(feat.id)}
-                                        ultra={localSettings.tierPermissions?.ULTRA?.includes(feat.id)}
-                                        onChangeFree={() => togglePermission('FREE', feat.id)}
-                                        onChangeBasic={() => togglePermission('BASIC', feat.id)}
-                                        onChangeUltra={() => togglePermission('ULTRA', feat.id)}
-                                    />
-                                ))}
+                                {/* PERMISSIONS MOVED TO FEATURE ACCESS MANAGER */}
+                                <tr>
+                                    <td colSpan={4} className="p-4 text-center bg-slate-50 border-t border-slate-200">
+                                        <div className="flex flex-col items-center gap-2 py-4">
+                                            <p className="font-bold text-slate-500">Feature Permissions have moved!</p>
+                                            <p className="text-xs text-slate-400">Please use the "Feature Access" page from the main dashboard to configure locks, limits, and costs.</p>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>

@@ -9,6 +9,7 @@ export interface Feature {
     requiredSubscription?: 'FREE' | 'BASIC' | 'ULTRA';
     adminVisible: boolean;
     isExperimental?: boolean;
+    isDummy?: boolean; // Default dummy status if not overridden
     description?: string;
     icon?: string; // Lucide icon name
     adminTab?: string; // Corresponds to AdminTab in AdminDashboard.tsx
@@ -184,6 +185,7 @@ export const ALL_FEATURES: Feature[] = [
         surfaceLevel: 2,
         requiredSubscription: 'ULTRA',
         adminVisible: false,
+        isDummy: true,
         description: 'Generate AI-based study plans.'
     },
     {
@@ -192,6 +194,7 @@ export const ALL_FEATURES: Feature[] = [
         group: 'REVISION',
         surfaceLevel: 2,
         adminVisible: false,
+        isDummy: true,
         description: 'Review your past mistakes.'
     },
 
@@ -213,6 +216,7 @@ export const ALL_FEATURES: Feature[] = [
         surfaceLevel: 2,
         requiredSubscription: 'BASIC',
         adminVisible: false,
+        isDummy: true,
         icon: 'FileText',
         description: 'Generate custom notes.'
     },

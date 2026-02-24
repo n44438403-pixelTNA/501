@@ -35,7 +35,8 @@ export const getUserTier = (user: User | null): UserTier => {
 };
 
 /**
- * Checks if a user has access to a specific feature based on dynamic settings and static registry.
+ * Checks if a user has access to a specific feature based on dynamic settings.
+ * Prioritizes the 'Feature Access Page' configuration.
  */
 export const checkFeatureAccess = (
     featureId: string,
@@ -44,75 +45,43 @@ export const checkFeatureAccess = (
 ): FeatureAccessResult => {
     const userTier = getUserTier(user);
 
-    // 1. Get Dynamic Config from Settings
+    // 1. Get Dynamic Config from Settings (Priority)
+    // We treat featureConfig as the single source of truth for access control.
     const dynamicConfig = settings.featureConfig?.[featureId];
 
-    // 2. Get Static Config from Registry
+    // 2. Get Static Config from Registry (Fallback)
     const staticConfig = ALL_FEATURES.find(f => f.id === featureId);
 
     // 3. Determine Allowed Tiers
     let allowedTiers: UserTier[] = [];
 
-    // FEED CONTROL (Priority if visible is explicitly TRUE or undefined (default true for new config))
-    // Note: If dynamicConfig exists, we check visibility. If it doesn't exist, we fall through.
-    const isFeedControl = dynamicConfig && dynamicConfig.visible !== false;
-
-    if (isFeedControl) {
-        if (dynamicConfig.allowedTiers && dynamicConfig.allowedTiers.length > 0) {
-            // Use Granular Dynamic Config
+    if (dynamicConfig) {
+        // Strict Dynamic Control
+        if (dynamicConfig.allowedTiers) {
             allowedTiers = dynamicConfig.allowedTiers;
         } else if (dynamicConfig.minTier) {
-            // Fallback to Legacy Dynamic MinTier
+            // Legacy Dynamic Support (MinTier) - converting to list
             if (dynamicConfig.minTier === 'ULTRA') allowedTiers = ['ULTRA'];
             else if (dynamicConfig.minTier === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
             else allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
         } else {
-             // Fallback to Static Registry if Dynamic Config exists but has no restrictions set (open)
-             // OR check static registry first?
-             if (staticConfig?.requiredSubscription) {
-                if (staticConfig.requiredSubscription === 'ULTRA') allowedTiers = ['ULTRA'];
-                else if (staticConfig.requiredSubscription === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
-                else allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-             } else {
-                allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-             }
-        }
-    }
-    // MATRIX CONTROL (Fallback if visible is FALSE)
-    else if (settings.tierPermissions) {
-        if (settings.tierPermissions.FREE?.includes(featureId)) allowedTiers.push('FREE');
-        if (settings.tierPermissions.BASIC?.includes(featureId)) allowedTiers.push('BASIC');
-        if (settings.tierPermissions.ULTRA?.includes(featureId)) allowedTiers.push('ULTRA');
-
-        // If not found in matrix, fall back to static registry as safety net?
-        // Or assume strictly restricted?
-        if (allowedTiers.length === 0) {
-             if (staticConfig?.requiredSubscription) {
-                if (staticConfig.requiredSubscription === 'ULTRA') allowedTiers = ['ULTRA'];
-                else if (staticConfig.requiredSubscription === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
-                else allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-             } else {
-                allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-             }
-        }
-    } else {
-        // No Dynamic Config, No Matrix -> Use Static Registry
-        if (staticConfig?.requiredSubscription) {
-            if (staticConfig.requiredSubscription === 'ULTRA') allowedTiers = ['ULTRA'];
-            else if (staticConfig.requiredSubscription === 'BASIC') allowedTiers = ['BASIC', 'ULTRA'];
-            else allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
-        } else {
+            // Config exists but no tiers specified? Default to Open.
             allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
         }
+    } else {
+        // No Dynamic Config found -> Default to OPEN to avoid locking out unconfigured features.
+        // Once an admin saves the Feature Access Page, the config will exist.
+        allowedTiers = ['FREE', 'BASIC', 'ULTRA'];
     }
 
-    // 4. Determine Cost
+    // 3. Determine Cost
     const cost = dynamicConfig?.creditCost !== undefined ? dynamicConfig.creditCost : 0;
 
-    // 5. Determine Dummy Status
-    const isDummy = dynamicConfig?.isDummy === true;
+    // 4. Determine Dummy Status
+    // Priority: Dynamic Config -> Static Registry
+    const isDummy = dynamicConfig?.isDummy !== undefined ? dynamicConfig.isDummy : (staticConfig?.isDummy === true);
 
-    // 6. Determine Limit
+    // 5. Determine Limit
     let limit: number | undefined;
     if (dynamicConfig?.limits) {
         if (userTier === 'FREE') limit = dynamicConfig.limits.free;
@@ -120,7 +89,7 @@ export const checkFeatureAccess = (
         else if (userTier === 'ULTRA') limit = dynamicConfig.limits.ultra;
     }
 
-    // 7. Check Access
+    // 6. Check Access
     const hasAccess = allowedTiers.includes(userTier);
 
     let reason: FeatureAccessResult['reason'] = hasAccess ? 'GRANTED' : 'TIER_RESTRICTED';

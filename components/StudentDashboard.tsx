@@ -1160,12 +1160,15 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                     </div>
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => onTabChange('STORE')}
-                            className="flex flex-col items-end group active:scale-95 transition-transform"
+                            onClick={() => {
+                                if (!hasPermission('STORE_ACCESS')) { showAlert("Store Locked", "INFO"); return; }
+                                onTabChange('STORE');
+                            }}
+                            className={`flex flex-col items-end group active:scale-95 transition-transform ${!hasPermission('STORE_ACCESS') ? 'opacity-50' : ''}`}
                         >
                             <span className="text-[10px] font-bold text-slate-400 uppercase group-hover:text-blue-600 transition-colors">Credits</span>
                             <span className="font-black text-blue-600 flex items-center gap-1">
-                                <Crown size={14} className="fill-blue-600"/> {user.credits} <span className="bg-blue-100 text-blue-700 text-[8px] px-1 rounded ml-1 group-hover:bg-blue-600 group-hover:text-white transition-colors">ADD</span>
+                                {!hasPermission('STORE_ACCESS') ? <Lock size={14} className="text-slate-400"/> : <Crown size={14} className="fill-blue-600"/>} {user.credits} <span className="bg-blue-100 text-blue-700 text-[8px] px-1 rounded ml-1 group-hover:bg-blue-600 group-hover:text-white transition-colors">ADD</span>
                             </span>
                         </button>
                         <div className="flex flex-col items-end border-l pl-3 border-slate-100">
@@ -2009,24 +2012,28 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                 
                 <button
                     onClick={() => {
+                        if (!hasPermission('REVISION_HUB')) { showAlert("Feature Locked", "INFO"); return; }
                         onTabChange('REVISION' as any);
                     }}
-                    className={`flex flex-col items-center justify-center w-full h-full ${activeTab === 'REVISION' ? 'text-blue-600' : 'text-slate-400'}`}
+                    className={`flex flex-col items-center justify-center w-full h-full ${activeTab === 'REVISION' ? 'text-blue-600' : 'text-slate-400'} ${!hasPermission('REVISION_HUB') ? 'opacity-60' : ''}`}
                 >
                     <div className="relative">
                         <BrainCircuit size={24} fill={activeTab === 'REVISION' ? "currentColor" : "none"} />
+                        {!hasPermission('REVISION_HUB') && <div className="absolute -top-1 -right-2 bg-slate-100 rounded-full p-[1px] border border-slate-200"><Lock size={10} className="text-slate-500" /></div>}
                     </div>
                     <span className="text-[10px] font-bold mt-1">Revision</span>
                 </button>
 
                 <button
                     onClick={() => {
+                        if (!hasPermission('AI_CENTER')) { showAlert("Feature Locked", "INFO"); return; }
                         onTabChange('AI_HUB');
                     }}
-                    className={`flex flex-col items-center justify-center w-full h-full ${activeTab === 'AI_HUB' ? 'text-blue-600' : 'text-slate-400'}`}
+                    className={`flex flex-col items-center justify-center w-full h-full ${activeTab === 'AI_HUB' ? 'text-blue-600' : 'text-slate-400'} ${!hasPermission('AI_CENTER') ? 'opacity-60' : ''}`}
                 >
                     <div className="relative">
                         <Sparkles size={24} fill={activeTab === 'AI_HUB' ? "currentColor" : "none"} />
+                        {!hasPermission('AI_CENTER') && <div className="absolute -top-1 -right-2 bg-slate-100 rounded-full p-[1px] border border-slate-200"><Lock size={10} className="text-slate-500" /></div>}
                     </div>
                     <span className="text-[10px] font-bold mt-1">AI Hub</span>
                 </button>
@@ -2319,26 +2326,36 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                         {[
                             { id: 'INBOX', label: 'Inbox', icon: Mail, color: 'indigo', action: () => { setShowInbox(true); setShowSidebar(false); } },
                             { id: 'UPDATES', label: 'Notifications', icon: Bell, color: 'red', action: () => { onTabChange('UPDATES'); setHasNewUpdate(false); localStorage.setItem('nst_last_read_update', Date.now().toString()); setShowSidebar(false); } },
-                            { id: 'ANALYTICS', label: 'Analytics', icon: BarChart3, color: 'blue', action: () => { onTabChange('ANALYTICS'); setShowSidebar(false); } },
+                            { id: 'ANALYTICS', featureId: 'MY_ANALYSIS', label: 'Analytics', icon: BarChart3, color: 'blue', action: () => { onTabChange('ANALYTICS'); setShowSidebar(false); } },
                             { id: 'MARKSHEET', label: 'Marksheet', icon: FileText, color: 'green', action: () => { setShowMonthlyReport(true); setShowSidebar(false); } },
                             { id: 'HISTORY', label: 'History', icon: History, color: 'slate', action: () => { onTabChange('HISTORY'); setShowSidebar(false); } },
-                            { id: 'PLAN', label: 'My Plan', icon: CreditCard, color: 'purple', action: () => { onTabChange('SUB_HISTORY'); setShowSidebar(false); } },
-                            ...(isGameEnabled ? [{ id: 'GAME', label: 'Play Game', icon: Gamepad2, color: 'orange', action: () => { onTabChange('GAME'); setShowSidebar(false); } }] : []),
-                            { id: 'REDEEM', label: 'Redeem', icon: Gift, color: 'pink', action: () => { onTabChange('REDEEM'); setShowSidebar(false); } },
+                            { id: 'PLAN', featureId: 'PREMIUM_ACCESS', label: 'My Plan', icon: CreditCard, color: 'purple', action: () => { onTabChange('SUB_HISTORY'); setShowSidebar(false); } },
+                            ...(isGameEnabled ? [{ id: 'GAME', featureId: 'GAMES', label: 'Play Game', icon: Gamepad2, color: 'orange', action: () => { onTabChange('GAME'); setShowSidebar(false); } }] : []),
+                            { id: 'REDEEM', featureId: 'REDEEM_CODE', label: 'Redeem', icon: Gift, color: 'pink', action: () => { onTabChange('REDEEM'); setShowSidebar(false); } },
                             { id: 'PRIZES', label: 'Prizes', icon: Trophy, color: 'yellow', action: () => { onTabChange('PRIZES'); setShowSidebar(false); } },
                             { id: 'REQUEST', label: 'Request Content', icon: Megaphone, color: 'purple', action: () => { setShowRequestModal(true); setShowSidebar(false); } },
-                        ].map(item => (
-                            <Button
-                                key={item.id}
-                                onClick={item.action}
-                                variant="ghost"
-                                fullWidth
-                                className="justify-start gap-4 p-4 hover:bg-slate-50"
-                            >
-                                <div className={`bg-${item.color}-100 text-${item.color}-600 p-2 rounded-lg`}><item.icon size={20} /></div>
-                                {item.label}
-                            </Button>
-                        ))}
+                        ].map((item: any) => {
+                            const isLocked = item.featureId ? !hasPermission(item.featureId) : false;
+                            return (
+                                <Button
+                                    key={item.id}
+                                    onClick={() => {
+                                        if (isLocked) { showAlert("Feature Locked", "INFO"); return; }
+                                        item.action();
+                                    }}
+                                    variant="ghost"
+                                    fullWidth
+                                    className={`justify-start gap-4 p-4 hover:bg-slate-50 ${isLocked ? 'opacity-50 grayscale' : ''}`}
+                                >
+                                    <div className={`bg-${item.color}-100 text-${item.color}-600 p-2 rounded-lg relative`}>
+                                        <item.icon size={20} />
+                                        {isLocked && <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow"><Lock size={8} className="text-red-500" /></div>}
+                                    </div>
+                                    {item.label}
+                                    {isLocked && <Lock size={12} className="ml-auto text-slate-400" />}
+                                </Button>
+                            );
+                        })}
 
                         {/* EXTERNAL APPS */}
                         {settings?.externalApps?.map(app => (

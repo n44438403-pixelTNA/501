@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Chapter, User, Subject, SystemSettings, MCQResult, PerformanceTag } from '../types';
 import { CheckCircle, Lock, ArrowLeft, Crown, PlayCircle, HelpCircle, Trophy, Clock, BrainCircuit, FileText } from 'lucide-react';
 import { CustomAlert, CustomConfirm } from './CustomDialogs';
+import { checkFeatureAccess } from '../utils/permissionUtils';
 import { getChapterData, saveUserToLive, saveUserHistory, savePublicActivity } from '../firebase';
 import { generateLocalAnalysis, generateAnalysisJson } from '../utils/analysisUtils';
 import { LessonView } from './LessonView'; 
@@ -78,9 +79,17 @@ export const McqView: React.FC<Props> = ({
               .filter(h => new Date(h.date).toDateString() === todayStr)
               .reduce((sum, h) => sum + h.totalQuestions, 0);
 
-          let dailyLimit = settings?.mcqLimitFree || 30;
-          if (user.subscriptionLevel === 'BASIC') dailyLimit = settings?.mcqLimitBasic || 50;
-          if (user.subscriptionLevel === 'ULTRA') dailyLimit = settings?.mcqLimitUltra || 100;
+          // Use checkFeatureAccess to get limit from new config if available
+          const { limit } = checkFeatureAccess('MCQ_PRACTICE', user, settings || {});
+
+          let dailyLimit = limit;
+
+          // Fallback to legacy settings if limit not in config
+          if (dailyLimit === undefined) {
+              dailyLimit = settings?.mcqLimitFree || 30;
+              if (user.subscriptionLevel === 'BASIC') dailyLimit = settings?.mcqLimitBasic || 50;
+              if (user.subscriptionLevel === 'ULTRA') dailyLimit = settings?.mcqLimitUltra || 100;
+          }
 
           if (solvedToday >= dailyLimit) {
               setAlertConfig({

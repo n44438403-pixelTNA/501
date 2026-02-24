@@ -72,6 +72,14 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toDateString();
 
+    const pendingNotes = useMemo(() => {
+        return topics.filter(t => t.nextRevision && new Date(t.nextRevision) <= now);
+    }, [topics]);
+
+    const pendingMcqs = useMemo(() => {
+        return topics.filter(t => t.mcqDueDate && new Date(t.mcqDueDate) <= now);
+    }, [topics]);
+
     // Memoize History Processing to prevent Infinite Loops / Auto Refresh
     const processedTopics = useMemo(() => {
         try {

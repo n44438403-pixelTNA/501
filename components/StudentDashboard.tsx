@@ -942,53 +942,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
           return <AiHub user={user} onTabChange={onTabChange} settings={settings} />;
       }
 
-      // 3. REVISION HUB
-      if (activeTab === 'REVISION') {
-          if (!hasPermission('REVISION_HUB')) return <div className="p-8 text-center text-slate-500">🔒 Revision Hub is locked. Upgrade to access.</div>;
-
-          return (
-              <RevisionHub
-                  user={user}
-                  onTabChange={onTabChange}
-                  settings={settings}
-                  onUpdateUser={handleUserUpdate}
-                  onNavigateContent={(type, chapterId, topicName, subjectName) => {
-                      // Only for PDF/Notes now
-                      setTopicFilter(topicName);
-
-                      if (type === 'PDF') {
-                          setLoadingChapters(true);
-                          const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
-
-                          // Fix Subject Context FIRST
-                          const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board);
-                          let targetSubject = selectedSubject;
-
-                          if (subjectName) {
-                              targetSubject = subjects.find(s => s.name === subjectName) || subjects[0];
-                          } else if (!targetSubject) {
-                              targetSubject = subjects[0];
-                          }
-
-                          // Now call fetchChapters with targetSubject
-                          fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', targetSubject, lang).then(allChapters => {
-                              const ch = allChapters.find(c => c.id === chapterId);
-                              if (ch) {
-                                  onTabChange('PDF');
-                                  setSelectedSubject(targetSubject);
-                                  setSelectedChapter(ch);
-                                  setContentViewStep('PLAYER');
-                                  setFullScreen(true);
-                              } else {
-                                  showAlert("Content not found or not loaded.", "ERROR");
-                              }
-                              setLoadingChapters(false);
-                          });
-                      }
-                  }}
-              />
-          );
-      }
 
       // 5. UNIVERSAL VIDEO
       if (activeTab === 'UNIVERSAL_VIDEO') {

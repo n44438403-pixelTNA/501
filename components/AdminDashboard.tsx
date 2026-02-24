@@ -4947,6 +4947,22 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                   </button>
                               </div>
 
+                              {/* DEEP DIVE NOTES (TTS ENABLED) */}
+                              <div className="bg-cyan-50 p-4 rounded-xl border border-cyan-200 mt-4">
+                                  <h4 className="font-bold text-cyan-900 mb-2 flex items-center gap-2">
+                                      <Headphones size={20} /> Deep Dive Notes (TTS Enabled)
+                                  </h4>
+                                  <p className="text-xs text-cyan-700 mb-3">
+                                      These notes will be read aloud in "Audio Slide" mode.
+                                  </p>
+                                  <textarea
+                                      value={editConfig.deepDiveNotesHtml || ''}
+                                      onChange={e => setEditConfig({...editConfig, deepDiveNotesHtml: e.target.value})}
+                                      className="w-full p-3 border border-cyan-200 rounded-xl text-sm h-40 focus:ring-2 focus:ring-cyan-500 outline-none font-mono"
+                                      placeholder="Paste text for Deep Dive (TTS) here..."
+                                  />
+                              </div>
+
                               {/* TOPIC NOTES MANAGER (NEW) */}
                               <div className="bg-orange-50 p-4 rounded-xl border border-orange-200">
                                   <h4 id="topic-notes-manager-header" className="font-bold text-orange-900 mb-4 flex items-center gap-2">
@@ -6768,6 +6784,31 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                               </div>
                           </div>
                           
+                          {/* CONTENT ACCESS PRICING */}
+                          <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200 mb-6">
+                              <h4 className="font-bold text-indigo-900 mb-4 flex items-center gap-2"><Banknote size={18} /> Content Access Pricing (Credits)</h4>
+                              <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                      <label className="text-xs font-bold text-indigo-700 uppercase block mb-1">Deep Dive Notes Cost</label>
+                                      <input
+                                          type="number"
+                                          value={localSettings.deepDiveCost !== undefined ? localSettings.deepDiveCost : 5}
+                                          onChange={e => setLocalSettings({...localSettings, deepDiveCost: Number(e.target.value)})}
+                                          className="w-full p-2 border border-indigo-200 rounded-lg font-bold text-indigo-900"
+                                      />
+                                  </div>
+                                  <div>
+                                      <label className="text-xs font-bold text-indigo-700 uppercase block mb-1">Audio Slide Cost</label>
+                                      <input
+                                          type="number"
+                                          value={localSettings.audioSlideCost !== undefined ? localSettings.audioSlideCost : 10}
+                                          onChange={e => setLocalSettings({...localSettings, audioSlideCost: Number(e.target.value)})}
+                                          className="w-full p-2 border border-indigo-200 rounded-lg font-bold text-indigo-900"
+                                      />
+                                  </div>
+                              </div>
+                          </div>
+
                           {/* PACKAGE MANAGER */}
                           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4">
                               <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><ShoppingBag size={18} /> Store Packages Manager</h4>

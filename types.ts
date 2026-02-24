@@ -465,6 +465,8 @@ export interface SystemSettings {
   nameChangeCost?: number;
   defaultVideoCost?: number;
   defaultPdfCost?: number; // NEW
+  deepDiveCost?: number; // NEW
+  audioSlideCost?: number; // NEW
   enableMcqUnlockRestriction?: boolean; // NEW
   lessonUnlockPolicy?: 'SEQUENTIAL_100_MCQ' | 'ALL_OPEN'; // NEW
   externalApps?: ExternalApp[]; // NEW
@@ -930,6 +932,8 @@ export interface LessonContent {
   schoolPremiumNotesHtml?: string;
   competitionFreeNotesHtml?: string;
   competitionPremiumNotesHtml?: string;
+
+  deepDiveNotesHtml?: string; // NEW: Deep Dive Notes (TTS Source)
 
   // NEW TOPIC BASED CONTENT
   topicNotes?: { id: string, title: string, content: string, isPremium: boolean, topic: string }[];

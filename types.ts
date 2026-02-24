@@ -453,7 +453,8 @@ export interface SystemSettings {
   showAiPromo?: boolean; // NEW: Toggle AI Banner
   showChallengesBanner?: boolean; // NEW: Toggle Live Challenges
   exploreBanners?: ExploreBanner[]; // NEW: Dynamic Explore Banners
-  featureAccess?: FeatureAccessConfig[]; // NEW: Granular Feature Control
+  featureConfig?: Record<string, any>; // NEW: Mapped Feature Control
+  featureAccess?: FeatureAccessConfig[]; // NEW: Granular Feature Control (Legacy Array)
   featureCosts?: FeatureCostConfig[]; // NEW: Granular Cost Control
   hiddenFeatures?: string[]; // NEW: Explicit Hidden Features List
   loginBonusConfig?: LoginBonusConfig; // NEW: Login Bonus Settings

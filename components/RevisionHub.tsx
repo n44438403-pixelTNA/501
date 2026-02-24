@@ -360,9 +360,20 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
 
             if (isMounted) {
                 const flattened = expandedResults.flat();
-                // Only update if count changed (avoid render loop)
-                if (flattened.length !== processedTopics.length) {
-                    setTopics(flattened);
+
+                // STRICT DEDUPLICATION (Fix for "2 baar dikh raha hai")
+                const uniqueMap = new Map<string, TopicItem>();
+                flattened.forEach(item => {
+                    // Use a composite key or just ID if robust
+                    if (!uniqueMap.has(item.id)) {
+                        uniqueMap.set(item.id, item);
+                    }
+                });
+                const uniqueTopics = Array.from(uniqueMap.values());
+
+                // Update if different
+                if (uniqueTopics.length !== topics.length) {
+                    setTopics(uniqueTopics);
                 }
             }
         };
@@ -503,7 +514,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     const pendingMcqs = topics.filter(t => t.mcqDueDate && new Date(t.mcqDueDate) <= now);
 
     const completedToday = useMemo(() => {
-        return (user.mcqHistory || [])
+        const rawList = (user.mcqHistory || [])
             .filter(h => new Date(h.date).toDateString() === todayStr && (h as any).type === 'REVISION_NOTES')
             .map(h => {
                 let name = h.chapterTitle || 'Topic';
@@ -520,6 +531,19 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                     subjectName: h.subjectName
                 };
             });
+
+        // Deduplicate Completed List (Visual cleanup)
+        const uniqueCompleted = [];
+        const seen = new Set();
+        for (const item of rawList) {
+            // Key by Chapter ID + Name to ensure distinct entries are kept, but repeats are hidden
+            const key = `${item.chapterId}_${item.name}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                uniqueCompleted.push(item);
+            }
+        }
+        return uniqueCompleted;
     }, [user.mcqHistory, todayStr]);
 
     // WEEKLY BREAKDOWN GROUPING (New Request)

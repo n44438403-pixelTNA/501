@@ -158,7 +158,8 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
             title: f.label,
             category: f.group,
             enabled: true,
-            isDummy: f.isDummy // Preserve Dummy Status from Registry
+            isDummy: f.isDummy, // Preserve Dummy Status from Registry
+            adminVisible: f.adminVisible // Preserve Admin Visibility
         })),
         ...customFeatureIds.map(id => ({
             id,
@@ -166,7 +167,8 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
             enabled: true,
             order: 999,
             category: localConfig[id].customCategory || 'CUSTOM',
-            isDummy: false
+            isDummy: false,
+            adminVisible: false // Custom features default to student features unless specified
         }))
     ];
 
@@ -192,9 +194,15 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
     const categories = ['ALL', ...Array.from(new Set(mergedFeatures.map(f => f.category))).sort()];
 
     const filteredFeatures = mergedFeatures.filter(f => {
+        // 1. FILTER BY MODE (STRICT SEPARATION)
+        if (configMode === 'STUDENT' && f.adminVisible) return false;
+        if (configMode === 'SUB_ADMIN' && !f.adminVisible) return false;
+
+        // 2. SEARCH
         const matchesSearch = f.title.toLowerCase().includes(searchTerm.toLowerCase()) || f.id.toLowerCase().includes(searchTerm.toLowerCase());
         if (!matchesSearch) return false;
 
+        // 3. CATEGORY
         if (activeCategory !== 'ALL' && f.category !== activeCategory) return false;
 
         return true;

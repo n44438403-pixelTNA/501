@@ -15,6 +15,7 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
     const [localConfig, setLocalConfig] = useState<Record<string, any>>(settings.featureConfig || {});
     const [subAdminPermissions, setSubAdminPermissions] = useState<string[]>(settings.defaultAdminPermissions || []);
     const [viewMode, setViewMode] = useState<'GRID' | 'LIST'>('GRID');
+    const [configMode, setConfigMode] = useState<'STUDENT' | 'SUB_ADMIN'>('STUDENT');
 
     // Add Feature Modal State
     const [showAddModal, setShowAddModal] = useState(false);
@@ -214,6 +215,22 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
                 </div>
 
                 <div className="flex gap-2 w-full md:w-auto">
+                    {/* MODE SWITCHER */}
+                    <div className="bg-slate-200 p-1 rounded-xl flex gap-1">
+                        <button
+                            onClick={() => setConfigMode('STUDENT')}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${configMode === 'STUDENT' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Student
+                        </button>
+                        <button
+                            onClick={() => setConfigMode('SUB_ADMIN')}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${configMode === 'SUB_ADMIN' ? 'bg-white shadow text-purple-700' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Sub-Admin
+                        </button>
+                    </div>
+
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 flex items-center gap-2"
@@ -295,90 +312,103 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
                                 </div>
                             </div>
 
-                            {/* Main Toggles */}
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                <button
-                                    onClick={() => handleToggle(feature.id, 'visible')}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold text-[10px] flex-1 justify-center whitespace-nowrap ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
-                                >
-                                    {feature.visible ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                                    {feature.visible ? 'FEED' : 'MATRIX'}
-                                </button>
+                            {configMode === 'STUDENT' ? (
+                                <>
+                                    {/* Main Toggles (STUDENT) */}
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        <button
+                                            onClick={() => handleToggle(feature.id, 'visible')}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold text-[10px] flex-1 justify-center whitespace-nowrap ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
+                                        >
+                                            {feature.visible ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                                            {feature.visible ? 'FEED' : 'MATRIX'}
+                                        </button>
+                                    </div>
 
-                                <button
-                                    onClick={() => handleSubAdminToggle(feature.id)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold text-[10px] flex-1 justify-center whitespace-nowrap ${feature.isSubAdminAccessible ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
-                                >
-                                    <Shield size={14} />
-                                    {feature.isSubAdminAccessible ? 'SUB-ADMIN' : 'NO ACCESS'}
-                                </button>
-                            </div>
+                                    {/* Status Flags */}
+                                    <div className="flex gap-1 mb-4">
+                                        <button onClick={() => handleToggle(feature.id, 'isNew')} className={`flex-1 py-1 rounded text-[9px] font-bold border ${feature.isNew ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-300 border-slate-100'}`}>NEW</button>
+                                        <button onClick={() => handleToggle(feature.id, 'isUpdated')} className={`flex-1 py-1 rounded text-[9px] font-bold border ${feature.isUpdated ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-white text-slate-300 border-slate-100'}`}>UPDATED</button>
+                                        <button onClick={() => handleToggle(feature.id, 'isDummy')} className={`flex-1 py-1 rounded text-[9px] font-bold border ${feature.isDummy ? 'bg-gray-800 text-white border-gray-900' : 'bg-white text-slate-300 border-slate-100'}`}>DUMMY</button>
+                                    </div>
 
-                            {/* Status Flags */}
-                            <div className="flex gap-1 mb-4">
-                                <button onClick={() => handleToggle(feature.id, 'isNew')} className={`flex-1 py-1 rounded text-[9px] font-bold border ${feature.isNew ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-300 border-slate-100'}`}>NEW</button>
-                                <button onClick={() => handleToggle(feature.id, 'isUpdated')} className={`flex-1 py-1 rounded text-[9px] font-bold border ${feature.isUpdated ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-white text-slate-300 border-slate-100'}`}>UPDATED</button>
-                                <button onClick={() => handleToggle(feature.id, 'isDummy')} className={`flex-1 py-1 rounded text-[9px] font-bold border ${feature.isDummy ? 'bg-gray-800 text-white border-gray-900' : 'bg-white text-slate-300 border-slate-100'}`}>DUMMY</button>
-                            </div>
-
-                            {/* Limits & Access Config */}
-                            <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                <div className="grid grid-cols-3 divide-x divide-slate-200 border-b border-slate-200">
-                                    {['FREE', 'BASIC', 'ULTRA'].map(tier => (
-                                        <div key={tier} className="p-2 text-center bg-slate-100">
-                                            <span className="text-[9px] font-black text-slate-500">{tier}</span>
+                                    {/* Limits & Access Config */}
+                                    <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                        <div className="grid grid-cols-3 divide-x divide-slate-200 border-b border-slate-200">
+                                            {['FREE', 'BASIC', 'ULTRA'].map(tier => (
+                                                <div key={tier} className="p-2 text-center bg-slate-100">
+                                                    <span className="text-[9px] font-black text-slate-500">{tier}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-3 divide-x divide-slate-200">
-                                    {['FREE', 'BASIC', 'ULTRA'].map((tier) => {
-                                        const t = tier as 'FREE' | 'BASIC' | 'ULTRA';
-                                        const isAllowed = feature.allowedTiers.includes(t);
-                                        const limitVal = feature.limits?.[t.toLowerCase() as 'free'|'basic'|'ultra'] ?? '';
+                                        <div className="grid grid-cols-3 divide-x divide-slate-200">
+                                            {['FREE', 'BASIC', 'ULTRA'].map((tier) => {
+                                                const t = tier as 'FREE' | 'BASIC' | 'ULTRA';
+                                                const isAllowed = feature.allowedTiers.includes(t);
+                                                const limitVal = feature.limits?.[t.toLowerCase() as 'free'|'basic'|'ultra'] ?? '';
 
-                                        return (
-                                            <div key={tier} className="p-2 flex flex-col gap-2 items-center">
-                                                <button
-                                                    onClick={() => handleTierToggle(feature.id, t)}
-                                                    className={`w-full py-1 rounded text-[9px] font-bold flex items-center justify-center gap-1 transition-colors ${
-                                                        isAllowed
-                                                        ? (t === 'FREE' ? 'bg-green-100 text-green-700' : t === 'BASIC' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700')
-                                                        : 'bg-white border border-slate-200 text-slate-300'
-                                                    }`}
-                                                >
-                                                    {isAllowed ? <CheckCircle size={10} /> : <div className="w-2.5 h-2.5 rounded-full border border-slate-300"></div>}
-                                                    {isAllowed ? 'ON' : 'OFF'}
-                                                </button>
+                                                return (
+                                                    <div key={tier} className="p-2 flex flex-col gap-2 items-center">
+                                                        <button
+                                                            onClick={() => handleTierToggle(feature.id, t)}
+                                                            className={`w-full py-1 rounded text-[9px] font-bold flex items-center justify-center gap-1 transition-colors ${
+                                                                isAllowed
+                                                                ? (t === 'FREE' ? 'bg-green-100 text-green-700' : t === 'BASIC' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700')
+                                                                : 'bg-white border border-slate-200 text-slate-300'
+                                                            }`}
+                                                        >
+                                                            {isAllowed ? <CheckCircle size={10} /> : <div className="w-2.5 h-2.5 rounded-full border border-slate-300"></div>}
+                                                            {isAllowed ? 'ON' : 'OFF'}
+                                                        </button>
 
-                                                {isAllowed && (
-                                                    <div className="w-full relative">
-                                                        <Settings size={10} className="absolute left-1.5 top-1.5 text-slate-400" />
-                                                        <input
-                                                            type="number"
-                                                            placeholder="∞"
-                                                            value={limitVal}
-                                                            onChange={(e) => handleLimitChange(feature.id, t.toLowerCase() as any, e.target.value)}
-                                                            className="w-full pl-5 pr-1 py-1 text-[10px] font-bold border border-slate-200 rounded text-center focus:ring-1 focus:ring-blue-500 outline-none"
-                                                        />
+                                                        {isAllowed && (
+                                                            <div className="w-full relative">
+                                                                <Settings size={10} className="absolute left-1.5 top-1.5 text-slate-400" />
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="∞"
+                                                                    value={limitVal}
+                                                                    onChange={(e) => handleLimitChange(feature.id, t.toLowerCase() as any, e.target.value)}
+                                                                    className="w-full pl-5 pr-1 py-1 text-[10px] font-bold border border-slate-200 rounded text-center focus:ring-1 focus:ring-blue-500 outline-none"
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
 
-                            {/* Global Cost Override */}
-                            <div className="mt-3 flex items-center gap-2">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Credit Cost:</label>
-                                <input
-                                    type="number"
-                                    value={feature.creditCost}
-                                    onChange={(e) => handleCostChange(feature.id, Number(e.target.value))}
-                                    className="flex-1 p-1 text-xs border border-slate-200 rounded font-bold text-slate-700"
-                                    min="0"
-                                />
-                            </div>
+                                    {/* Global Cost Override */}
+                                    <div className="mt-3 flex items-center gap-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap">Credit Cost:</label>
+                                        <input
+                                            type="number"
+                                            value={feature.creditCost}
+                                            onChange={(e) => handleCostChange(feature.id, Number(e.target.value))}
+                                            className="flex-1 p-1 text-xs border border-slate-200 rounded font-bold text-slate-700"
+                                            min="0"
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    {/* Sub-Admin Configuration Only */}
+                                    <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 flex flex-col gap-3">
+                                        <p className="text-[10px] font-bold text-purple-700 uppercase">Sub-Admin Permission</p>
+                                        <button
+                                            onClick={() => handleSubAdminToggle(feature.id)}
+                                            className={`flex items-center gap-2 px-3 py-3 rounded-xl transition-all font-bold text-xs flex-1 justify-center whitespace-nowrap ${feature.isSubAdminAccessible ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-200 hover:bg-slate-50'}`}
+                                        >
+                                            <Shield size={16} />
+                                            {feature.isSubAdminAccessible ? 'ACCESS GRANTED' : 'ACCESS DENIED'}
+                                        </button>
+                                        <p className="text-[10px] text-slate-400 text-center">
+                                            {feature.isSubAdminAccessible ? 'Sub-Admins can manage this feature.' : 'Hidden from Sub-Admins.'}
+                                        </p>
+                                    </div>
+                                </>
+                            )}
 
                         </div>
                     );

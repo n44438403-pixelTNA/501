@@ -45,7 +45,8 @@ export const checkFeatureAccess = (
     const userTier = getUserTier(user);
 
     // 1. Get Dynamic Config from Settings (FEED)
-    const dynamicConfig = settings.featureConfig?.[featureId];
+    // Note: settings.featureAccess is an array of FeatureAccessConfig
+    const dynamicConfig = settings.featureAccess?.find(c => c.featureId === featureId);
 
     // 2. Get Static Config from Registry
     const staticConfig = ALL_FEATURES.find(f => f.id === featureId);

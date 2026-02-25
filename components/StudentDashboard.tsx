@@ -32,6 +32,7 @@ import { fetchChapters, generateCustomNotes } from '../services/groq'; // Needed
 import { LoadingOverlay } from './LoadingOverlay';
 import { CreditConfirmationModal } from './CreditConfirmationModal';
 import { UserGuide } from './UserGuide';
+import { StudentGuide } from './student/StudentGuide'; // NEW
 import { CustomAlert } from './CustomDialogs';
 import { AnalyticsPage } from './AnalyticsPage';
 import { LiveResultsFeed } from './LiveResultsFeed';
@@ -242,6 +243,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   const [canClaimReward, setCanClaimReward] = useState(false);
   const [selectedPhoneId, setSelectedPhoneId] = useState<string>('');
   const [showUserGuide, setShowUserGuide] = useState(false);
+  const [showStudentGuide, setShowStudentGuide] = useState(false); // NEW
   const [showNameChangeModal, setShowNameChangeModal] = useState(false);
   const [newNameInput, setNewNameInput] = useState('');
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -637,6 +639,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
           { id: 'REDEEM', label: 'Redeem', icon: Gift, color: 'pink', action: () => { onTabChange('REDEEM'); setShowSidebar(false); } },
           { id: 'PRIZES', label: 'Prizes', icon: Trophy, color: 'yellow', action: () => { onTabChange('PRIZES'); setShowSidebar(false); } },
           { id: 'REQUEST', label: 'Request Content', icon: Megaphone, color: 'purple', action: () => { setShowRequestModal(true); setShowSidebar(false); } },
+          { id: 'GUIDE', label: 'App Guide', icon: HelpCircle, color: 'cyan', action: () => { setShowStudentGuide(true); setShowSidebar(false); } }, // NEW
       ];
 
       return items.map(item => {
@@ -1694,6 +1697,14 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
             <StudentHistoryModal
                 user={viewingUserHistory}
                 onClose={() => setViewingUserHistory(null)}
+            />
+        )}
+
+        {/* STUDENT GUIDE MODAL (NEW) */}
+        {showStudentGuide && (
+            <StudentGuide
+                settings={settings}
+                onClose={() => setShowStudentGuide(false)}
             />
         )}
 

@@ -983,64 +983,59 @@ export const generateStudyRoutine = async (
     userContext: {
         name: string,
         classLevel: string,
-        recentScores: { subject: string, score: number, total: number }[],
-        weakTopics: string[]
+        history: { subject: string, chapter: string, score: number, total: number }[]
     },
     settings?: SystemSettings
 ): Promise<string> => {
-    let modelName = "llama-3.1-8b-instant";
-    if (settings?.aiModel) modelName = settings.aiModel;
+    // Force use of a stronger model for analysis if available, otherwise fallback
+    let modelName = "llama-3.3-70b-versatile";
 
     const prompt = `
-    ROLE: Expert Study Planner & Mentor.
+    ROLE: Expert Academic Mentor & Data Analyst.
 
     CONTEXT:
     Student: ${userContext.name} (Class ${userContext.classLevel})
-    Recent Performance: ${JSON.stringify(userContext.recentScores)}
-    Weak Areas: ${JSON.stringify(userContext.weakTopics)}
+    Full Test History: ${JSON.stringify(userContext.history)}
 
-    TASK:
-    Create a personalized 3-day study routine to improve weak areas and revise strong ones.
+    GOAL:
+    Analyze the ENTIRE history to find EVERY topic where the score is below 50%.
+    Create a specific, high-impact study routine for **TODAY ONLY** to fix these weak areas.
 
-    CRITICAL INSTRUCTION:
-    - Break down the "Weak Areas" (which are Chapter names) into specific SUB-TOPICS.
-    - Do NOT just schedule the whole chapter. Pick a specific concept/sub-topic for each slot.
-    - Example: Instead of "Real Numbers", schedule "Euclid's Division Lemma" or "HCF/LCM Word Problems".
+    CRITICAL INSTRUCTIONS:
+    1. **Analyze Deeply**: Look at all tests. Identify ALL chapters with < 50% score.
+    2. **Sub-Topic Breakdown**: For each weak chapter, identify specific SUB-TOPICS that usually cause confusion (e.g., if weak in "Light", assign "Mirror Formula Sign Convention" not just "Light").
+    3. **Volume**: If there are many weak topics, prioritize the top 3-4 most critical ones for today. Do NOT list just 1 or 2 if there are many.
+    4. **Today Only**: Do not plan for 3 days. Focus on maximizing TODAY.
 
     OUTPUT FORMAT (STRICT JSON ONLY):
     {
-      "title": "3-Day Mastery Plan",
-      "focus": "Focus Area Summary",
+      "title": "Today's Power Plan",
+      "summary": "You have X weak topics (<50%). Focusing on the most critical ones today.",
+      "weakAreas": ["Chapter A - Subtopic 1", "Chapter B - Subtopic 2"], // List all identified weak sub-topics
       "routine": [
         {
-          "day": "Day 1",
-          "slots": [
-            {
-              "time": "Morning",
-              "subject": "Math",
-              "topic": "Real Numbers - HCF & LCM", // Example of Sub-topic
-              "activity": "Read Notes / MCQ Practice / Video",
-              "duration": "45 mins"
-            },
-            {
-              "time": "Evening",
-              "subject": "Physics",
-              "topic": "Light - Mirror Formula", // Example of Sub-topic
-              "activity": "Revision",
-              "duration": "30 mins"
-            }
-          ]
+          "time": "Morning / Session 1",
+          "subject": "Subject Name",
+          "topic": "Specific Sub-Topic (e.g., Ohm's Law Graph)",
+          "activity": "Watch Video & Solve 10 MCQs",
+          "duration": "45 mins"
         },
         {
-          "day": "Day 2",
-          ...
+          "time": "Afternoon / Session 2",
+          "subject": "Subject Name",
+          "topic": "Specific Sub-Topic",
+          "activity": "Deep Dive Notes Reading",
+          "duration": "45 mins"
         },
         {
-          "day": "Day 3",
-          ...
+          "time": "Evening / Session 3",
+          "subject": "Subject Name",
+          "topic": "Specific Sub-Topic",
+          "activity": "Revision & Mock Test",
+          "duration": "30 mins"
         }
       ],
-      "tips": ["Tip 1", "Tip 2"]
+      "motivation": "One line specific advice based on their weak areas."
     }
 
     Ensure strict JSON response. No markdown.
@@ -1048,7 +1043,7 @@ export const generateStudyRoutine = async (
 
     return await executeWithRotation(async () => {
         const content = await callGroqApi([
-            { role: "system", content: "You are a strict JSON generator." },
+            { role: "system", content: "You are a strict JSON generator. Analyze all data provided." },
             { role: "user", content: prompt }
         ], modelName);
         return cleanJson(content || "{}");

@@ -1002,6 +1002,11 @@ export const generateStudyRoutine = async (
     TASK:
     Create a personalized 3-day study routine to improve weak areas and revise strong ones.
 
+    CRITICAL INSTRUCTION:
+    - Break down the "Weak Areas" (which are Chapter names) into specific SUB-TOPICS.
+    - Do NOT just schedule the whole chapter. Pick a specific concept/sub-topic for each slot.
+    - Example: Instead of "Real Numbers", schedule "Euclid's Division Lemma" or "HCF/LCM Word Problems".
+
     OUTPUT FORMAT (STRICT JSON ONLY):
     {
       "title": "3-Day Mastery Plan",
@@ -1010,8 +1015,20 @@ export const generateStudyRoutine = async (
         {
           "day": "Day 1",
           "slots": [
-            { "time": "Morning", "subject": "Subject", "topic": "Topic", "activity": "Read Notes / MCQ Practice / Video", "duration": "45 mins" },
-            { "time": "Evening", "subject": "Subject", "topic": "Topic", "activity": "Revision", "duration": "30 mins" }
+            {
+              "time": "Morning",
+              "subject": "Math",
+              "topic": "Real Numbers - HCF & LCM", // Example of Sub-topic
+              "activity": "Read Notes / MCQ Practice / Video",
+              "duration": "45 mins"
+            },
+            {
+              "time": "Evening",
+              "subject": "Physics",
+              "topic": "Light - Mirror Formula", // Example of Sub-topic
+              "activity": "Revision",
+              "duration": "30 mins"
+            }
           ]
         },
         {

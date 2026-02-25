@@ -611,13 +611,31 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   }
 
                   const diff = percent - prevPercent;
-                  const remarks = generateTeacherRemarks(percent, topic, prevPercent, hasPrev);
-
                   // Filter questions for this topic
                   const topicQuestions = questions?.filter((q, idx) => {
-                      const t = q.topic || 'General';
-                      return t === topic;
-                  }) || [];
+          const t = q.topic || 'General';
+          return t === topic;
+      }) || [];
+
+      // Calculate Topic-Specific Percentage
+      const topicStats = { correct: 0, total: 0 };
+      topicQuestions.forEach(q => {
+          const globalIdx = questions?.indexOf(q) ?? -1;
+          const omr = result.omrData?.find(d => d.qIndex === globalIdx);
+          if (omr && omr.selected === q.correctAnswer) topicStats.correct++;
+          topicStats.total++;
+      });
+      const topicPercent = topicStats.total > 0 ? Math.round((topicStats.correct / topicStats.total) * 100) : 0;
+
+      // Find Previous Attempt for SAME Topic
+      let prevTopicPercent = 0;
+      let hasPrevTopic = false;
+      if (previousResult && previousResult.topicAnalysis && previousResult.topicAnalysis[topic]) {
+          prevTopicPercent = previousResult.topicAnalysis[topic].percentage;
+          hasPrevTopic = true;
+      }
+
+      const remarks = generateTeacherRemarks(topicPercent, topic, prevTopicPercent, hasPrevTopic);
 
                   return (
                       <div key={i} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md">

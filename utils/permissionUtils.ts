@@ -42,6 +42,18 @@ export const checkFeatureAccess = (
     user: User | null,
     settings: SystemSettings
 ): FeatureAccessResult => {
+    // 0. Admin / Sub-Admin Bypass
+    if (user?.role === 'ADMIN' || user?.isSubAdmin) {
+        return {
+            hasAccess: true,
+            cost: 0,
+            allowedTiers: ['FREE', 'BASIC', 'ULTRA'],
+            userTier: 'ULTRA',
+            isDummy: false,
+            reason: 'GRANTED'
+        };
+    }
+
     const userTier = getUserTier(user);
 
     // 1. Get Dynamic Config from Settings (FEED)

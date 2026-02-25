@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { User, MCQResult, PerformanceTag, SystemSettings } from '../types';
+import type { User, MCQResult, PerformanceTag, SystemSettings } from '../types';
 import { BarChart, Clock, Calendar, BookOpen, TrendingUp, AlertTriangle, CheckCircle, XCircle, FileText, BrainCircuit } from 'lucide-react';
 import { MarksheetCard } from './MarksheetCard';
 

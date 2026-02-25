@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { User, SystemSettings, MCQResult } from '../types';
+import type { User, SystemSettings, MCQResult } from '../types';
 import { X, Download, Calendar, Trophy, Target, Award, Crown, Star } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';

@@ -20,6 +20,7 @@ import { AdminPowerManager } from './AdminPowerManager';
 import { SyllabusManager } from './SyllabusManager';
 import { FeatureGroupList } from './admin/FeatureGroupList';
 import { ALL_FEATURES } from '../utils/featureRegistry';
+import { DocumentationTab } from './admin/DocumentationTab';
 // @ts-ignore
 import JSZip from 'jszip';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -121,7 +122,8 @@ type AdminTab =
   | 'REVISION_LOGIC' // NEW
   | 'PLAN_MATRIX'
   | 'FEATURE_ACCESS' // NEW
-  | 'EVENT_MANAGER'; // NEW
+  | 'EVENT_MANAGER' // NEW
+  | 'DOCUMENTATION'; // NEW
 
 interface ContentConfig {
     freeLink?: string;
@@ -9688,6 +9690,17 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
               }}
               onBack={() => setActiveTab('DASHBOARD')}
           />
+      )}
+
+      {/* --- DOCUMENTATION TAB --- */}
+      {activeTab === 'DOCUMENTATION' && (
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                  <button onClick={() => setActiveTab('DASHBOARD')} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200"><ArrowLeft size={20} /></button>
+                  <h3 className="text-xl font-black text-slate-800">System Documentation</h3>
+              </div>
+              <DocumentationTab />
+          </div>
       )}
 
       {/* --- VISIBILITY CONTROL (Legacy Restored) --- */}

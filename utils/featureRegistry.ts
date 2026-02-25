@@ -693,6 +693,17 @@ export const ALL_FEATURES: Feature[] = [
         icon: 'Trash2',
         color: 'red'
     },
+    {
+        id: 'ADMIN_DOCS',
+        label: 'Documentation',
+        group: 'ADVANCED',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'DOCUMENTATION',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'BookOpen',
+        color: 'teal'
+    },
 
     // --- ANALYSIS DUMMIES (Not switchable individually) ---
     { id: 'ACCURACY_STAT', label: 'Accuracy Stat', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: false, isDummy: true },

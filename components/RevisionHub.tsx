@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, StudentTab, SystemSettings, TopicItem, TopicStatus } from '../types';
+import type { User, StudentTab, SystemSettings, TopicItem, TopicStatus } from '../types';
 import { BrainCircuit, Clock, CheckCircle, TrendingUp, AlertTriangle, ArrowRight, BookOpen, AlertCircle, X, FileText, CheckSquare, Calendar, Zap, AlertCircle as AlertIcon, ChevronDown, ChevronUp, Loader2, Lock, Unlock, MessageSquare, Bot, PlayCircle, Star, Volume2, Mic, AlertOctagon, Crown, Layout, Trophy } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { generateCustomNotes } from '../services/groq';

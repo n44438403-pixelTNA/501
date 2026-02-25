@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Volume2, StopCircle, Square, Zap, Settings2 } from 'lucide-react';
 import { speakText, stopSpeech } from '../utils/textToSpeech';
-import { SystemSettings } from '../types';
+import type { SystemSettings } from '../types';
 
 interface Props {
     text: string;

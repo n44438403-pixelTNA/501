@@ -336,7 +336,7 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
 
                                     {generatedPlan.weakAreas && (
                                         <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                                            <h4 className="font-bold text-red-800 text-sm mb-2 flex items-center gap-2"><AlertCircle size={14}/> Weak Areas Identified (<50%)</h4>
+                                            <h4 className="font-bold text-red-800 text-sm mb-2 flex items-center gap-2"><AlertCircle size={14}/> Weak Areas Identified (&lt;50%)</h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {generatedPlan.weakAreas.map((area: string, i: number) => (
                                                     <span key={i} className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-200 shadow-sm">{area}</span>

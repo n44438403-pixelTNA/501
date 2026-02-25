@@ -53,21 +53,18 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
     const handleGeneratePlan = async () => {
         setIsGeneratingPlan(true);
         try {
-            // 1. Gather User Context
-            const recentScores = (user.mcqHistory || [])
-                .slice(0, 10)
-                .map(h => ({ subject: h.subjectName || 'Unknown', score: h.score, total: h.totalQuestions }));
-
-            const weakTopics = (user.mcqHistory || [])
-                .filter(h => (h.score / h.totalQuestions) < 0.6)
-                .map(h => h.chapterTitle)
-                .slice(0, 5);
+            // 1. Gather FULL User Context
+            const history = (user.mcqHistory || []).map(h => ({
+                subject: h.subjectName || 'Unknown',
+                chapter: h.chapterTitle,
+                score: h.score,
+                total: h.totalQuestions
+            }));
 
             const planJson = await generateStudyRoutine({
                 name: user.name,
                 classLevel: user.classLevel || '10',
-                recentScores,
-                weakTopics
+                history
             }, settings);
 
             setGeneratedPlan(JSON.parse(planJson));
@@ -334,38 +331,44 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
                                 <div className="space-y-6">
                                     <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-4 rounded-xl text-white">
                                         <h3 className="font-black text-lg">{generatedPlan.title}</h3>
-                                        <p className="text-sm opacity-90">{generatedPlan.focus}</p>
+                                        <p className="text-sm opacity-90">{generatedPlan.summary}</p>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        {generatedPlan.routine.map((day: any, idx: number) => (
-                                            <div key={idx} className="border border-slate-200 rounded-xl overflow-hidden">
-                                                <div className="bg-slate-50 p-3 font-bold text-slate-700 border-b border-slate-100 flex justify-between">
-                                                    <span>{day.day}</span>
-                                                    <span className="text-xs font-normal bg-white px-2 py-0.5 rounded border border-slate-200">2 Slots</span>
-                                                </div>
-                                                <div className="divide-y divide-slate-100">
-                                                    {day.slots.map((slot: any, sIdx: number) => (
-                                                        <div key={sIdx} className="p-4 flex gap-4 items-start">
-                                                            <div className="text-xs font-bold text-slate-400 w-16 pt-1">{slot.time}</div>
-                                                            <div>
-                                                                <h4 className="font-bold text-slate-800 text-sm">{slot.subject}: {slot.topic}</h4>
-                                                                <p className="text-xs text-slate-500 mt-1">{slot.activity} • <span className="text-pink-600 font-medium">{slot.duration}</span></p>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                    {generatedPlan.weakAreas && (
+                                        <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                                            <h4 className="font-bold text-red-800 text-sm mb-2 flex items-center gap-2"><AlertCircle size={14}/> Weak Areas Identified (<50%)</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {generatedPlan.weakAreas.map((area: string, i: number) => (
+                                                    <span key={i} className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-200 shadow-sm">{area}</span>
+                                                ))}
                                             </div>
-                                        ))}
+                                        </div>
+                                    )}
+
+                                    <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                        <div className="bg-slate-50 p-3 font-bold text-slate-700 border-b border-slate-100 flex justify-between">
+                                            <span>TODAY'S SCHEDULE</span>
+                                            <span className="text-xs font-normal bg-white px-2 py-0.5 rounded border border-slate-200">High Impact</span>
+                                        </div>
+                                        <div className="divide-y divide-slate-100">
+                                            {generatedPlan.routine?.map((slot: any, sIdx: number) => (
+                                                <div key={sIdx} className="p-4 flex gap-4 items-start">
+                                                    <div className="text-xs font-bold text-slate-400 w-20 pt-1">{slot.time}</div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="text-[10px] font-black bg-slate-100 px-1.5 rounded uppercase text-slate-500">{slot.subject}</span>
+                                                            <h4 className="font-bold text-slate-800 text-sm">{slot.topic}</h4>
+                                                        </div>
+                                                        <p className="text-xs text-slate-600">{slot.activity} • <span className="text-pink-600 font-bold">{slot.duration}</span></p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
 
-                                    <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-                                        <h4 className="font-bold text-yellow-800 text-sm mb-2 flex items-center gap-2"><AlertCircle size={14}/> Pro Tips</h4>
-                                        <ul className="list-disc list-inside text-xs text-yellow-700 space-y-1">
-                                            {generatedPlan.tips?.map((tip: string, i: number) => (
-                                                <li key={i}>{tip}</li>
-                                            ))}
-                                        </ul>
+                                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                        <h4 className="font-bold text-blue-800 text-sm mb-1 flex items-center gap-2"><Zap size={14}/> AI Motivation</h4>
+                                        <p className="text-xs text-blue-700 italic">"{generatedPlan.motivation}"</p>
                                     </div>
 
                                     <Button onClick={() => setGeneratedPlan(null)} variant="outline" fullWidth>Generate New Plan</Button>

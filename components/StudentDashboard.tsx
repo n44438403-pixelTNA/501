@@ -1139,82 +1139,129 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 </button>
                                 <button
                                     onClick={async () => {
-                                        // PDF DOWNLOAD LOGIC
-                                        // 1. Create a hidden element for PDF rendering
-                                        const element = document.createElement('div');
-                                        element.style.position = 'fixed';
-                                        element.style.top = '-9999px';
-                                        element.style.left = '-9999px';
-                                        element.style.width = '210mm'; // A4 width
-                                        element.style.padding = '20mm';
-                                        element.style.backgroundColor = 'white';
-                                        element.style.fontFamily = 'Arial, sans-serif';
-                                        element.style.color = '#333';
+                                        try {
+                                            showAlert("Generating Report...", "INFO");
 
-                                        element.innerHTML = `
-                                            <div style="border: 2px solid #3b82f6; border-radius: 10px; padding: 20px;">
-                                                <h1 style="color: #1e40af; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">${settings?.appName || 'NST AI'} - Student Report</h1>
-                                                <div style="margin-top: 20px;">
-                                                    <p><strong>Name:</strong> ${user.name}</p>
-                                                    <p><strong>ID:</strong> ${user.id}</p>
-                                                    <p><strong>Class:</strong> ${user.classLevel || 'N/A'} (${user.board})</p>
-                                                    <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-                                                </div>
-                                                <div style="margin-top: 20px; background: #f8fafc; padding: 15px; border-radius: 5px;">
-                                                    <h3 style="margin-top: 0;">Subscription Details</h3>
-                                                    <p><strong>Plan:</strong> ${user.subscriptionTier || 'FREE'} ${user.subscriptionLevel || ''}</p>
-                                                    <p><strong>Status:</strong> ${user.isPremium ? 'PREMIUM ✅' : 'FREE USER'}</p>
-                                                    <p><strong>Expires:</strong> ${user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleString() : 'Never'}</p>
-                                                </div>
-                                                <div style="margin-top: 20px;">
-                                                    <h3>Recent Activity (Last 10)</h3>
-                                                    <table style="width: 100%; border-collapse: collapse;">
+                                            // Create container
+                                            const element = document.createElement('div');
+                                            element.style.width = '210mm';
+                                            element.style.minHeight = '297mm';
+                                            element.style.padding = '40px';
+                                            element.style.background = '#ffffff';
+                                            element.style.fontFamily = 'Helvetica, Arial, sans-serif';
+                                            element.style.position = 'fixed';
+                                            element.style.top = '-9999px';
+                                            element.style.left = '-9999px';
+
+                                            // Calculate Stats
+                                            const totalTests = user.mcqHistory?.length || 0;
+                                            const avgScore = totalTests > 0
+                                                ? Math.round((user.mcqHistory?.reduce((a, b) => a + (b.score/b.totalQuestions), 0) || 0) / totalTests * 100)
+                                                : 0;
+                                            const bestSubject = "General"; // simplified logic for now
+
+                                            element.innerHTML = `
+                                                <div style="border: 4px solid #1e293b; padding: 40px; height: 100%; box-sizing: border-box; position: relative;">
+
+                                                    <!-- Header -->
+                                                    <div style="text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px;">
+                                                        <h1 style="color: #1e293b; font-size: 32px; margin: 0; font-weight: 900; letter-spacing: -1px;">STUDENT PROGRESS REPORT</h1>
+                                                        <p style="color: #64748b; margin: 10px 0 0 0; font-size: 14px;">${settings?.appName || 'NST AI'} Official Record</p>
+                                                    </div>
+
+                                                    <!-- Student Info Grid -->
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;">
+                                                        <div style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+                                                            <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: bold;">Student Name</p>
+                                                            <p style="margin: 5px 0 0 0; color: #0f172a; font-size: 18px; font-weight: bold;">${user.name}</p>
+                                                        </div>
+                                                        <div style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+                                                            <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: bold;">Student ID</p>
+                                                            <p style="margin: 5px 0 0 0; color: #0f172a; font-size: 18px; font-weight: bold;">${user.displayId || user.id.slice(0,8)}</p>
+                                                        </div>
+                                                        <div style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+                                                            <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: bold;">Class & Stream</p>
+                                                            <p style="margin: 5px 0 0 0; color: #0f172a; font-size: 18px; font-weight: bold;">${user.classLevel} - ${user.stream || 'General'}</p>
+                                                        </div>
+                                                        <div style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+                                                            <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: bold;">Date Generated</p>
+                                                            <p style="margin: 5px 0 0 0; color: #0f172a; font-size: 18px; font-weight: bold;">${new Date().toLocaleDateString()}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Performance Snapshot -->
+                                                    <h3 style="color: #334155; font-size: 16px; border-left: 4px solid #3b82f6; padding-left: 10px; margin-bottom: 20px;">PERFORMANCE SNAPSHOT</h3>
+                                                    <div style="display: flex; gap: 20px; margin-bottom: 40px;">
+                                                        <div style="flex: 1; text-align: center; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
+                                                            <div style="font-size: 32px; font-weight: 900; color: #3b82f6;">${avgScore}%</div>
+                                                            <div style="font-size: 12px; color: #64748b; font-weight: bold;">AVERAGE SCORE</div>
+                                                        </div>
+                                                        <div style="flex: 1; text-align: center; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
+                                                            <div style="font-size: 32px; font-weight: 900; color: #10b981;">${totalTests}</div>
+                                                            <div style="font-size: 12px; color: #64748b; font-weight: bold;">TESTS TAKEN</div>
+                                                        </div>
+                                                        <div style="flex: 1; text-align: center; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
+                                                            <div style="font-size: 32px; font-weight: 900; color: #f59e0b;">${user.credits}</div>
+                                                            <div style="font-size: 12px; color: #64748b; font-weight: bold;">CREDITS EARNED</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Recent Activity Table -->
+                                                    <h3 style="color: #334155; font-size: 16px; border-left: 4px solid #ec4899; padding-left: 10px; margin-bottom: 20px;">RECENT TEST ACTIVITY</h3>
+                                                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                                                         <thead>
-                                                            <tr style="background: #e2e8f0;">
-                                                                <th style="padding: 8px; text-align: left;">Date</th>
-                                                                <th style="padding: 8px; text-align: left;">Topic</th>
-                                                                <th style="padding: 8px; text-align: left;">Score</th>
+                                                            <tr style="background: #f1f5f9; color: #475569;">
+                                                                <th style="padding: 12px; text-align: left; border-radius: 8px 0 0 8px;">DATE</th>
+                                                                <th style="padding: 12px; text-align: left;">TOPIC</th>
+                                                                <th style="padding: 12px; text-align: right; border-radius: 0 8px 8px 0;">SCORE</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            ${(user.mcqHistory || []).slice(0, 10).map(h => `
-                                                                <tr>
-                                                                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${new Date(h.date).toLocaleDateString()}</td>
-                                                                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${h.chapterTitle.substring(0, 30)}</td>
-                                                                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">${h.score}/${h.totalQuestions}</td>
+                                                            ${(user.mcqHistory || []).slice(0, 15).map((h, i) => `
+                                                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                                                    <td style="padding: 12px; color: #64748b;">${new Date(h.date).toLocaleDateString()}</td>
+                                                                    <td style="padding: 12px; font-weight: 600; color: #334155;">${h.chapterTitle.substring(0, 40)}</td>
+                                                                    <td style="padding: 12px; text-align: right;">
+                                                                        <span style="background: ${h.score/h.totalQuestions >= 0.8 ? '#dcfce7' : '#fee2e2'}; color: ${h.score/h.totalQuestions >= 0.8 ? '#166534' : '#991b1b'}; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
+                                                                            ${h.score}/${h.totalQuestions}
+                                                                        </span>
+                                                                    </td>
                                                                 </tr>
                                                             `).join('')}
                                                         </tbody>
                                                     </table>
+
+                                                    <!-- Footer -->
+                                                    <div style="position: absolute; bottom: 40px; left: 40px; right: 40px; text-align: center; color: #94a3b8; font-size: 10px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                                                        This report is system generated by ${settings?.appName || 'NST AI'}. Verified & Valid.
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        `;
+                                            `;
 
-                                        document.body.appendChild(element);
+                                            document.body.appendChild(element);
 
-                                        try {
-                                            showAlert("Generating PDF...", "INFO");
-                                            const canvas = await html2canvas(element, { scale: 2 });
-                                            const imgData = canvas.toDataURL('image/png');
+                                            // Render
+                                            const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+                                            const imgData = canvas.toDataURL('image/jpeg', 0.9);
 
                                             const pdf = new jsPDF('p', 'mm', 'a4');
                                             const pdfWidth = pdf.internal.pageSize.getWidth();
                                             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-                                            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                                            pdf.save(`Student_Report_${user.id}.pdf`);
+                                            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                                            pdf.save(`Report_${user.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`);
 
-                                            showAlert("PDF Downloaded Successfully!", "SUCCESS");
-                                        } catch (e) {
-                                            console.error("PDF Gen Error:", e);
-                                            showAlert("Failed to generate PDF.", "ERROR");
-                                        } finally {
                                             document.body.removeChild(element);
+                                            showAlert("✅ Report Downloaded!", "SUCCESS");
+
+                                        } catch (e) {
+                                            console.error("PDF Error", e);
+                                            showAlert("Failed to generate PDF. Please try again.", "ERROR");
                                         }
                                     }}
                                     className="bg-white p-3 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-2"
                                 >
-                                    <Download size={14} className="text-red-500"/> Download PDF Report
+                                    <Download size={14} className="text-red-500"/> Download Optimized Report
                                 </button>
                             </div>
                         </div>
@@ -1641,6 +1688,14 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
             isOpen={activeTab === 'AI_CHAT'}
             onClose={() => onTabChange('HOME')}
         />
+
+        {/* STUDENT HISTORY MODAL (FULL ACTIVITY) */}
+        {viewingUserHistory && (
+            <StudentHistoryModal
+                user={viewingUserHistory}
+                onClose={() => setViewingUserHistory(null)}
+            />
+        )}
 
         {/* REVISION HUB CHECK */}
         {activeTab === 'REVISION' && (

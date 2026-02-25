@@ -978,3 +978,62 @@ export const generateUltraAnalysis = async (
         return cleanJson(content || "{}");
     }, 'STUDENT');
 };
+
+export const generateStudyRoutine = async (
+    userContext: {
+        name: string,
+        classLevel: string,
+        recentScores: { subject: string, score: number, total: number }[],
+        weakTopics: string[]
+    },
+    settings?: SystemSettings
+): Promise<string> => {
+    let modelName = "llama-3.1-8b-instant";
+    if (settings?.aiModel) modelName = settings.aiModel;
+
+    const prompt = `
+    ROLE: Expert Study Planner & Mentor.
+
+    CONTEXT:
+    Student: ${userContext.name} (Class ${userContext.classLevel})
+    Recent Performance: ${JSON.stringify(userContext.recentScores)}
+    Weak Areas: ${JSON.stringify(userContext.weakTopics)}
+
+    TASK:
+    Create a personalized 3-day study routine to improve weak areas and revise strong ones.
+
+    OUTPUT FORMAT (STRICT JSON ONLY):
+    {
+      "title": "3-Day Mastery Plan",
+      "focus": "Focus Area Summary",
+      "routine": [
+        {
+          "day": "Day 1",
+          "slots": [
+            { "time": "Morning", "subject": "Subject", "topic": "Topic", "activity": "Read Notes / MCQ Practice / Video", "duration": "45 mins" },
+            { "time": "Evening", "subject": "Subject", "topic": "Topic", "activity": "Revision", "duration": "30 mins" }
+          ]
+        },
+        {
+          "day": "Day 2",
+          ...
+        },
+        {
+          "day": "Day 3",
+          ...
+        }
+      ],
+      "tips": ["Tip 1", "Tip 2"]
+    }
+
+    Ensure strict JSON response. No markdown.
+    `;
+
+    return await executeWithRotation(async () => {
+        const content = await callGroqApi([
+            { role: "system", content: "You are a strict JSON generator." },
+            { role: "user", content: prompt }
+        ], modelName);
+        return cleanJson(content || "{}");
+    }, 'STUDENT');
+};

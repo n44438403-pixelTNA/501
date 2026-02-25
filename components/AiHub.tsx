@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, SystemSettings, StudentTab } from '../types';
-import { Bot, Sparkles, BrainCircuit, FileText, Zap } from 'lucide-react';
+import { Bot, Sparkles, BrainCircuit, FileText, Zap, Calendar, X, AlertCircle } from 'lucide-react';
 import { CustomAlert } from './CustomDialogs';
 import { BannerCarousel } from './BannerCarousel';
+import { Button } from './ui/Button';
+import { generateStudyRoutine } from '../services/groq';
 
 interface Props {
     user: User;
@@ -15,6 +17,11 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
     const [discountStatus, setDiscountStatus] = useState<'WAITING' | 'ACTIVE' | 'NONE'>('NONE');
     const [showDiscountBanner, setShowDiscountBanner] = useState(false);
     const [discountTimer, setDiscountTimer] = useState<string | null>(null);
+
+    // NEW STATE FOR STUDY PLANNER
+    const [showPlannerModal, setShowPlannerModal] = useState(false);
+    const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+    const [generatedPlan, setGeneratedPlan] = useState<any>(null);
 
     useEffect(() => {
         const evt = settings?.specialDiscountEvent;
@@ -42,6 +49,35 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
         if (evt?.enabled) { const interval = setInterval(checkStatus, 1000); return () => clearInterval(interval); }
         else { setShowDiscountBanner(false); setDiscountStatus('NONE'); }
     }, [settings?.specialDiscountEvent]);
+
+    const handleGeneratePlan = async () => {
+        setIsGeneratingPlan(true);
+        try {
+            // 1. Gather User Context
+            const recentScores = (user.mcqHistory || [])
+                .slice(0, 10)
+                .map(h => ({ subject: h.subjectName || 'Unknown', score: h.score, total: h.totalQuestions }));
+
+            const weakTopics = (user.mcqHistory || [])
+                .filter(h => (h.score / h.totalQuestions) < 0.6)
+                .map(h => h.chapterTitle)
+                .slice(0, 5);
+
+            const planJson = await generateStudyRoutine({
+                name: user.name,
+                classLevel: user.classLevel || '10',
+                recentScores,
+                weakTopics
+            }, settings);
+
+            setGeneratedPlan(JSON.parse(planJson));
+        } catch (e) {
+            console.error("Plan Gen Error", e);
+            setAlertConfig({ isOpen: true, type: 'ERROR', message: 'Failed to generate plan. Please try again.' });
+        } finally {
+            setIsGeneratingPlan(false);
+        }
+    };
 
     const getEventSlides = () => {
         const slides: any[] = [];
@@ -222,17 +258,17 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
                     </div>
                 </button>
 
-                {/* 2. NOTES GENERATOR */}
+                {/* 2. REPLACED: NOTES GENERATOR -> AI STUDY PLANNER */}
                 <button
-                    onClick={() => onTabChange('AI_STUDIO' as any)} // Assuming mapped to AI Modal logic in parent
+                    onClick={() => setShowPlannerModal(true)}
                     className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                     <div className="bg-pink-100 text-pink-600 p-3 rounded-xl">
-                        <FileText size={24} />
+                        <Calendar size={24} />
                     </div>
                     <div className="flex-1 text-left">
-                        <h3 className="font-bold text-slate-800">Generate Notes</h3>
-                        <p className="text-xs text-slate-500">Create custom summaries instantly.</p>
+                        <h3 className="font-bold text-slate-800">AI Personalized Plans</h3>
+                        <p className="text-xs text-slate-500">Get a study routine based on your history.</p>
                     </div>
                     <div className="text-slate-300">
                         <Zap size={16} />
@@ -256,6 +292,89 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
                     </div>
                 </button>
             </div>
+
+            {/* AI PLANNER MODAL */}
+            {showPlannerModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in">
+                    <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600">
+                                    <Calendar size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-800">AI Study Planner</h3>
+                                    <p className="text-xs text-slate-500">Personalized for {user.name}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowPlannerModal(false)} className="p-2 hover:bg-slate-100 rounded-full"><X size={20} /></button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto">
+                            {!generatedPlan ? (
+                                <div className="text-center py-10">
+                                    <div className="bg-pink-50 p-6 rounded-full inline-block mb-4 animate-pulse">
+                                        <Sparkles size={40} className="text-pink-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-800 mb-2">Create Your Success Plan</h3>
+                                    <p className="text-slate-500 mb-6 text-sm max-w-xs mx-auto">
+                                        Our AI will analyze your past test performance and create a custom 3-day schedule to fix your weak areas.
+                                    </p>
+                                    <Button
+                                        onClick={handleGeneratePlan}
+                                        isLoading={isGeneratingPlan}
+                                        variant="primary"
+                                        size="lg"
+                                        icon={<Zap size={18} />}
+                                    >
+                                        {isGeneratingPlan ? "Analyzing History..." : "Generate My Plan"}
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-4 rounded-xl text-white">
+                                        <h3 className="font-black text-lg">{generatedPlan.title}</h3>
+                                        <p className="text-sm opacity-90">{generatedPlan.focus}</p>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {generatedPlan.routine.map((day: any, idx: number) => (
+                                            <div key={idx} className="border border-slate-200 rounded-xl overflow-hidden">
+                                                <div className="bg-slate-50 p-3 font-bold text-slate-700 border-b border-slate-100 flex justify-between">
+                                                    <span>{day.day}</span>
+                                                    <span className="text-xs font-normal bg-white px-2 py-0.5 rounded border border-slate-200">2 Slots</span>
+                                                </div>
+                                                <div className="divide-y divide-slate-100">
+                                                    {day.slots.map((slot: any, sIdx: number) => (
+                                                        <div key={sIdx} className="p-4 flex gap-4 items-start">
+                                                            <div className="text-xs font-bold text-slate-400 w-16 pt-1">{slot.time}</div>
+                                                            <div>
+                                                                <h4 className="font-bold text-slate-800 text-sm">{slot.subject}: {slot.topic}</h4>
+                                                                <p className="text-xs text-slate-500 mt-1">{slot.activity} • <span className="text-pink-600 font-medium">{slot.duration}</span></p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
+                                        <h4 className="font-bold text-yellow-800 text-sm mb-2 flex items-center gap-2"><AlertCircle size={14}/> Pro Tips</h4>
+                                        <ul className="list-disc list-inside text-xs text-yellow-700 space-y-1">
+                                            {generatedPlan.tips?.map((tip: string, i: number) => (
+                                                <li key={i}>{tip}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    <Button onClick={() => setGeneratedPlan(null)} variant="outline" fullWidth>Generate New Plan</Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <CustomAlert
                 isOpen={alertConfig.isOpen}

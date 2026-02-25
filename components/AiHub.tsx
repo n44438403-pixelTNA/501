@@ -4,7 +4,7 @@ import { Bot, Sparkles, BrainCircuit, FileText, Zap, Calendar, X, AlertCircle } 
 import { CustomAlert } from './CustomDialogs';
 import { BannerCarousel } from './BannerCarousel';
 import { Button } from './ui/Button';
-import { generateStudyRoutine } from '../services/groq';
+import { generateSmartStudyPlan } from '../utils/studyPlanner';
 
 interface Props {
     user: User;
@@ -52,28 +52,18 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
 
     const handleGeneratePlan = async () => {
         setIsGeneratingPlan(true);
-        try {
-            // 1. Gather FULL User Context
-            const history = (user.mcqHistory || []).map(h => ({
-                subject: h.subjectName || 'Unknown',
-                chapter: h.chapterTitle,
-                score: h.score,
-                total: h.totalQuestions
-            }));
-
-            const planJson = await generateStudyRoutine({
-                name: user.name,
-                classLevel: user.classLevel || '10',
-                history
-            }, settings);
-
-            setGeneratedPlan(JSON.parse(planJson));
-        } catch (e) {
-            console.error("Plan Gen Error", e);
-            setAlertConfig({ isOpen: true, type: 'ERROR', message: 'Failed to generate plan. Please try again.' });
-        } finally {
-            setIsGeneratingPlan(false);
-        }
+        // Simulate API delay for UX
+        setTimeout(() => {
+            try {
+                const plan = generateSmartStudyPlan(user);
+                setGeneratedPlan(plan);
+            } catch (e) {
+                console.error("Plan Gen Error", e);
+                setAlertConfig({ isOpen: true, type: 'ERROR', message: 'Failed to generate plan. Please try again.' });
+            } finally {
+                setIsGeneratingPlan(false);
+            }
+        }, 1500);
     };
 
     const getEventSlides = () => {

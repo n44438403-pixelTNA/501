@@ -697,16 +697,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                 {/* NEW HEADER DESIGN */}
                 <div className="bg-white p-4 rounded-b-3xl shadow-sm border-b border-slate-200 mb-2 flex items-center justify-between sticky top-0 z-40">
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setShowSidebar(true)}
-                            className="bg-white border border-slate-200 shadow-sm px-3 py-2 rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2 group active:scale-95"
-                        >
-                            <div className="space-y-1">
-                                <span className="block w-5 h-0.5 bg-slate-600 group-hover:bg-blue-600 transition-colors rounded-full"></span>
-                                <span className="block w-3 h-0.5 bg-slate-600 group-hover:bg-blue-600 transition-colors rounded-full"></span>
-                                <span className="block w-5 h-0.5 bg-slate-600 group-hover:bg-blue-600 transition-colors rounded-full"></span>
-                            </div>
-                        </button>
+                        {/* Menu Button Removed from Header - Moved to Floating */}
                         <div>
                             <div className="flex items-center gap-2">
                                 <h2 className="text-lg font-black text-slate-800 leading-none">
@@ -1556,6 +1547,22 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
             </div>
         </div>
 
+        {/* FLOATING ACTION BUTTON (REPLACES MENU) */}
+        {activeTab === 'HOME' && (
+            <div className="fixed bottom-20 right-4 z-40">
+                <button
+                    onClick={() => setShowSidebar(true)}
+                    className="w-14 h-14 bg-slate-900 rounded-full shadow-2xl flex items-center justify-center border-2 border-white hover:scale-110 transition-transform active:scale-95"
+                >
+                    {settings?.appLogo ? (
+                        <img src={settings.appLogo} alt="Menu" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                        <Menu size={24} className="text-white" />
+                    )}
+                </button>
+            </div>
+        )}
+
         {/* SIDEBAR OVERLAY (INLINE) */}
         {showSidebar && (
             <div className="fixed inset-0 z-[100] flex animate-in fade-in duration-200">
@@ -1565,10 +1572,14 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                 ></div>
 
                 <div className="w-64 bg-white h-full shadow-2xl relative z-10 flex flex-col slide-in-from-left duration-300">
-                    <div className="p-6 bg-slate-900 text-white rounded-br-3xl">
-                        <h2 className="text-2xl font-black italic mb-1">{settings?.appName || 'App'}</h2>
-                        <p className="text-xs text-slate-400">Student Menu</p>
-                        <button onClick={() => setShowSidebar(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
+                    <div className="p-6 bg-slate-900 text-white rounded-br-3xl relative overflow-hidden">
+                        {/* Background Logo Effect */}
+                        {settings?.appLogo && (
+                            <img src={settings.appLogo} className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 rotate-12 pointer-events-none" />
+                        )}
+                        <h2 className="text-2xl font-black italic mb-1 relative z-10">{settings?.appName || 'App'}</h2>
+                        <p className="text-xs text-slate-400 relative z-10">Student Menu</p>
+                        <button onClick={() => setShowSidebar(false)} className="absolute top-4 right-4 text-white/50 hover:text-white z-20">
                             <X size={24} />
                         </button>
                     </div>
@@ -1609,8 +1620,10 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
                     <div className="p-4 border-t border-slate-100">
                         <div className="bg-slate-50 p-4 rounded-xl flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold">
-                                {user.name.charAt(0)}
+                            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold overflow-hidden">
+                                {user.subscriptionLevel === 'ULTRA' ? (
+                                    <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-white">👑</div>
+                                ) : user.name.charAt(0)}
                             </div>
                             <div className="overflow-hidden">
                                 <p className="font-bold text-sm truncate text-slate-800">{user.name}</p>
@@ -1652,6 +1665,8 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                 chapter={selectedLessonForModal}
                 onClose={() => setShowLessonModal(false)}
                 onSelect={handleLessonOption}
+                logoUrl={settings?.appLogo} // Pass logo from settings
+                appName={settings?.appName}
             />
         )}
 

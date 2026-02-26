@@ -589,13 +589,19 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       const currentFreeNotesField = syllabusMode === 'SCHOOL' ? 'schoolFreeNotesList' : 'competitionFreeNotesList';
       const currentPremiumNotesField = syllabusMode === 'SCHOOL' ? 'schoolPremiumNotesList' : 'competitionPremiumNotesList';
       
+      // NEW FIELDS
+      const currentDeepDiveField = syllabusMode === 'SCHOOL' ? 'schoolDeepDiveEntries' : 'competitionDeepDiveEntries';
+      const currentAdditionalField = syllabusMode === 'SCHOOL' ? 'schoolAdditionalNotes' : 'competitionAdditionalNotes';
+
       const updatedConfig = {
           ...editConfig,
           [currentVideoField]: videoPlaylist,
           [currentAudioField]: audioPlaylist,
           [currentSlotsField]: premiumNoteSlots,
           [currentFreeNotesField]: freeNotesList,
-          [currentPremiumNotesField]: premiumNotesList
+          [currentPremiumNotesField]: premiumNotesList,
+          [currentDeepDiveField]: deepDiveEntries,
+          [currentAdditionalField]: additionalNotes
       };
       setEditConfig(updatedConfig);
 
@@ -612,6 +618,10 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           setFreeNotesList(updatedConfig.schoolFreeNotesList || []);
           // @ts-ignore
           setPremiumNotesList(updatedConfig.schoolPremiumNotesList || []);
+          // @ts-ignore
+          setDeepDiveEntries(updatedConfig.schoolDeepDiveEntries || updatedConfig.deepDiveEntries || []);
+          // @ts-ignore
+          setAdditionalNotes(updatedConfig.schoolAdditionalNotes || updatedConfig.additionalNotes || []);
       } else {
           // @ts-ignore
           setVideoPlaylist(updatedConfig.competitionVideoPlaylist || []);
@@ -623,6 +633,10 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           setFreeNotesList(updatedConfig.competitionFreeNotesList || []);
           // @ts-ignore
           setPremiumNotesList(updatedConfig.competitionPremiumNotesList || []);
+          // @ts-ignore
+          setDeepDiveEntries(updatedConfig.competitionDeepDiveEntries || []);
+          // @ts-ignore
+          setAdditionalNotes(updatedConfig.competitionAdditionalNotes || []);
       }
       
       setSyllabusMode(newMode);
@@ -880,14 +894,19 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           [syllabusMode === 'SCHOOL' ? 'schoolFreeNotesList' : 'competitionFreeNotesList']: freeNotesList,
           [syllabusMode === 'SCHOOL' ? 'schoolPremiumNotesList' : 'competitionPremiumNotesList']: premiumNotesList,
 
-          // NEW: Deep Dive & Additional Notes (Shared or Mode Specific? User said "Admin enter karega". Assuming shared for now or per chapter)
-          // Since structure is unlimited, we store it directly.
-          // If needed per mode, we can prefix. For now, storing as root fields in content object.
-          deepDiveEntries: deepDiveEntries,
-          additionalNotes: additionalNotes,
+          // NEW: Mode Specific Unlimited Entries
+          [syllabusMode === 'SCHOOL' ? 'schoolDeepDiveEntries' : 'competitionDeepDiveEntries']: deepDiveEntries,
+          [syllabusMode === 'SCHOOL' ? 'schoolAdditionalNotes' : 'competitionAdditionalNotes']: additionalNotes,
 
           // Legacy sync (ONLY Update if in SCHOOL mode to protect separation)
           // We DO NOT sync to legacy fields if in Competition mode to prevent pollution
+          ...(syllabusMode === 'SCHOOL' ? {
+              videoPlaylist: videoPlaylist,
+              audioPlaylist: audioPlaylist,
+              premiumNoteSlots: premiumNoteSlots,
+              deepDiveEntries: deepDiveEntries, // Fallback
+              additionalNotes: additionalNotes // Fallback
+          } : {}),
           ...(syllabusMode === 'SCHOOL' ? {
               videoPlaylist: videoPlaylist,
               audioPlaylist: audioPlaylist,
@@ -1876,21 +1895,23 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           setPremiumNoteSlots(data.schoolPdfPremiumSlots || data.premiumNoteSlots || []);
           setFreeNotesList(data.schoolFreeNotesList || []);
           setPremiumNotesList(data.schoolPremiumNotesList || []);
+
+          setDeepDiveEntries(data.schoolDeepDiveEntries || data.deepDiveEntries || []);
+          setAdditionalNotes(data.schoolAdditionalNotes || data.additionalNotes || []);
       } else {
           setVideoPlaylist(data.competitionVideoPlaylist || []); // No fallback
           setAudioPlaylist(data.competitionAudioPlaylist || []); // No fallback
           setPremiumNoteSlots(data.competitionPdfPremiumSlots || []); // No fallback
           setFreeNotesList(data.competitionFreeNotesList || []);
           setPremiumNotesList(data.competitionPremiumNotesList || []);
+
+          setDeepDiveEntries(data.competitionDeepDiveEntries || []);
+          setAdditionalNotes(data.competitionAdditionalNotes || []);
       }
 
-      // Load Topic Content
+      // Load Topic Content (Shared)
       setTopicNotes(data.topicNotes || []);
       setTopicVideos(data.topicVideos || []);
-
-      // Load New Lists
-      setDeepDiveEntries(data.deepDiveEntries || []);
-      setAdditionalNotes(data.additionalNotes || []);
   };
 
 

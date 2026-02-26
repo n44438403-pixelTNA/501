@@ -961,6 +961,12 @@ export interface LessonContent {
   deepDiveEntries?: DeepDiveEntry[]; // NEW: Unlimited Deep Dive Entries
   additionalNotes?: AdditionalNoteEntry[]; // NEW: Additional Notes
 
+  // MODE SPECIFIC UNLIMITED ENTRIES
+  schoolDeepDiveEntries?: DeepDiveEntry[];
+  competitionDeepDiveEntries?: DeepDiveEntry[];
+  schoolAdditionalNotes?: AdditionalNoteEntry[];
+  competitionAdditionalNotes?: AdditionalNoteEntry[];
+
   // NEW TOPIC BASED CONTENT
   topicNotes?: { id: string, title: string, content: string, isPremium: boolean, topic: string }[];
   topicVideos?: { id: string, title: string, url: string, isPremium: boolean, topic: string }[];

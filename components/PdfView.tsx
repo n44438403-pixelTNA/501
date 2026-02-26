@@ -33,10 +33,20 @@ interface Props {
 const formatDriveLink = (link: string) => {
     if (!link) return '';
     // If it's a view link, convert to preview
+    let formatted = link;
     if (link.includes('drive.google.com') && (link.includes('/view') || link.endsWith('/view'))) {
-        return link.replace(/\/view.*/, '/preview');
+        formatted = link.replace(/\/view.*/, '/preview');
     }
-    return link;
+
+    // Add parameters to suppress UI (Minimal Mode)
+    if (formatted.includes('drive.google.com')) {
+        // Remove existing parameters if any to avoid duplicates
+        // Append rm=minimal to hide header/toolbar
+        if (!formatted.includes('rm=minimal')) {
+            formatted += formatted.includes('?') ? '&rm=minimal' : '?rm=minimal';
+        }
+    }
+    return formatted;
 };
 
 // Helper to split HTML content into topics (SAFE)
@@ -472,7 +482,10 @@ export const PdfView: React.FC<Props> = ({
                       className="w-full h-full border-none"
                       title="PDF Viewer"
                       allow="autoplay"
+                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox"
                   />
+                  {/* Invisible Overlay to block top bar clicks if iframe sandbox isn't enough */}
+                  <div className="absolute top-0 left-0 w-full h-12 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
               </div>
           </div>
       );
@@ -751,7 +764,16 @@ export const PdfView: React.FC<Props> = ({
                                <>
                                    {pdfLink ? (
                                        <div className="relative w-full h-full">
-                                            <iframe src={formattedLink} className="w-full h-full border-none" title="PDF Viewer" allow="autoplay" />
+                                            <iframe
+                                                src={formattedLink}
+                                                className="w-full h-full border-none"
+                                                title="PDF Viewer"
+                                                allow="autoplay"
+                                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox"
+                                            />
+                                            {/* Invisible Header Blocker */}
+                                            <div className="absolute top-0 left-0 w-full h-12 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+
                                             {/* Open External Button Overlay (DISABLED) */}
                                             {/* <a
                                                 href={pdfLink}

@@ -220,7 +220,13 @@ export const PdfView: React.FC<Props> = ({
 
         // PROCESS NEW CONTENT STRUCTURE (SAFE)
         if (data) {
-            const entries: DeepDiveEntry[] = data.deepDiveEntries || [];
+            // Determine Entries based on Mode
+            let entries: DeepDiveEntry[] = [];
+            if (syllabusMode === 'SCHOOL') {
+                entries = data.schoolDeepDiveEntries || data.deepDiveEntries || [];
+            } else {
+                entries = data.competitionDeepDiveEntries || [];
+            }
 
             // 1. QUICK REVISION EXTRACTION
             const quickPoints: string[] = [];
@@ -568,22 +574,30 @@ export const PdfView: React.FC<Props> = ({
            {activeTab === 'PREMIUM' && (
                <div className="h-[calc(100vh-140px)] flex flex-col">
                    {/* ENTRY SELECTOR IF MULTIPLE */}
-                   {contentData?.deepDiveEntries && contentData.deepDiveEntries.length > 1 && (
-                       <div className="bg-slate-100 p-2 flex gap-2 overflow-x-auto border-b border-slate-200">
-                           {contentData.deepDiveEntries.map((_: any, i: number) => (
-                               <button
-                                   key={i}
-                                   onClick={() => {
-                                       setCurrentPremiumEntryIdx(i);
-                                       stopAllSpeech();
-                                   }}
-                                   className={`px-3 py-1 text-xs font-bold rounded-full whitespace-nowrap ${currentPremiumEntryIdx === i ? 'bg-purple-600 text-white shadow' : 'bg-white text-slate-500'}`}
-                               >
-                                   Part {i + 1}
-                               </button>
-                           ))}
-                       </div>
-                   )}
+                   {(() => {
+                       let entries: DeepDiveEntry[] = [];
+                       if (syllabusMode === 'SCHOOL') entries = contentData?.schoolDeepDiveEntries || contentData?.deepDiveEntries || [];
+                       else entries = contentData?.competitionDeepDiveEntries || [];
+
+                       if (entries.length <= 1) return null;
+
+                       return (
+                           <div className="bg-slate-100 p-2 flex gap-2 overflow-x-auto border-b border-slate-200">
+                               {entries.map((_: any, i: number) => (
+                                   <button
+                                       key={i}
+                                       onClick={() => {
+                                           setCurrentPremiumEntryIdx(i);
+                                           stopAllSpeech();
+                                       }}
+                                       className={`px-3 py-1 text-xs font-bold rounded-full whitespace-nowrap ${currentPremiumEntryIdx === i ? 'bg-purple-600 text-white shadow' : 'bg-white text-slate-500'}`}
+                                   >
+                                       Part {i + 1}
+                                   </button>
+                               ))}
+                           </div>
+                       );
+                   })()}
 
                    <div className="flex-1 relative bg-slate-200">
                        {(() => {
@@ -591,8 +605,12 @@ export const PdfView: React.FC<Props> = ({
                            let pdfLink = '';
                            let ttsHtml = '';
 
-                           if (contentData?.deepDiveEntries && contentData.deepDiveEntries.length > 0) {
-                               const entry = contentData.deepDiveEntries[currentPremiumEntryIdx];
+                           let entries: DeepDiveEntry[] = [];
+                           if (syllabusMode === 'SCHOOL') entries = contentData?.schoolDeepDiveEntries || contentData?.deepDiveEntries || [];
+                           else entries = contentData?.competitionDeepDiveEntries || [];
+
+                           if (entries.length > 0) {
+                               const entry = entries[currentPremiumEntryIdx];
                                pdfLink = entry?.pdfLink;
                                ttsHtml = entry?.htmlContent;
                            } else {
@@ -651,40 +669,40 @@ export const PdfView: React.FC<Props> = ({
                        <div className="flex-1 text-left"><h4 className="font-bold text-slate-700 text-sm">Standard Notes</h4><p className="text-[10px] text-slate-400">Basic Reading Material</p></div>
                    </button>
 
-                   {(!contentData?.additionalNotes || contentData.additionalNotes.length === 0) && (
-                       <p className="text-center text-xs text-slate-400 py-4">No additional resources added.</p>
-                   )}
+                   {(() => {
+                       let addNotes: AdditionalNoteEntry[] = [];
+                       if (syllabusMode === 'SCHOOL') addNotes = contentData?.schoolAdditionalNotes || contentData?.additionalNotes || [];
+                       else addNotes = contentData?.competitionAdditionalNotes || [];
 
-                   {contentData?.additionalNotes?.map((note: AdditionalNoteEntry, idx: number) => (
-                       <button
-                           key={idx}
-                           onClick={() => {
-                               // Smart Open Logic
-                               if (note.pdfLink && note.noteContent) {
-                                   // Open as Premium Style (PDF + TTS) - Just treating as a "link" for now in main viewer?
-                                   // Or trigger interstitial?
-                                   // Simplest: setActivePdf(note.pdfLink) and play TTS if needed.
-                                   setActivePdf(note.pdfLink);
-                                   // Optionally trigger TTS
-                                   const plainText = note.noteContent.replace(/<[^>]*>?/gm, ' ');
-                                   speakText(plainText, null, speechRate, 'hi-IN');
-                               } else if (note.pdfLink) {
-                                   setActivePdf(note.pdfLink);
-                               } else if (note.noteContent) {
-                                   setActivePdf(note.noteContent); // Viewer handles Markdown/HTML string
-                               }
-                           }}
-                           className="w-full p-4 rounded-xl border border-cyan-100 bg-white hover:bg-cyan-50 flex items-center gap-3 transition-all"
-                       >
-                           <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center"><Book size={20} /></div>
-                           <div className="flex-1 text-left">
-                               <h4 className="font-bold text-slate-700 text-sm">{note.title || `Resource ${idx + 1}`}</h4>
-                               <p className="text-[10px] text-slate-400">
-                                   {note.pdfLink && note.noteContent ? 'PDF + Audio' : note.pdfLink ? 'PDF Document' : 'Reading Material'}
-                               </p>
-                           </div>
-                       </button>
-                   ))}
+                       if (addNotes.length === 0) return <p className="text-center text-xs text-slate-400 py-4">No additional resources added.</p>;
+
+                       return addNotes.map((note: AdditionalNoteEntry, idx: number) => (
+                           <button
+                               key={idx}
+                               onClick={() => {
+                                   // Smart Open Logic
+                                   if (note.pdfLink && note.noteContent) {
+                                       setActivePdf(note.pdfLink);
+                                       const plainText = note.noteContent.replace(/<[^>]*>?/gm, ' ');
+                                       speakText(plainText, null, speechRate, 'hi-IN');
+                                   } else if (note.pdfLink) {
+                                       setActivePdf(note.pdfLink);
+                                   } else if (note.noteContent) {
+                                       setActivePdf(note.noteContent);
+                                   }
+                               }}
+                               className="w-full p-4 rounded-xl border border-cyan-100 bg-white hover:bg-cyan-50 flex items-center gap-3 transition-all"
+                           >
+                               <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center"><Book size={20} /></div>
+                               <div className="flex-1 text-left">
+                                   <h4 className="font-bold text-slate-700 text-sm">{note.title || `Resource ${idx + 1}`}</h4>
+                                   <p className="text-[10px] text-slate-400">
+                                       {note.pdfLink && note.noteContent ? 'PDF + Audio' : note.pdfLink ? 'PDF Document' : 'Reading Material'}
+                                   </p>
+                               </div>
+                           </button>
+                       ));
+                   })()}
                </div>
            )}
 

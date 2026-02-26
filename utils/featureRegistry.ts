@@ -269,7 +269,7 @@ export const ALL_FEATURES: Feature[] = [
     },
     {
         id: 'DEEP_DIVE',
-        label: 'Deep Dive Notes',
+        label: 'Deep Dive',
         group: 'CONTENT',
         surfaceLevel: 2,
         requiredSubscription: 'BASIC',
@@ -287,7 +287,7 @@ export const ALL_FEATURES: Feature[] = [
     },
     {
         id: 'PREMIUM_NOTES',
-        label: 'Premium Notes Access',
+        label: 'Premium Notes',
         group: 'CONTENT',
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',
@@ -297,7 +297,7 @@ export const ALL_FEATURES: Feature[] = [
     },
     {
         id: 'ADDITIONAL_NOTES',
-        label: 'Additional Resources',
+        label: 'Additional Notes',
         group: 'CONTENT',
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',

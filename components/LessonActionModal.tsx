@@ -6,9 +6,11 @@ interface Props {
     chapter: Chapter;
     onClose: () => void;
     onSelect: (type: ContentType) => void;
+    logoUrl?: string; // NEW
+    appName?: string; // NEW
 }
 
-export const LessonActionModal: React.FC<Props> = ({ chapter, onClose, onSelect }) => {
+export const LessonActionModal: React.FC<Props> = ({ chapter, onClose, onSelect, logoUrl, appName }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-200">
             <div
@@ -24,10 +26,15 @@ export const LessonActionModal: React.FC<Props> = ({ chapter, onClose, onSelect 
                         <X size={16} />
                     </button>
 
-                    <div className="w-16 h-16 bg-white rounded-2xl mx-auto shadow-lg flex items-center justify-center mb-3 transform rotate-3">
-                        <img src="/icon-192.png" alt="App" className="w-10 h-10 object-contain" onError={(e) => (e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/3426/3426653.png')} />
+                    <div className="w-16 h-16 bg-white rounded-2xl mx-auto shadow-lg flex items-center justify-center mb-3 transform rotate-3 overflow-hidden">
+                        <img
+                            src={logoUrl || "/icon-192.png"}
+                            alt="App"
+                            className="w-full h-full object-cover"
+                            onError={(e) => (e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/3426/3426653.png')}
+                        />
                     </div>
-                    <h2 className="text-white font-black text-lg tracking-tight">Ideal Inspiration Classes</h2>
+                    <h2 className="text-white font-black text-lg tracking-tight leading-tight">{appName || 'Ideal Inspiration Classes'}</h2>
                     <p className="text-indigo-100 text-[10px] uppercase font-bold tracking-widest mt-1">Premium Learning</p>
                 </div>
 

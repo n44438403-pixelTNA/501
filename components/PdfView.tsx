@@ -109,7 +109,7 @@ export const PdfView: React.FC<Props> = ({
   const [loading, setLoading] = useState(true);
   const [syllabusMode, setSyllabusMode] = useState<'SCHOOL' | 'COMPETITION'>(initialSyllabusMode || 'SCHOOL');
   const [activePdf, setActivePdf] = useState<string | null>(null);
-  const [activeNoteContent, setActiveNoteContent] = useState<{title: string, content: string} | null>(null); // NEW: HTML Note Content
+  const [activeNoteContent, setActiveNoteContent] = useState<{title: string, content: string, pdfUrl?: string} | null>(null); // NEW: HTML Note Content + Optional PDF
   const [activeLang, setActiveLang] = useState<'ENGLISH' | 'HINDI'>('ENGLISH');
   const [pendingPdf, setPendingPdf] = useState<{type: string, price: number, link: string, tts?: string} | null>(null);
   
@@ -523,8 +523,11 @@ export const PdfView: React.FC<Props> = ({
       );
   }
 
-  // HTML NOTE OVERLAY (For Text-Only Resources)
+  // RESOURCE OVERLAY (Handles Text-Only AND PDF+Text)
   if (activeNoteContent) {
+      const hasPdf = !!activeNoteContent.pdfUrl;
+      const formattedLink = hasPdf ? formatDriveLink(activeNoteContent.pdfUrl!) : '';
+
       return (
           <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in fade-in zoom-in-95">
               <div className="bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
@@ -534,9 +537,11 @@ export const PdfView: React.FC<Props> = ({
                       </button>
                       <div>
                           <h3 className="font-bold text-sm leading-tight line-clamp-1">{activeNoteContent.title}</h3>
-                          <p className="text-[10px] text-slate-400">Note Viewer</p>
+                          <p className="text-[10px] text-slate-400">Resource Viewer</p>
                       </div>
                   </div>
+
+                  {/* TTS Controls */}
                   <button
                       onClick={() => {
                           if (isAutoPlaying) {
@@ -553,8 +558,34 @@ export const PdfView: React.FC<Props> = ({
                       {isAutoPlaying ? 'Stop' : 'Listen'}
                   </button>
               </div>
-              <div className="flex-1 bg-slate-50 overflow-y-auto p-6">
-                  <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-200 prose prose-slate prose-sm lg:prose-base" dangerouslySetInnerHTML={{ __html: activeNoteContent.content }} />
+
+              <div className="flex-1 bg-slate-100 relative flex flex-col">
+                  {hasPdf ? (
+                      // PDF VIEW WITH AUDIO OVERLAY
+                      <>
+                          <div className="flex-1 relative">
+                              <iframe
+                                  src={formattedLink}
+                                  className="w-full h-full border-none"
+                                  title="PDF Viewer"
+                                  allow="autoplay"
+                                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox"
+                              />
+                              <div className="absolute top-0 left-0 w-full h-12 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+                          </div>
+                          {/* Mini Player Status */}
+                          {isAutoPlaying && (
+                              <div className="absolute bottom-4 right-4 bg-slate-900/90 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-2">
+                                  <Headphones size={12} /> Playing Audio...
+                              </div>
+                          )}
+                      </>
+                  ) : (
+                      // TEXT ONLY VIEW
+                      <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                          <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-200 prose prose-slate prose-sm lg:prose-base" dangerouslySetInnerHTML={{ __html: activeNoteContent.content }} />
+                      </div>
+                  )}
               </div>
           </div>
       );
@@ -775,94 +806,142 @@ export const PdfView: React.FC<Props> = ({
                            // Determine Content
                            let pdfLink = '';
                            let ttsHtml = '';
+                           let entryTitle = '';
 
                            let entries: DeepDiveEntry[] = [];
                            if (syllabusMode === 'SCHOOL') entries = contentData?.schoolDeepDiveEntries || contentData?.deepDiveEntries || [];
                            else entries = contentData?.competitionDeepDiveEntries || [];
 
-                           if (entries.length > 0) {
-                               const entry = entries[currentPremiumEntryIdx];
-                               pdfLink = entry?.pdfLink;
-                               ttsHtml = entry?.htmlContent;
-                           } else {
-                               // Fallback
-                               pdfLink = syllabusMode === 'SCHOOL' ? contentData?.premiumLink : contentData?.competitionPdfPremiumLink;
-                               ttsHtml = syllabusMode === 'SCHOOL' ? contentData?.deepDiveNotesHtml : contentData?.competitionDeepDiveNotesHtml;
+                           // Check if showing "Chapter Premium" (Legacy) or "Topic Premium" (Entry)
+                           const legacyLink = syllabusMode === 'SCHOOL' ? contentData?.premiumLink : contentData?.competitionPdfPremiumLink;
+                           const legacyHtml = syllabusMode === 'SCHOOL' ? contentData?.deepDiveNotesHtml : contentData?.competitionDeepDiveNotesHtml;
+                           const hasLegacy = legacyLink || (legacyHtml && legacyHtml.length > 10);
+
+                           // If index is 0 and we have legacy content, show legacy. Otherwise shift index.
+                           // Actually, let's make a combined list for the UI selector to keep indices aligned.
+                           // But here we need to resolve content based on `currentPremiumEntryIdx`.
+
+                           // Construct a virtual list for selection logic: [Legacy (if exists), ...Entries]
+                           let virtualList: {title: string, pdf: string, html: string}[] = [];
+
+                           if (hasLegacy) {
+                               virtualList.push({
+                                   title: 'Chapter Premium Note',
+                                   pdf: legacyLink,
+                                   html: legacyHtml
+                               });
+                           }
+
+                           entries.forEach((e, i) => {
+                               virtualList.push({
+                                   title: e.title || `Topic Note ${i + 1}`,
+                                   pdf: e.pdfLink,
+                                   html: e.htmlContent
+                               });
+                           });
+
+                           // Safety check
+                           if (currentPremiumEntryIdx >= virtualList.length && virtualList.length > 0) {
+                               // Reset to 0 if out of bounds (can happen when switching chapters)
+                               // setCurrentPremiumEntryIdx(0); // Cannot set state in render
+                               // Just use 0 for now
+                               const item = virtualList[0];
+                               pdfLink = item.pdf;
+                               ttsHtml = item.html;
+                               entryTitle = item.title;
+                           } else if (virtualList.length > 0) {
+                               const item = virtualList[currentPremiumEntryIdx];
+                               pdfLink = item.pdf;
+                               ttsHtml = item.html;
+                               entryTitle = item.title;
                            }
 
                            const formattedLink = formatDriveLink(pdfLink);
 
                            return (
                                <>
-                                   {pdfLink ? (
-                                       <div className="relative w-full h-full">
-                                            <iframe
-                                                src={formattedLink}
-                                                className="w-full h-full border-none"
-                                                title="PDF Viewer"
-                                                allow="autoplay"
-                                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox"
-                                            />
-                                            {/* Invisible Header Blocker */}
-                                            <div className="absolute top-0 left-0 w-full h-12 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-
-                                            {/* Open External Button Overlay (DISABLED) */}
-                                            {/* <a
-                                                href={pdfLink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-1 rounded shadow-lg border border-slate-200 text-slate-400 cursor-not-allowed transition-all z-10 flex items-center gap-1 text-[10px] font-bold opacity-50 pointer-events-none"
-                                            >
-                                                <ExternalLink size={10} />
-                                                External Disabled
-                                            </a> */}
-                                       </div>
-                                   ) : (
-                                       <div className="flex items-center justify-center h-full text-slate-400 font-bold">
-                                           No PDF attached.
+                                   {/* Selection Header (Only if multiple items) */}
+                                   {virtualList.length > 1 && (
+                                       <div className="absolute top-0 left-0 w-full z-20 bg-white/90 backdrop-blur-sm border-b border-slate-200 p-2 overflow-x-auto flex gap-2">
+                                           {virtualList.map((item, i) => (
+                                               <button
+                                                   key={i}
+                                                   onClick={() => {
+                                                       setCurrentPremiumEntryIdx(i);
+                                                       stopAllSpeech();
+                                                   }}
+                                                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all flex flex-col items-center border ${currentPremiumEntryIdx === i ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                               >
+                                                   <span>{i === 0 && hasLegacy ? 'MAIN' : `TOPIC ${hasLegacy ? i : i + 1}`}</span>
+                                                   <span className="opacity-80 text-[9px] truncate max-w-[80px]">{item.title}</span>
+                                               </button>
+                                           ))}
                                        </div>
                                    )}
 
-                                   {/* FLOATING AUDIO PLAYER */}
-                                   {(ttsHtml && ttsHtml.length > 10) && (
-                                       <div className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-xl border border-slate-200 flex items-center gap-2 z-10">
-                                           <button
-                                              onClick={() => {
-                                                  if (isAutoPlaying) {
-                                                      stopAllSpeech();
-                                                  } else {
-                                                      // START PLAYBACK
-                                                      // 1. Chunking Logic
-                                                      const topics = extractTopicsFromHtml(ttsHtml);
-                                                      let chunks: string[] = [];
+                                   {/* Content Container (Adjust top padding if header exists) */}
+                                   <div className={`relative w-full h-full ${virtualList.length > 1 ? 'pt-14' : ''}`}>
+                                       {pdfLink ? (
+                                           <div className="relative w-full h-full">
+                                                <iframe
+                                                    src={formattedLink}
+                                                    className="w-full h-full border-none"
+                                                    title="PDF Viewer"
+                                                    allow="autoplay"
+                                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox"
+                                                />
+                                                {/* Invisible Header Blocker */}
+                                                <div className="absolute top-0 left-0 w-full h-12 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+                                           </div>
+                                       ) : (
+                                           <div className="flex items-center justify-center h-full text-slate-400 font-bold bg-slate-50">
+                                               <div className="text-center">
+                                                   <FileText size={48} className="mx-auto mb-2 opacity-20" />
+                                                   <p>No PDF attached for this section.</p>
+                                                   <p className="text-xs font-normal mt-1 text-slate-400">{entryTitle}</p>
+                                               </div>
+                                           </div>
+                                       )}
 
-                                                      if (topics.length > 0 && topics[0].title !== "Notes") {
-                                                          // Good structure found
-                                                          chunks = topics.map(t => `${t.title}. ${t.content}`);
+                                       {/* FLOATING AUDIO PLAYER */}
+                                       {(ttsHtml && ttsHtml.length > 10) && (
+                                           <div className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-xl border border-slate-200 flex items-center gap-2 z-10 animate-in fade-in slide-in-from-bottom-4">
+                                               <button
+                                                  onClick={() => {
+                                                      if (isAutoPlaying) {
+                                                          stopAllSpeech();
                                                       } else {
-                                                          // No structure, fallback to splitting by paragraphs or sentences if extremely long
-                                                          // Basic fallback: just use the text. extractTopicsFromHtml already handles fallback to single note.
-                                                          // Let's improve fallback by splitting large blocks
-                                                          const rawText = topics[0].content;
-                                                          if (rawText.length > 4000) {
-                                                              // Split by regex for sentence endings to avoid timeout
-                                                              chunks = rawText.match(/[^.!?]+[.!?]+/g) || [rawText];
-                                                          } else {
-                                                              chunks = [rawText];
-                                                          }
-                                                      }
+                                                          // START PLAYBACK
+                                                          // 1. Chunking Logic
+                                                          const topics = extractTopicsFromHtml(ttsHtml);
+                                                          let chunks: string[] = [];
 
-                                                      setPremiumChunks(chunks);
-                                                      setPremiumChunkIndex(0);
-                                                      setIsAutoPlaying(true);
-                                                  }
-                                              }}
-                                              className={`p-3 rounded-full text-white shadow-lg transition-all ${isAutoPlaying ? 'bg-red-500 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-                                           >
-                                               {isAutoPlaying ? <Pause size={20} /> : <Headphones size={20} />}
-                                           </button>
-                                       </div>
-                                   )}
+                                                          if (topics.length > 0 && topics[0].title !== "Notes") {
+                                                              // Good structure found
+                                                              chunks = topics.map(t => `${t.title}. ${t.content}`);
+                                                          } else {
+                                                              // No structure, fallback
+                                                              const rawText = topics[0].content;
+                                                              if (rawText.length > 4000) {
+                                                                  chunks = rawText.match(/[^.!?]+[.!?]+/g) || [rawText];
+                                                              } else {
+                                                                  chunks = [rawText];
+                                                              }
+                                                          }
+
+                                                          setPremiumChunks(chunks);
+                                                          setPremiumChunkIndex(0);
+                                                          setIsAutoPlaying(true);
+                                                      }
+                                                  }}
+                                                  className={`flex items-center gap-2 px-4 py-3 rounded-full text-white shadow-lg transition-all ${isAutoPlaying ? 'bg-red-500 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                                              >
+                                                  {isAutoPlaying ? <Pause size={20} /> : <Headphones size={20} />}
+                                                  {isAutoPlaying && <span className="text-xs font-bold">Playing...</span>}
+                                              </button>
+                                           </div>
+                                       )}
+                                   </div>
                                </>
                            );
                        })()}
@@ -905,19 +984,18 @@ export const PdfView: React.FC<Props> = ({
                                key={idx}
                                onClick={() => {
                                    // Smart Open Logic
-                                   if (note.pdfLink) {
-                                       // If PDF exists, ALWAYS open PDF.
-                                       // If Note Content ALSO exists, play audio in background (Premium style) or open content overlay?
-                                       // User said: "Resources me html dala gaya hai aur student open kar raha to app link ko khoj raha hai pdf view me ja raha hai."
-                                       // This implies if HTML is there but NO PDF, it was still going to PDF view.
-                                       // Our logic `if (note.pdfLink)` handles this correctly, but let's be explicit.
+                                   if (note.pdfLink && note.noteContent) {
+                                       // Hybrid Mode: Show PDF with Persistent Audio Overlay
+                                       setActiveNoteContent({
+                                           title: note.title || `Resource ${idx + 1}`,
+                                           content: note.noteContent,
+                                           pdfUrl: note.pdfLink
+                                       });
+                                   } else if (note.pdfLink) {
+                                       // PDF Only
                                        setActivePdf(note.pdfLink);
-                                       if (note.noteContent) {
-                                            const plainText = note.noteContent.replace(/<[^>]*>?/gm, ' ');
-                                            speakText(plainText, null, speechRate, 'hi-IN');
-                                       }
                                    } else if (note.noteContent) {
-                                       // Open HTML Note Viewer ONLY if no PDF
+                                       // Text Only
                                        setActiveNoteContent({
                                            title: note.title || `Note ${idx + 1}`,
                                            content: note.noteContent

@@ -9,7 +9,7 @@ interface Props {
 
 export const AdminPowerManager: React.FC<Props> = ({ settings, onUpdate }) => {
     const [localSettings, setLocalSettings] = useState<SystemSettings>(settings);
-    const [activeTab, setActiveTab] = useState<'LIMITS' | 'PRICING' | 'VISIBILITY' | 'PLAN_MATRIX' | 'PACKAGES'>('LIMITS');
+    const [activeTab, setActiveTab] = useState<'PRICING' | 'VISIBILITY' | 'PLAN_MATRIX' | 'PACKAGES'>('PRICING');
 
     const handleSave = () => {
         onUpdate(localSettings);
@@ -99,7 +99,6 @@ export const AdminPowerManager: React.FC<Props> = ({ settings, onUpdate }) => {
             {/* TABS */}
             <div className="flex flex-wrap gap-2 mb-6 bg-slate-100 p-1.5 rounded-xl w-fit">
                 {[
-                    { id: 'LIMITS', icon: LayoutGrid, label: 'Limits & Access' },
                     { id: 'PRICING', icon: DollarSign, label: 'Pricing & Costs' },
                     { id: 'VISIBILITY', icon: Eye, label: 'Visibility' },
                     { id: 'PLAN_MATRIX', icon: List, label: 'Plan Matrix' },
@@ -114,76 +113,6 @@ export const AdminPowerManager: React.FC<Props> = ({ settings, onUpdate }) => {
                     </button>
                 ))}
             </div>
-
-            {/* TAB 1: LIMITS (GRID VIEW) */}
-            {activeTab === 'LIMITS' && (
-                <div className="space-y-6">
-                    <div className="border rounded-xl shadow-sm overflow-hidden">
-                        <div className="bg-slate-50 p-3 border-b border-slate-200 flex justify-between items-center">
-                            <h4 className="font-bold text-sm text-slate-700">Feature Access & Limits Grid</h4>
-                            <span className="text-[10px] text-slate-400 font-mono bg-white px-2 py-1 rounded border">Live Config</span>
-                        </div>
-                        <table className="w-full text-sm text-left border-collapse">
-                            <thead className="bg-slate-100 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200">
-                                <tr>
-                                    <th className="p-3 w-1/3 border-r border-slate-200">Feature / Constraint</th>
-                                    <th className="p-3 w-1/5 text-center border-r border-slate-200">Free Tier</th>
-                                    <th className="p-3 w-1/5 text-center border-r border-slate-200 text-blue-600">Basic Tier</th>
-                                    <th className="p-3 w-1/5 text-center text-purple-600">Ultra Tier</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white">
-                                {/* LIMITS */}
-                                <GridRow
-                                    label="Daily MCQ Limit (Count)"
-                                    type="number"
-                                    free={localSettings.mcqLimitFree ?? 30}
-                                    basic={localSettings.mcqLimitBasic ?? 50}
-                                    ultra={localSettings.mcqLimitUltra ?? 100}
-                                    onChangeFree={(v: any) => updateSetting('mcqLimitFree', Number(v))}
-                                    onChangeBasic={(v: any) => updateSetting('mcqLimitBasic', Number(v))}
-                                    onChangeUltra={(v: any) => updateSetting('mcqLimitUltra', Number(v))}
-                                />
-                                <GridRow
-                                    label="Daily Spin Limit (Count)"
-                                    type="number"
-                                    free={localSettings.spinLimitFree ?? 2}
-                                    basic={localSettings.spinLimitBasic ?? 5}
-                                    ultra={localSettings.spinLimitUltra ?? 10}
-                                    onChangeFree={(v: any) => updateSetting('spinLimitFree', Number(v))}
-                                    onChangeBasic={(v: any) => updateSetting('spinLimitBasic', Number(v))}
-                                    onChangeUltra={(v: any) => updateSetting('spinLimitUltra', Number(v))}
-                                />
-
-                                {/* PERMISSIONS (CHECKBOXES) */}
-                                {[
-                                    { id: 'NOTES_ACCESS', label: 'PDF Notes Access' },
-                                    { id: 'VIDEO_ACCESS', label: 'Video Lectures Access' },
-                                    { id: 'AUDIO_ACCESS', label: 'Audio / Podcast Access' },
-                                    { id: 'MCQ_PRACTICE', label: 'MCQ Practice Mode' },
-                                    { id: 'MCQ_TEST', label: 'MCQ Test Mode' },
-                                    { id: 'REVISION_HUB', label: 'Revision Hub Access' },
-                                    { id: 'AI_CHAT', label: 'AI Tutor Chat' },
-                                    { id: 'DOWNLOAD', label: 'Offline Downloads' },
-                                    { id: 'NO_ADS', label: 'Ad-Free Experience' },
-                                ].map(feat => (
-                                    <GridRow
-                                        key={feat.id}
-                                        label={feat.label}
-                                        type="checkbox"
-                                        free={localSettings.tierPermissions?.FREE?.includes(feat.id)}
-                                        basic={localSettings.tierPermissions?.BASIC?.includes(feat.id)}
-                                        ultra={localSettings.tierPermissions?.ULTRA?.includes(feat.id)}
-                                        onChangeFree={() => togglePermission('FREE', feat.id)}
-                                        onChangeBasic={() => togglePermission('BASIC', feat.id)}
-                                        onChangeUltra={() => togglePermission('ULTRA', feat.id)}
-                                    />
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
 
             {/* TAB 2: PRICING */}
             {activeTab === 'PRICING' && (

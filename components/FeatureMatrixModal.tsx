@@ -57,9 +57,9 @@ export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings,
             )}
             <div>
                 <h2 className="text-2xl font-black text-white flex items-center gap-2">
-                    <Crown className="text-yellow-400 fill-yellow-400" /> Premium Membership Tiers
+                    <Crown className="text-yellow-400 fill-yellow-400" /> App Future Access
                 </h2>
-                <p className="text-slate-400 text-sm">Compare features and choose the best plan for your success.</p>
+                <p className="text-slate-400 text-sm">Unlock your potential with Free vs Basic vs Ultra power.</p>
             </div>
             <button onClick={onClose} className="p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors">
                 <X size={24} />

@@ -654,7 +654,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
           ...(isGameEnabled ? [{ id: 'GAME', label: 'Play Game', icon: Gamepad2, color: 'orange', action: () => { onTabChange('GAME'); setShowSidebar(false); }, featureId: 'GAMES' }] : []),
           { id: 'REDEEM', label: 'Redeem', icon: Gift, color: 'pink', action: () => { onTabChange('REDEEM'); setShowSidebar(false); } },
           { id: 'PRIZES', label: 'Prizes', icon: Trophy, color: 'yellow', action: () => { onTabChange('PRIZES'); setShowSidebar(false); } },
-          { id: 'REQUEST', label: 'Request Content', icon: Megaphone, color: 'purple', action: () => { setShowRequestModal(true); setShowSidebar(false); } },
+          { id: 'REQUEST', label: 'Request Content', icon: Megaphone, color: 'purple', action: () => { setShowRequestModal(true); setShowSidebar(false); }, featureId: 'REQUEST_CONTENT' },
           { id: 'GUIDE', label: 'App Guide', icon: HelpCircle, color: 'cyan', action: () => { setShowStudentGuide(true); setShowSidebar(false); } }, // NEW
       ];
 

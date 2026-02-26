@@ -43,7 +43,14 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     const masteryCountReq = revisionConfig?.mastery.requiredCount || 2;
 
     const [topics, setTopics] = useState<TopicItem[]>([]);
-    const [hubMode, setHubMode] = useState<'FREE' | 'PREMIUM'>(user.subscriptionTier !== 'FREE' ? 'PREMIUM' : 'FREE');
+
+    // Initial Mode Logic with Permission Check
+    const [hubMode, setHubMode] = useState<'FREE' | 'PREMIUM'>(() => {
+        const premiumAccess = checkFeatureAccess('REVISION_HUB_PREMIUM', user, settings || {});
+        if (premiumAccess.hasAccess && user.subscriptionTier !== 'FREE') return 'PREMIUM';
+        return 'FREE';
+    });
+
     const [activeFilter, setActiveFilter] = useState<'TODAY' | 'WEAK' | 'AVERAGE' | 'STRONG' | 'EXCELLENT' | 'MISTAKES' | 'MCQ'>('TODAY');
     const [scoreViewMode, setScoreViewMode] = useState<'LATEST' | 'ALL_TIME'>('LATEST'); // NEW: Score View Mode
     const [ttsRate, setTtsRate] = useState(1.0); // TTS Speed Control
@@ -676,7 +683,11 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
             <div className="flex justify-center mb-4">
                 <div className="bg-slate-100 p-1 rounded-full flex gap-1 shadow-inner">
                     <button
-                        onClick={() => setHubMode('FREE')}
+                        onClick={() => {
+                            const access = checkFeatureAccess('REVISION_HUB_FREE', user, settings || {});
+                            if (access.hasAccess) setHubMode('FREE');
+                            else setAlertConfig({isOpen: true, type: 'ERROR', message: "🔒 Free Hub is disabled by Admin."});
+                        }}
                         className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
                             hubMode === 'FREE' ? 'bg-white shadow text-slate-800' : 'text-slate-400 hover:text-slate-600'
                         }`}
@@ -684,7 +695,11 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         <Layout size={14} /> Free Hub
                     </button>
                     <button
-                        onClick={() => setHubMode('PREMIUM')}
+                        onClick={() => {
+                            const access = checkFeatureAccess('REVISION_HUB_PREMIUM', user, settings || {});
+                            if (access.hasAccess) setHubMode('PREMIUM');
+                            else setAlertConfig({isOpen: true, type: 'ERROR', message: access.reason === 'FEED_LOCKED' ? "🔒 Premium Hub is disabled by Admin." : "🔒 Upgrade to access Premium Hub."});
+                        }}
                         className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
                             hubMode === 'PREMIUM' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow text-white' : 'text-slate-400 hover:text-slate-600'
                         }`}

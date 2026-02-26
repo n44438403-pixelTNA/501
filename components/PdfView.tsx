@@ -751,6 +751,23 @@ export const PdfView: React.FC<Props> = ({
                       </button>
                    </div>
 
+                   {/* FEATURE CHECK: TOPIC CONTENT VISIBILITY */}
+                   {(() => {
+                       const access = checkFeatureAccess('TOPIC_CONTENT', user, settings || {});
+                       if (!access.hasAccess) {
+                           return (
+                               <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
+                                   <Lock size={48} className="mx-auto mb-4 text-slate-300" />
+                                   <h4 className="font-bold text-slate-700">Topic Breakdown Locked</h4>
+                                   <p className="text-xs text-slate-500 max-w-xs mx-auto mt-2">
+                                       {access.reason === 'FEED_LOCKED' ? 'Content hidden by Admin.' : 'Upgrade your plan to see detailed topic breakdown.'}
+                                   </p>
+                               </div>
+                           );
+                       }
+                       return null;
+                   })()}
+
                    {deepDiveTopics.length === 0 && (
                        <div className="text-center py-12 text-slate-400">
                            <BookOpen size={48} className="mx-auto mb-4 opacity-20" />
@@ -758,7 +775,7 @@ export const PdfView: React.FC<Props> = ({
                        </div>
                    )}
 
-                   {deepDiveTopics.map((topic, idx) => {
+                   {checkFeatureAccess('TOPIC_CONTENT', user, settings || {}).hasAccess && deepDiveTopics.map((topic, idx) => {
                       const isActive = topicSpeakingState === idx;
                       // Detect if it's a "Topic Breakdown" based on title pattern or just index (First is usually Chapter Deep Dive if populated)
                       // Ideally we'd have a flag, but for now we render them all uniformly.

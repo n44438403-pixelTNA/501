@@ -59,6 +59,7 @@ import { StudyGoalTimer } from './StudyGoalTimer';
 import { ExplorePage } from './ExplorePage';
 import { StudentHistoryModal } from './StudentHistoryModal';
 import { generateDailyRoutine } from '../utils/routineGenerator';
+import { FeatureMatrixModal } from './FeatureMatrixModal';
 // @ts-ignore
 import jsPDF from 'jspdf';
 // @ts-ignore
@@ -259,6 +260,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   const [showSidebar, setShowSidebar] = useState(false);
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showFeatureMatrix, setShowFeatureMatrix] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'HOME' || activeTab === 'EXPLORE' || activeTab === 'PROFILE' || (activeTab as any) === 'AI_STUDIO' || activeTab === 'REVISION') {
@@ -697,7 +699,17 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                 {/* NEW HEADER DESIGN */}
                 <div className="bg-white p-4 rounded-b-3xl shadow-sm border-b border-slate-200 mb-2 flex items-center justify-between sticky top-0 z-40">
                     <div className="flex items-center gap-3">
-                        {/* Menu Button Removed from Header - Moved to Floating */}
+                        {/* Menu Button Restored */}
+                        <button
+                            onClick={() => setShowSidebar(true)}
+                            className="bg-white border border-slate-200 shadow-sm px-3 py-2 rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2 group active:scale-95"
+                        >
+                            <div className="space-y-1">
+                                <span className="block w-5 h-0.5 bg-slate-600 group-hover:bg-blue-600 transition-colors rounded-full"></span>
+                                <span className="block w-3 h-0.5 bg-slate-600 group-hover:bg-blue-600 transition-colors rounded-full"></span>
+                                <span className="block w-5 h-0.5 bg-slate-600 group-hover:bg-blue-600 transition-colors rounded-full"></span>
+                            </div>
+                        </button>
                         <div>
                             <div className="flex items-center gap-2">
                                 <h2 className="text-lg font-black text-slate-800 leading-none">
@@ -1547,21 +1559,30 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
             </div>
         </div>
 
-        {/* FLOATING ACTION BUTTON (REPLACES MENU) */}
-        {activeTab === 'HOME' && (
-            <div className="fixed bottom-20 right-4 z-40">
+        {/* FLOATING ACTION BUTTON (APP FUTURE ACCESS) */}
+        {(activeTab === 'HOME' || activeTab === 'REVISION' || activeTab === 'AI_HUB' || activeTab === 'PROFILE' || activeTab === 'HISTORY' || (activeTab as string) === 'ANALYTICS') && (
+            <div className="fixed bottom-20 right-4 z-40 animate-in fade-in zoom-in duration-300">
                 <button
-                    onClick={() => setShowSidebar(true)}
-                    className="w-14 h-14 bg-slate-900 rounded-full shadow-2xl flex items-center justify-center border-2 border-white hover:scale-110 transition-transform active:scale-95"
+                    onClick={() => setShowFeatureMatrix(true)}
+                    className="w-14 h-14 bg-slate-900 rounded-full shadow-2xl flex items-center justify-center border-2 border-white hover:scale-110 transition-transform active:scale-95 relative overflow-hidden group"
                 >
                     {settings?.appLogo ? (
-                        <img src={settings.appLogo} alt="Menu" className="w-full h-full rounded-full object-cover" />
+                        <img src={settings.appLogo} alt="Access" className="w-full h-full rounded-full object-cover" />
                     ) : (
-                        <Menu size={24} className="text-white" />
+                        <Crown size={24} className="text-yellow-400" />
                     )}
+                    {/* Ripple/Glow Effect */}
+                    <div className="absolute inset-0 rounded-full bg-white/20 scale-0 group-hover:scale-150 transition-transform duration-500 opacity-0 group-hover:opacity-100"></div>
                 </button>
             </div>
         )}
+
+        <FeatureMatrixModal
+            isOpen={showFeatureMatrix}
+            onClose={() => setShowFeatureMatrix(false)}
+            settings={settings}
+            discountActive={settings?.specialDiscountEvent?.enabled}
+        />
 
         {/* SIDEBAR OVERLAY (INLINE) */}
         {showSidebar && (

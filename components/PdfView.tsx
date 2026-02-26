@@ -478,6 +478,7 @@ export const PdfView: React.FC<Props> = ({
                                // For now, simpler check
                            }
                            setActiveTab(tab.id as any);
+                           setActivePdf(null); // Clear active resource on tab switch
                            stopAllSpeech();
                        }}
                        className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex flex-col items-center gap-1 border-b-2 transition-all ${activeTab === tab.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
@@ -493,6 +494,32 @@ export const PdfView: React.FC<Props> = ({
        <ErrorBoundary>
        <div className="flex-1 overflow-y-auto">
 
+           {/* GLOBAL RESOURCE VIEWER (Overlay) */}
+           {activePdf ? (
+               <div className="h-full flex flex-col bg-slate-50 animate-in fade-in slide-in-from-bottom-4">
+                   <div className="p-2 bg-white border-b border-slate-200 flex items-center justify-between shadow-sm z-10">
+                       <button
+                           onClick={() => { setActivePdf(null); stopAllSpeech(); }}
+                           className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 transition-all"
+                       >
+                           <ArrowLeft size={14} /> Back to Resources
+                       </button>
+                       <p className="text-xs font-bold text-slate-400">Viewing Content</p>
+                   </div>
+                   <div className="flex-1 relative overflow-hidden">
+                       {(activePdf.startsWith('http') || activePdf.endsWith('.pdf')) ? (
+                           <iframe src={activePdf} className="w-full h-full border-none bg-white" title="Resource Viewer" />
+                       ) : (
+                           <div className="p-4 h-full overflow-y-auto">
+                               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 prose prose-sm max-w-none mx-auto leading-relaxed text-slate-700">
+                                   <div dangerouslySetInnerHTML={{ __html: activePdf }} />
+                               </div>
+                           </div>
+                       )}
+                   </div>
+               </div>
+           ) : (
+               <>
            {/* 1. QUICK REVISION */}
            {activeTab === 'QUICK' && (
                <div className="p-4 space-y-4">
@@ -704,6 +731,8 @@ export const PdfView: React.FC<Props> = ({
                        ));
                    })()}
                </div>
+           )}
+           </>
            )}
 
        </div>

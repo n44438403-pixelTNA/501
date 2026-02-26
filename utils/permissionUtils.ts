@@ -82,13 +82,10 @@ export const checkFeatureAccess = (
         // This implies if it's in Feed, Feed rules apply 100%.
 
         if (dynamicConfig.visible === false) {
-            // Strictly Locked via Feed? Or does toggle OFF mean "Use Matrix"?
-            // User said: "Future access me no access hai to wo Future wo tired wale use nahi kar oayenge".
-            // And "agar Future access me lock karne ka option hoga user ko lock kiya hua Future pe lock dikhega".
-            // The toggle on Admin UI says "FEED" vs "MATRIX".
-            // If toggle is FEED (visible=true), we use Feed rules.
-            // If toggle is MATRIX (visible=false), we use Matrix rules.
-            isFeedControl = false;
+            // STRICT FEED CONTROL: User explicitly requested App Soul to control all access.
+            // If visible is FALSE, it means "LOCKED" (No Access), NOT "Use Matrix".
+            allowedTiers = []; // Explicitly Deny Access
+            // Keep isFeedControl = true to prevent Matrix fallback
         } else {
             // FEED MODE IS ACTIVE
             if (dynamicConfig.allowedTiers && dynamicConfig.allowedTiers.length > 0) {

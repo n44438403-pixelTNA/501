@@ -463,15 +463,7 @@ export const PdfView: React.FC<Props> = ({
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
-                      <a
-                          href={activePdf}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-xs font-bold flex items-center gap-2 transition-colors"
-                      >
-                          <ExternalLink size={14} />
-                          Open
-                      </a>
+                      {/* External Link Disabled */}
                   </div>
               </div>
               <div className="flex-1 bg-slate-100 relative">
@@ -743,16 +735,16 @@ export const PdfView: React.FC<Props> = ({
                                    {pdfLink ? (
                                        <div className="relative w-full h-full">
                                             <iframe src={formattedLink} className="w-full h-full border-none" title="PDF Viewer" allow="autoplay" />
-                                            {/* Open External Button Overlay */}
-                                            <a
+                                            {/* Open External Button Overlay (DISABLED) */}
+                                            {/* <a
                                                 href={pdfLink}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg border border-slate-200 text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-all z-10 flex items-center gap-2 text-xs font-bold"
+                                                className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-1 rounded shadow-lg border border-slate-200 text-slate-400 cursor-not-allowed transition-all z-10 flex items-center gap-1 text-[10px] font-bold opacity-50 pointer-events-none"
                                             >
-                                                <ExternalLink size={14} />
-                                                Open External
-                                            </a>
+                                                <ExternalLink size={10} />
+                                                External Disabled
+                                            </a> */}
                                        </div>
                                    ) : (
                                        <div className="flex items-center justify-center h-full text-slate-400 font-bold">
@@ -761,7 +753,7 @@ export const PdfView: React.FC<Props> = ({
                                    )}
 
                                    {/* FLOATING AUDIO PLAYER */}
-                                   {ttsHtml && (
+                                   {(ttsHtml && ttsHtml.length > 10) && (
                                        <div className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-xl border border-slate-200 flex items-center gap-2 z-10">
                                            <button
                                               onClick={() => {
@@ -770,8 +762,11 @@ export const PdfView: React.FC<Props> = ({
                                                       stopSpeech();
                                                   } else {
                                                       setIsAutoPlaying(true);
-                                                      const plainText = ttsHtml.replace(/<[^>]*>?/gm, ' ');
-                                                      speakText(plainText, null, speechRate, 'hi-IN');
+                                                      // Strip HTML but keep basic punctuation flow
+                                                      const tempDiv = document.createElement('div');
+                                                      tempDiv.innerHTML = ttsHtml;
+                                                      const plainText = tempDiv.innerText || tempDiv.textContent || '';
+                                                      speakText(plainText, null, speechRate, 'hi-IN', undefined, () => setIsAutoPlaying(false));
                                                   }
                                               }}
                                               className={`p-3 rounded-full text-white shadow-lg transition-all ${isAutoPlaying ? 'bg-red-500 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'}`}
@@ -822,14 +817,19 @@ export const PdfView: React.FC<Props> = ({
                                key={idx}
                                onClick={() => {
                                    // Smart Open Logic
-                                   if (note.pdfLink && note.noteContent) {
+                                   if (note.pdfLink) {
+                                       // If PDF exists, ALWAYS open PDF.
+                                       // If Note Content ALSO exists, play audio in background (Premium style) or open content overlay?
+                                       // User said: "Resources me html dala gaya hai aur student open kar raha to app link ko khoj raha hai pdf view me ja raha hai."
+                                       // This implies if HTML is there but NO PDF, it was still going to PDF view.
+                                       // Our logic `if (note.pdfLink)` handles this correctly, but let's be explicit.
                                        setActivePdf(note.pdfLink);
-                                       const plainText = note.noteContent.replace(/<[^>]*>?/gm, ' ');
-                                       speakText(plainText, null, speechRate, 'hi-IN');
-                                   } else if (note.pdfLink) {
-                                       setActivePdf(note.pdfLink);
+                                       if (note.noteContent) {
+                                            const plainText = note.noteContent.replace(/<[^>]*>?/gm, ' ');
+                                            speakText(plainText, null, speechRate, 'hi-IN');
+                                       }
                                    } else if (note.noteContent) {
-                                       // Open HTML Note Viewer
+                                       // Open HTML Note Viewer ONLY if no PDF
                                        setActiveNoteContent({
                                            title: note.title || `Note ${idx + 1}`,
                                            content: note.noteContent

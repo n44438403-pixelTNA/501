@@ -13,6 +13,7 @@ import { Button } from './ui/Button'; // Design System
 import { getActiveChallenges } from '../services/questionBank';
 import { generateDailyChallengeQuestions } from '../utils/challengeGenerator';
 import { generateMorningInsight } from '../services/morningInsight';
+import { LessonActionModal } from './LessonActionModal';
 import { RedeemSection } from './RedeemSection';
 import { PrizeList } from './PrizeList';
 import { Store } from './Store';
@@ -219,6 +220,8 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loadingChapters, setLoadingChapters] = useState(false);
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [selectedLessonForModal, setSelectedLessonForModal] = useState<Chapter | null>(null);
   const [syllabusMode, setSyllabusMode] = useState<'SCHOOL' | 'COMPETITION'>('SCHOOL');
   const [currentAudioTrack, setCurrentAudioTrack] = useState<{url: string, title: string} | null>(null);
   const [universalNotes, setUniversalNotes] = useState<any[]>([]);
@@ -559,6 +562,17 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       });
   };
 
+  const handleLessonOption = (type: 'VIDEO' | 'PDF' | 'MCQ' | 'AUDIO') => {
+      if (!selectedLessonForModal) return;
+      setShowLessonModal(false);
+
+      // Update Tab and State for Player
+      onTabChange(type);
+      setSelectedChapter(selectedLessonForModal);
+      setContentViewStep('PLAYER');
+      setFullScreen(true);
+  };
+
   const handleExternalAppClick = (app: any) => {
       if (app.isLocked) {
            showAlert("🔒 This app is currently locked.", "ERROR");
@@ -578,14 +592,14 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       }
   };
 
-  const renderContentSection = (type: 'VIDEO' | 'PDF' | 'MCQ' | 'AUDIO') => {
+  const renderContentSection = (type: 'VIDEO' | 'PDF' | 'MCQ' | 'AUDIO' | 'GENERIC') => {
       const goBack = () => {
           if (contentViewStep === 'PLAYER') {
               setContentViewStep('CHAPTERS');
               setFullScreen(false);
           } else {
               setContentViewStep('SUBJECTS');
-              onTabChange('COURSES');
+              onTabChange('HOME'); // Go back to Home from Subject List
           }
       };
 
@@ -599,9 +613,9 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                   user={user}
                   settings={settings}
                   onSelect={(chapter) => {
-                      setSelectedChapter(chapter);
-                      setContentViewStep('PLAYER');
-                      setFullScreen(true);
+                      // OPEN MODAL INSTEAD OF PLAYER
+                      setSelectedLessonForModal(chapter);
+                      setShowLessonModal(true);
                   }}
                   onBack={goBack}
               />
@@ -762,24 +776,45 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                 {/* MAIN ACTION BUTTONS (RESTORED OLD LAYOUT) */}
                 <DashboardSectionWrapper id="section_main_actions" label="Main Actions" settings={settings} isLayoutEditing={isLayoutEditing} onToggleVisibility={toggleLayoutVisibility}>
                     <div className="grid grid-cols-2 gap-4">
-                        {(() => {
-                             const access = checkFeatureAccess('START_STUDY', user, settings || {});
-                             const isLocked = !access.hasAccess;
-                             return (
-                                <button
-                                    onClick={() => {
-                                        if (isLocked) { showAlert("🔒 This feature is locked by Admin.", "ERROR"); return; }
-                                        onTabChange('COURSES'); setContentViewStep('SUBJECTS');
-                                    }}
-                                    className={`col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl shadow-lg shadow-blue-200 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all relative overflow-hidden h-32 ${isLocked ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
-                                >
-                                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    <Book size={32} className="text-white mb-1" />
-                                    <span className="font-black text-white text-lg tracking-wide uppercase">My Courses</span>
-                                    {isLocked && <div className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"><Lock size={16} /></div>}
-                                </button>
-                             );
-                        })()}
+                        {/* STUDY SECTION (REPLACED MY COURSES) */}
+                        <div className="col-span-2 bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+                            <h3 className="font-black text-slate-800 text-lg mb-4 flex items-center gap-2">
+                                <BookOpen className="text-blue-600" size={24} /> Study
+                            </h3>
+                            <div className="grid grid-cols-3 gap-3">
+                                {getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board).map((subject) => {
+                                    if ((settings?.hiddenSubjects || []).includes(subject.id)) return null;
+                                    return (
+                                        <button
+                                            key={subject.id}
+                                            onClick={() => {
+                                                onTabChange('COURSES');
+                                                handleContentSubjectSelect(subject);
+                                            }}
+                                            className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl transition-all active:scale-95 border-2 ${
+                                                subject.id.includes('science') ? 'bg-purple-50 border-purple-100 text-purple-700' :
+                                                subject.id.includes('math') ? 'bg-blue-50 border-blue-100 text-blue-700' :
+                                                subject.id.includes('social') ? 'bg-orange-50 border-orange-100 text-orange-700' :
+                                                'bg-slate-50 border-slate-100 text-slate-700'
+                                            }`}
+                                        >
+                                            <div className={`p-2 rounded-full bg-white shadow-sm`}>
+                                                {/* Simple Icon Mapping or default */}
+                                                <BookOpen size={20} className={
+                                                    subject.id.includes('science') ? 'text-purple-600' :
+                                                    subject.id.includes('math') ? 'text-blue-600' :
+                                                    subject.id.includes('social') ? 'text-orange-600' :
+                                                    'text-slate-600'
+                                                } />
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase text-center leading-tight">
+                                                {subject.name}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
                         {(() => {
                             // UNLOCKED AS PER REQUEST
@@ -878,106 +913,9 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
           );
       }
 
-      // 3. COURSES TAB (Handles Video, Notes, MCQ Selection)
+      // 3. COURSES TAB (Generic Chapter List for Study Mode)
       if (activeTab === 'COURSES') {
-          // If viewing a specific content type (from drilled down), show it
-          // Note: Clicking a subject switches tab to VIDEO/PDF/MCQ, so COURSES just shows the Hub.
-          const visibleSubjects = getSubjectsList(user.classLevel || '10', user.stream || null, user.board)
-                                    .filter(s => !(settings?.hiddenSubjects || []).includes(s.id));
-
-          return (
-              <div className="space-y-6 pb-24">
-                      <div className="flex items-center justify-between">
-                          <h2 className="text-2xl font-black text-slate-800">My Courses</h2>
-                      </div>
-
-                      {/* Video Section */}
-                      {settings?.contentVisibility?.VIDEO !== false && (
-                          <div className="bg-gradient-to-br from-red-50 to-rose-100 p-6 rounded-3xl border border-red-200 shadow-sm">
-                              <h3 className="font-black text-red-900 flex items-center gap-2 mb-4 text-lg">
-                                  <div className="p-2 bg-white rounded-full shadow-sm text-red-600"><Youtube size={20} /></div>
-                                  Video Lectures
-                              </h3>
-                              <div className="grid grid-cols-2 gap-3">
-                                  {visibleSubjects.map(s => (
-                                      <button key={s.id} onClick={() => { onTabChange('VIDEO'); handleContentSubjectSelect(s); }} className="bg-white p-3 rounded-2xl text-xs font-bold text-slate-700 shadow-sm border border-red-100 text-left hover:shadow-md hover:scale-[1.02] transition-all flex items-center gap-2">
-                                          <div className={`w-2 h-2 rounded-full ${s.color?.split(' ')[0] || 'bg-red-500'}`}></div>
-                                          {s.name}
-                                      </button>
-                                  ))}
-                              </div>
-                          </div>
-                      )}
-
-                      {/* Notes Section */}
-                      {settings?.contentVisibility?.PDF !== false && (
-                          <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-3xl border border-blue-200 shadow-sm">
-                              <h3 className="font-black text-blue-900 flex items-center gap-2 mb-4 text-lg">
-                                  <div className="p-2 bg-white rounded-full shadow-sm text-blue-600"><FileText size={20} /></div>
-                                  Notes Library
-                              </h3>
-                              <div className="grid grid-cols-2 gap-3">
-                                  {visibleSubjects.map(s => (
-                                      <button key={s.id} onClick={() => { onTabChange('PDF'); handleContentSubjectSelect(s); }} className="bg-white p-3 rounded-2xl text-xs font-bold text-slate-700 shadow-sm border border-blue-100 text-left hover:shadow-md hover:scale-[1.02] transition-all flex items-center gap-2">
-                                          <div className={`w-2 h-2 rounded-full ${s.color?.split(' ')[0] || 'bg-blue-500'}`}></div>
-                                          {s.name}
-                                      </button>
-                                  ))}
-                              </div>
-                          </div>
-                      )}
-
-                      {/* MCQ Section */}
-                      {settings?.contentVisibility?.MCQ !== false && (
-                          <div className={`bg-gradient-to-br from-purple-50 to-fuchsia-100 p-6 rounded-3xl border border-purple-200 shadow-sm relative overflow-hidden`}>
-                              <div className="flex justify-between items-center mb-4">
-                                  <h3 className="font-black text-purple-900 flex items-center gap-2 text-lg">
-                                      <div className="p-2 bg-white rounded-full shadow-sm text-purple-600"><CheckSquare size={20} /></div>
-                                      MCQ Practice
-                                  </h3>
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                  {visibleSubjects.map(s => (
-                                      <button
-                                        key={s.id}
-                                        onClick={() => {
-                                            onTabChange('MCQ'); handleContentSubjectSelect(s);
-                                        }}
-                                        className="bg-white p-3 rounded-2xl text-xs font-bold text-slate-700 shadow-sm border border-purple-100 text-left hover:shadow-md hover:scale-[1.02] transition-all flex items-center gap-2"
-                                      >
-                                          <div className={`w-2 h-2 rounded-full ${s.color?.split(' ')[0] || 'bg-purple-500'}`}></div>
-                                          {s.name}
-                                      </button>
-                                  ))}
-                              </div>
-                          </div>
-                      )}
-
-                      {/* Audio/Podcast Section */}
-                      {settings?.contentVisibility?.AUDIO !== false && (
-                          <div className={`bg-gradient-to-r from-slate-900 to-slate-800 p-4 rounded-2xl shadow-lg border border-slate-700 relative overflow-hidden`}>
-                              <div className="flex justify-between items-center mb-2 relative z-10">
-                                  <h3 className="font-bold text-white flex items-center gap-2"><Headphones className="text-pink-500" /> Audio Library</h3>
-                                  <span className="text-[10px] font-black bg-pink-600 text-white px-2 py-0.5 rounded-full">NEW</span>
-                              </div>
-                              <p className="text-xs text-slate-400 mb-3 relative z-10">Listen to high-quality audio lectures and podcasts.</p>
-                              <div className="grid grid-cols-2 gap-2 relative z-10">
-                                  {visibleSubjects.map(s => (
-                                      <button
-                                        key={s.id}
-                                        onClick={() => {
-                                            onTabChange('AUDIO'); handleContentSubjectSelect(s);
-                                        }}
-                                        className="bg-white/10 hover:bg-white/20 p-2 rounded-xl text-xs font-bold text-white shadow-sm border border-white/10 text-left backdrop-blur-sm transition-colors"
-                                      >
-                                          {s.name}
-                                      </button>
-                                  ))}
-                              </div>
-                          </div>
-                      )}
-                  </div>
-              );
+          return renderContentSection('GENERIC');
       }
 
       // 4. LEGACY TABS (Mapped to new structure or kept as sub-views)
@@ -1705,6 +1643,15 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
             <StudentGuide
                 settings={settings}
                 onClose={() => setShowStudentGuide(false)}
+            />
+        )}
+
+        {/* LESSON ACTION MODAL */}
+        {showLessonModal && selectedLessonForModal && (
+            <LessonActionModal
+                chapter={selectedLessonForModal}
+                onClose={() => setShowLessonModal(false)}
+                onSelect={handleLessonOption}
             />
         )}
 

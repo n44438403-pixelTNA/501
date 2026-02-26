@@ -1,6 +1,7 @@
 import React from 'react';
-import { X, Check, Lock, AlertTriangle, Crown, List, Shield, Zap } from 'lucide-react';
+import { X, Check, Lock, AlertTriangle, Crown, List, Shield, Zap, Sparkles, BookOpen, Star, Layout, MessageSquare, Gamepad2, Trophy, Video, FileText, Headphones } from 'lucide-react';
 import { SystemSettings } from '../types';
+import { ALL_FEATURES, FeatureGroup } from '../utils/featureRegistry';
 
 interface Props {
   isOpen: boolean;
@@ -9,45 +10,71 @@ interface Props {
   discountActive?: boolean;
 }
 
-const DEFAULT_MATRIX = [
-    {
-        name: 'Core Features',
-        features: [
-            { name: 'PDF Notes Library', free: 'First 2 Chapters', basic: '✅ Unlimited', ultra: '✅ Unlimited' },
-            { name: 'Video Lectures', free: 'First 2 Videos', basic: '✅ Unlimited', ultra: '✅ Unlimited' },
-            { name: 'Topic-wise Notes', free: '🔒 Locked', basic: '✅ Full Access', ultra: '✅ Full Access' },
-            { name: 'Audio / Podcast', free: '🔒 Locked', basic: '🔒 Locked', ultra: '✅ Premium Only' },
-            { name: 'Search Capability', free: 'Basic', basic: 'Advanced', ultra: 'Advanced' },
-        ]
-    },
-    {
-        name: 'Revision Hub (USP)',
-        features: [
-            { name: 'Revision Hub Access', free: '🔒 Locked', basic: '⚠️ 1 Day/Week', ultra: '✅ Daily' },
-            { name: 'Weak/Strong Sorting', free: '❌', basic: '❌', ultra: '✅ Yes' },
-            { name: 'Mistake Analysis', free: '❌', basic: '❌', ultra: '✅ Yes' },
-        ]
-    },
-    {
-        name: 'MCQ System',
-        features: [
-            { name: 'Daily MCQ Limit', free: '30 Questions', basic: '50 Questions', ultra: '100 Questions' },
-            { name: 'Detailed Solutions', free: 'Right/Wrong Only', basic: 'Text Solution', ultra: 'AI Explanation' },
-        ]
-    }
-];
-
 export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings, discountActive }) => {
   if (!isOpen) return null;
 
-  // Use default matrix if settings.planComparison is missing OR empty
-  const matrix = (settings?.planComparison && settings.planComparison.length > 0)
-                 ? settings.planComparison
-                 : DEFAULT_MATRIX;
+  // Logic to merge and filter features
+  const localConfig = settings?.featureConfig || {};
+
+  const coreFeatureIds = new Set(ALL_FEATURES.map(f => f.id));
+  const customFeatureIds = Object.keys(localConfig).filter(id => !coreFeatureIds.has(id));
+
+  const combinedFeatures = [
+      ...ALL_FEATURES.map(f => ({
+          id: f.id,
+          title: f.label,
+          category: f.group,
+          adminVisible: f.adminVisible,
+          description: f.description,
+          // icon: f.icon // We map locally
+      })),
+      ...customFeatureIds.map(id => ({
+          id,
+          title: localConfig[id].label || id,
+          category: localConfig[id].customCategory || 'CUSTOM',
+          adminVisible: false, // Custom defaults to student visible
+          description: 'Custom Feature',
+      }))
+  ];
+
+  const mergedFeatures = combinedFeatures.map(f => {
+      const conf = localConfig[f.id] || {};
+      return {
+          ...f,
+          visible: conf.visible !== false,
+          allowedTiers: conf.allowedTiers || ['FREE', 'BASIC', 'ULTRA'],
+          creditCost: conf.creditCost !== undefined ? conf.creditCost : 0,
+      };
+  }).filter(f => !f.adminVisible && f.visible); // Show only student visible & enabled features
+
+  // Group by Category
+  const groupedFeatures: Record<string, typeof mergedFeatures> = {};
+  mergedFeatures.forEach(f => {
+      const cat = f.category || 'OTHER';
+      if (!groupedFeatures[cat]) groupedFeatures[cat] = [];
+      groupedFeatures[cat].push(f);
+  });
+
+  const getCategoryIcon = (group: string) => {
+      switch(group) {
+          case 'AI': return <Sparkles size={18} className="text-purple-500"/>;
+          case 'CONTENT': return <BookOpen size={18} className="text-blue-500"/>;
+          case 'GAME': return <Gamepad2 size={18} className="text-orange-500"/>;
+          case 'CORE': return <Layout size={18} className="text-indigo-500"/>;
+          case 'TOOLS': return <Zap size={18} className="text-yellow-500"/>;
+          default: return <Star size={18} className="text-slate-500"/>;
+      }
+  };
+
+  const getTierBadge = (tiers: string[]) => {
+      if (tiers.includes('FREE')) return <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded">FREE</span>;
+      if (tiers.includes('BASIC')) return <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded">BASIC</span>;
+      return <span className="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-0.5 rounded">ULTRA</span>;
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
         {/* HEADER */}
         <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 flex justify-between items-center shrink-0 relative overflow-hidden">
             {discountActive && (
@@ -59,7 +86,7 @@ export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings,
                 <h2 className="text-2xl font-black text-white flex items-center gap-2">
                     <Crown className="text-yellow-400 fill-yellow-400" /> App Future Access
                 </h2>
-                <p className="text-slate-400 text-sm">Unlock your potential with Free vs Basic vs Ultra power.</p>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Available Features List</p>
             </div>
             <button onClick={onClose} className="p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors">
                 <X size={24} />
@@ -67,53 +94,43 @@ export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings,
         </div>
 
         {/* CONTENT */}
-        <div className="overflow-y-auto p-6 space-y-8 custom-scrollbar">
-            {matrix.map((category, idx) => (
-                <div key={idx} className="space-y-4">
-                    <h3 className="font-black text-slate-800 text-lg uppercase tracking-wide border-l-4 border-indigo-500 pl-3">
-                        {category.name}
-                    </h3>
-                    <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50 text-slate-500 uppercase text-xs font-bold">
-                                <tr>
-                                    <th className="p-4 w-1/3">Feature</th>
-                                    <th className="p-4 text-center w-1/5 bg-slate-100/50">Free (Trial)</th>
-                                    <th className="p-4 text-center w-1/5 bg-blue-50/50 text-blue-700">Basic (Reader)</th>
-                                    <th className="p-4 text-center w-1/5 bg-purple-50/50 text-purple-700">Ultra (VIP)</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {category.features.map((feat, fIdx) => (
-                                    <tr key={fIdx} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="p-4 font-bold text-slate-700">{feat.name}</td>
-                                        <td className="p-4 text-center font-medium text-slate-600 bg-slate-50/30">
-                                            {feat.free.includes('✅') ? <span className="text-green-600 font-bold">{feat.free}</span> :
-                                             feat.free.includes('❌') || feat.free.includes('🔒') ? <span className="text-slate-400">{feat.free}</span> :
-                                             feat.free}
-                                        </td>
-                                        <td className="p-4 text-center font-bold text-blue-600 bg-blue-50/20">
-                                            {feat.basic.includes('✅') ? <span className="text-blue-700">{feat.basic}</span> :
-                                             feat.basic.includes('⚠️') ? <span className="text-orange-500">{feat.basic}</span> :
-                                             feat.basic}
-                                        </td>
-                                        <td className="p-4 text-center font-black text-purple-600 bg-purple-50/20 relative overflow-hidden">
-                                            {/* GLOW EFFECT FOR ULTRA */}
-                                            {/* <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-100/20 to-transparent animate-shimmer"></div> */}
-                                            {feat.ultra}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+        <div className="overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50">
+            {Object.keys(groupedFeatures).length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                    <p>No features configured.</p>
                 </div>
-            ))}
+            ) : (
+                Object.entries(groupedFeatures).map(([category, features]) => (
+                    <div key={category} className="space-y-3">
+                        <h3 className="flex items-center gap-2 font-black text-slate-700 text-sm uppercase tracking-wide">
+                            {getCategoryIcon(category)} {category} Features
+                        </h3>
+                        <div className="grid gap-3">
+                            {features.map(feature => (
+                                <div key={feature.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between gap-4">
+                                    <div>
+                                        <h4 className="font-bold text-slate-800 text-sm">{feature.title}</h4>
+                                        <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">{feature.description || 'Unlock powerful tools to boost your learning.'}</p>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1 shrink-0">
+                                        {getTierBadge(feature.allowedTiers)}
+                                        {feature.creditCost > 0 && (
+                                            <span className="text-[9px] font-bold text-slate-400">
+                                                {feature.creditCost} Coins
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))
+            )}
         </div>
 
         {/* FOOTER */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 text-center text-xs text-slate-400 shrink-0">
-            * Features and limits are subject to change by the administrator.
+        <div className="p-4 bg-white border-t border-slate-200 text-center text-[10px] text-slate-400 shrink-0 font-medium">
+            * Availability depends on your current subscription plan.
         </div>
       </div>
     </div>

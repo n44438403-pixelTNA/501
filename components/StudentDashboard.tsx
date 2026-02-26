@@ -59,7 +59,7 @@ import { StudyGoalTimer } from './StudyGoalTimer';
 import { ExplorePage } from './ExplorePage';
 import { StudentHistoryModal } from './StudentHistoryModal';
 import { generateDailyRoutine } from '../utils/routineGenerator';
-import { FeatureMatrixModal } from './FeatureMatrixModal';
+import { FloatingActionMenu } from './FloatingActionMenu';
 // @ts-ignore
 import jsPDF from 'jspdf';
 // @ts-ignore
@@ -1515,6 +1515,17 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
         {/* MINI PLAYER */}
         <MiniPlayer track={currentAudioTrack} onClose={() => setCurrentAudioTrack(null)} />
 
+        {/* FLOATING ACTION MENU */}
+        {(activeTab === 'HOME' || activeTab === 'REVISION' || activeTab === 'AI_HUB' || activeTab === 'PROFILE' || activeTab === 'HISTORY' || (activeTab as string) === 'ANALYTICS') && (
+            <FloatingActionMenu
+                user={user}
+                settings={settings || {}}
+                isFlashSaleActive={settings?.specialDiscountEvent?.enabled}
+                onOpenProfile={() => onTabChange('PROFILE')}
+                onOpenStore={() => onTabChange('STORE')}
+            />
+        )}
+
         {/* FIXED BOTTOM NAVIGATION */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-50 pb-safe">
             <div className="flex justify-around items-center h-16">
@@ -1559,30 +1570,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
             </div>
         </div>
 
-        {/* FLOATING ACTION BUTTON (APP FUTURE ACCESS) */}
-        {(activeTab === 'HOME' || activeTab === 'REVISION' || activeTab === 'AI_HUB' || activeTab === 'PROFILE' || activeTab === 'HISTORY' || (activeTab as string) === 'ANALYTICS') && (
-            <div className="fixed bottom-20 right-4 z-40 animate-in fade-in zoom-in duration-300">
-                <button
-                    onClick={() => setShowFeatureMatrix(true)}
-                    className="w-14 h-14 bg-slate-900 rounded-full shadow-2xl flex items-center justify-center border-2 border-white hover:scale-110 transition-transform active:scale-95 relative overflow-hidden group"
-                >
-                    {settings?.appLogo ? (
-                        <img src={settings.appLogo} alt="Access" className="w-full h-full rounded-full object-cover" />
-                    ) : (
-                        <Crown size={24} className="text-yellow-400" />
-                    )}
-                    {/* Ripple/Glow Effect */}
-                    <div className="absolute inset-0 rounded-full bg-white/20 scale-0 group-hover:scale-150 transition-transform duration-500 opacity-0 group-hover:opacity-100"></div>
-                </button>
-            </div>
-        )}
-
-        <FeatureMatrixModal
-            isOpen={showFeatureMatrix}
-            onClose={() => setShowFeatureMatrix(false)}
-            settings={settings}
-            discountActive={settings?.specialDiscountEvent?.enabled}
-        />
 
         {/* SIDEBAR OVERLAY (INLINE) */}
         {showSidebar && (

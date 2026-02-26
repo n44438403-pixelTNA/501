@@ -2353,16 +2353,6 @@ const App: React.FC = () => {
           />
       )}
 
-      {/* FLOATING ACTION MENU (PLAN 2.0) */}
-      {state.user && !activeWeeklyTest && !isFullScreen && (
-          <FloatingActionMenu
-              user={state.user}
-              settings={state.settings}
-              isFlashSaleActive={isFlashSaleActive}
-              onOpenProfile={() => setStudentTab('PROFILE')}
-              onOpenStore={() => setStudentTab('STORE')}
-          />
-      )}
       
       {activeReward && <RewardPopup reward={activeReward} onClaim={handleClaimReward} onIgnore={handleIgnoreReward} />}
       

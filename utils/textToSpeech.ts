@@ -4,23 +4,29 @@ export const getAvailableVoices = (): Promise<SpeechSynthesisVoice[]> => {
         return Promise.resolve([]);
     }
     
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+        return Promise.resolve(voices);
+    }
+
     return new Promise((resolve) => {
-        let voices = window.speechSynthesis.getVoices();
-        if (voices.length > 0) {
-            resolve(voices);
-            return;
-        }
-        
         // Voices might load asynchronously
-        window.speechSynthesis.onvoiceschanged = () => {
-            voices = window.speechSynthesis.getVoices();
-            resolve(voices);
+        const handler = () => {
+            const v = window.speechSynthesis.getVoices();
+            if (v.length > 0) {
+                window.speechSynthesis.removeEventListener('voiceschanged', handler);
+                resolve(v);
+            }
         };
         
-        // Fallback timeout in case onvoiceschanged never fires
+        window.speechSynthesis.addEventListener('voiceschanged', handler);
+
+        // Fallback timeout: If no voices after 1s, return empty (don't block too long)
+        // Android WebView often has issues here, so we shouldn't wait forever.
         setTimeout(() => {
+             window.speechSynthesis.removeEventListener('voiceschanged', handler);
              resolve(window.speechSynthesis.getVoices());
-        }, 2000);
+        }, 1000);
     });
 };
 
@@ -63,11 +69,16 @@ export const speakText = async (
         return null;
     }
 
-    // Cancel any existing speech
-    window.speechSynthesis.cancel();
+    // ROBUSTNESS: Cancel any existing speech immediately
+    try {
+        window.speechSynthesis.cancel();
+    } catch (e) {
+        console.error("Error canceling speech:", e);
+    }
 
-    // Strip HTML if present (simple check, but utility ensures clean text)
+    // Strip HTML if present
     const cleanText = stripHtml(text);
+    if (!cleanText.trim()) return null;
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     
@@ -75,7 +86,19 @@ export const speakText = async (
     let selectedVoice = voice;
     
     if (!selectedVoice) {
-        selectedVoice = await getPreferredVoice();
+        // Try to get preferred voice, but don't block if not available immediately
+        // For WebView, we might just want to speak with default if voices aren't ready
+        try {
+             // We attempt to get voices, but if it takes too long, we proceed
+             // This avoids the "TTS not working" perception if loading fails
+             const voices = window.speechSynthesis.getVoices();
+             if (voices.length > 0) {
+                 const uri = localStorage.getItem('nst_preferred_voice_uri');
+                 if (uri) selectedVoice = voices.find(v => v.voiceURI === uri);
+             }
+        } catch (e) {
+            console.warn("Failed to retrieve voices synchronously:", e);
+        }
     }
 
     if (selectedVoice) {
@@ -89,15 +112,36 @@ export const speakText = async (
     utterance.pitch = 1.0;
 
     if (onStart) utterance.onstart = onStart;
-    if (onEnd) utterance.onend = onEnd;
+
+    // Robust onEnd handling
+    utterance.onend = () => {
+        if (onEnd) onEnd();
+    };
 
     // Error handling
     utterance.onerror = (e) => {
-        console.error("Speech Error:", e);
+        console.error("Speech Error (TTS):", e);
+        // Ensure onEnd is called even on error so UI doesn't get stuck
         if(onEnd) onEnd();
     };
 
-    window.speechSynthesis.speak(utterance);
+    // Android WebView Workaround:
+    // Sometimes speaking immediately after creation fails.
+    // We wrap in a small timeout to ensure the engine is ready.
+    setTimeout(() => {
+        try {
+            window.speechSynthesis.speak(utterance);
+
+            // Resume if paused (sometimes helps in Android)
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+            }
+        } catch (e) {
+            console.error("Speech Synthesis Failed:", e);
+            if (onEnd) onEnd();
+        }
+    }, 10);
+
     return utterance;
 };
 

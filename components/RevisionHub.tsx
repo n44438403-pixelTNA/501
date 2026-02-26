@@ -14,6 +14,7 @@ import { speakWithHighlight } from '../utils/ttsHighlighter';
 import { LEVEL_UP_CONFIG } from '../constants';
 import { MarksheetCard } from './MarksheetCard'; // Import MarksheetCard
 import { MonthlyMarksheet } from './MonthlyMarksheet'; // Import MonthlyMarksheet
+import { checkFeatureAccess } from '../utils/permissionUtils';
 
 interface Props {
     user: User;
@@ -682,30 +683,46 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
             {/* MODE SWITCHER */}
             <div className="flex justify-center mb-4">
                 <div className="bg-slate-100 p-1 rounded-full flex gap-1 shadow-inner">
-                    <button
-                        onClick={() => {
-                            const access = checkFeatureAccess('REVISION_HUB_FREE', user, settings || {});
-                            if (access.hasAccess) setHubMode('FREE');
-                            else setAlertConfig({isOpen: true, type: 'ERROR', message: "🔒 Free Hub is disabled by Admin."});
-                        }}
-                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
-                            hubMode === 'FREE' ? 'bg-white shadow text-slate-800' : 'text-slate-400 hover:text-slate-600'
-                        }`}
-                    >
-                        <Layout size={14} /> Free Hub
-                    </button>
-                    <button
-                        onClick={() => {
-                            const access = checkFeatureAccess('REVISION_HUB_PREMIUM', user, settings || {});
-                            if (access.hasAccess) setHubMode('PREMIUM');
-                            else setAlertConfig({isOpen: true, type: 'ERROR', message: access.reason === 'FEED_LOCKED' ? "🔒 Premium Hub is disabled by Admin." : "🔒 Upgrade to access Premium Hub."});
-                        }}
-                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
-                            hubMode === 'PREMIUM' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow text-white' : 'text-slate-400 hover:text-slate-600'
-                        }`}
-                    >
-                        <Crown size={14} /> Premium Hub
-                    </button>
+                    {(() => {
+                        const freeAccess = checkFeatureAccess('REVISION_HUB_FREE', user, settings || {});
+                        return (
+                            <button
+                                onClick={() => {
+                                    if (freeAccess.hasAccess) setHubMode('FREE');
+                                    else setAlertConfig({isOpen: true, type: 'INFO', title: "Locked", message: "Official Notice: Free Hub content is currently disabled by Admin."});
+                                }}
+                                className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+                                    hubMode === 'FREE' ? 'bg-white shadow text-slate-800' : 'text-slate-400 hover:text-slate-600'
+                                } ${!freeAccess.hasAccess ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                            >
+                                <Layout size={14} /> Free Hub
+                                {!freeAccess.hasAccess && <Lock size={10} />}
+                            </button>
+                        );
+                    })()}
+
+                    {(() => {
+                        const premiumAccess = checkFeatureAccess('REVISION_HUB_PREMIUM', user, settings || {});
+                        return (
+                            <button
+                                onClick={() => {
+                                    if (premiumAccess.hasAccess) setHubMode('PREMIUM');
+                                    else setAlertConfig({
+                                        isOpen: true,
+                                        type: 'INFO',
+                                        title: 'Premium Upgrade Required',
+                                        message: "Official Notice: This content is locked for Premium Upgrade. Please upgrade to access Premium Revision Notes."
+                                    });
+                                }}
+                                className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+                                    hubMode === 'PREMIUM' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow text-white' : 'text-slate-400 hover:text-slate-600'
+                                } ${!premiumAccess.hasAccess ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                            >
+                                <Crown size={14} /> Premium Hub
+                                {!premiumAccess.hasAccess && <Lock size={10} />}
+                            </button>
+                        );
+                    })()}
                 </div>
             </div>
 

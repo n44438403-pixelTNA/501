@@ -10,6 +10,7 @@ import { getChapterData, saveUserToLive } from '../firebase';
 import { CreditConfirmationModal } from './CreditConfirmationModal';
 import { AiInterstitial } from './AiInterstitial';
 import { InfoPopup } from './InfoPopup';
+import { ErrorBoundary } from './ErrorBoundary';
 import { DEFAULT_CONTENT_INFO_CONFIG } from '../constants';
 import { checkFeatureAccess } from '../utils/permissionUtils';
 import { speakText, stopSpeech } from '../utils/textToSpeech';
@@ -28,51 +29,57 @@ interface Props {
   directResource?: { url: string, access: string };
 }
 
-// Helper to split HTML content into topics
+// Helper to split HTML content into topics (SAFE)
 const extractTopicsFromHtml = (html: string): { title: string, content: string }[] => {
     if (!html) return [];
 
-    // Create a temporary element to parse HTML
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
+    try {
+        // Create a temporary element to parse HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
 
-    const topics: { title: string, content: string }[] = [];
-    let currentTitle = "Introduction";
-    let currentContent: string[] = [];
+        const topics: { title: string, content: string }[] = [];
+        let currentTitle = "Introduction";
+        let currentContent: string[] = [];
 
-    const children = Array.from(tempDiv.children);
+        const children = Array.from(tempDiv.children);
 
-    // Fallback if no children (raw text)
-    if (children.length === 0 && html.trim().length > 0) {
-        return [{ title: "Notes", content: html }];
-    }
-
-    children.forEach((child) => {
-        const tagName = child.tagName.toLowerCase();
-        if (tagName === 'h1' || tagName === 'h2') {
-            // Push previous topic if exists
-            if (currentContent.length > 0) {
-                topics.push({
-                    title: currentTitle,
-                    content: currentContent.join('')
-                });
-                currentContent = [];
-            }
-            currentTitle = child.textContent || "Untitled Topic";
-        } else {
-            currentContent.push(child.outerHTML);
+        // Fallback if no children (raw text)
+        if (children.length === 0 && html.trim().length > 0) {
+            return [{ title: "Notes", content: html }];
         }
-    });
 
-    // Push the last topic
-    if (currentContent.length > 0 || topics.length === 0) {
-        topics.push({
-            title: currentTitle,
-            content: currentContent.join('')
+        children.forEach((child) => {
+            const tagName = child.tagName.toLowerCase();
+            if (tagName === 'h1' || tagName === 'h2') {
+                // Push previous topic if exists
+                if (currentContent.length > 0) {
+                    topics.push({
+                        title: currentTitle,
+                        content: currentContent.join('')
+                    });
+                    currentContent = [];
+                }
+                currentTitle = child.textContent || "Untitled Topic";
+            } else {
+                currentContent.push(child.outerHTML);
+            }
         });
-    }
 
-    return topics;
+        // Push the last topic
+        if (currentContent.length > 0 || topics.length === 0) {
+            topics.push({
+                title: currentTitle,
+                content: currentContent.join('')
+            });
+        }
+
+        return topics;
+    } catch (e) {
+        console.error("HTML Parsing Error (Safe Fallback):", e);
+        // Fallback to single safe block
+        return [{ title: "Content Error", content: "Error displaying formatted notes. Please contact admin." }];
+    }
 };
 
 export const PdfView: React.FC<Props> = ({ 
@@ -211,46 +218,52 @@ export const PdfView: React.FC<Props> = ({
         }
         setContentData(data || {});
 
-        // PROCESS NEW CONTENT STRUCTURE
+        // PROCESS NEW CONTENT STRUCTURE (SAFE)
         if (data) {
             const entries: DeepDiveEntry[] = data.deepDiveEntries || [];
 
             // 1. QUICK REVISION EXTRACTION
             const quickPoints: string[] = [];
-            // Regex to find lines containing "Quick Revision" (case insensitive)
-            // Or maybe separate blocks? User said "line dikhega".
-            // Let's extract paragraphs containing the keyword.
-            entries.forEach(entry => {
-                if (entry.htmlContent) {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = entry.htmlContent;
-                    const paragraphs = Array.from(tempDiv.querySelectorAll('p, li, div')); // Check broad block tags
-                    paragraphs.forEach(p => {
-                        const text = p.textContent || '';
-                        if (text.toLowerCase().includes('quick revision')) {
-                            // Clean up the text
-                            quickPoints.push(p.innerHTML); // Keep HTML formatting
-                        }
-                    });
-                }
-            });
+
+            try {
+                entries.forEach(entry => {
+                    if (entry.htmlContent) {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = entry.htmlContent;
+                        const paragraphs = Array.from(tempDiv.querySelectorAll('p, li, div')); // Check broad block tags
+                        paragraphs.forEach(p => {
+                            const text = p.textContent || '';
+                            if (text.toLowerCase().includes('quick revision')) {
+                                // Clean up the text
+                                quickPoints.push(p.innerHTML); // Keep HTML formatting
+                            }
+                        });
+                    }
+                });
+            } catch(e) {
+                console.error("Quick Revision Extraction Error:", e);
+            }
             setQuickRevisionPoints(quickPoints);
 
             // 2. DEEP DIVE TOPICS AGGREGATION
             // Combine all entries
             let allTopics: { title: string, content: string }[] = [];
 
-            // If legacy Deep Dive HTML exists, include it first
-            const legacyHtml = syllabusMode === 'SCHOOL' ? data.deepDiveNotesHtml : data.competitionDeepDiveNotesHtml;
-            if (legacyHtml) {
-                allTopics = [...allTopics, ...extractTopicsFromHtml(legacyHtml)];
-            }
-
-            entries.forEach(entry => {
-                if (entry.htmlContent) {
-                    allTopics = [...allTopics, ...extractTopicsFromHtml(entry.htmlContent)];
+            try {
+                // If legacy Deep Dive HTML exists, include it first
+                const legacyHtml = syllabusMode === 'SCHOOL' ? data.deepDiveNotesHtml : data.competitionDeepDiveNotesHtml;
+                if (legacyHtml) {
+                    allTopics = [...allTopics, ...extractTopicsFromHtml(legacyHtml)];
                 }
-            });
+
+                entries.forEach(entry => {
+                    if (entry.htmlContent) {
+                        allTopics = [...allTopics, ...extractTopicsFromHtml(entry.htmlContent)];
+                    }
+                });
+            } catch(e) {
+                console.error("Deep Dive Aggregation Error:", e);
+            }
             setDeepDiveTopics(allTopics);
         }
 
@@ -470,7 +483,8 @@ export const PdfView: React.FC<Props> = ({
            </div>
        </div>
 
-       {/* CONTENT BODY */}
+       {/* CONTENT BODY (WRAPPED IN ERROR BOUNDARY) */}
+       <ErrorBoundary>
        <div className="flex-1 overflow-y-auto">
 
            {/* 1. QUICK REVISION */}
@@ -675,6 +689,7 @@ export const PdfView: React.FC<Props> = ({
            )}
 
        </div>
+       </ErrorBoundary>
 
        {/* CONFIRMATION & INFO MODALS ... */}
        {pendingPdf && <CreditConfirmationModal title="Unlock Content" cost={pendingPdf.price} userCredits={user.credits} isAutoEnabledInitial={!!user.isAutoDeductEnabled} onCancel={() => setPendingPdf(null)} onConfirm={(auto) => processPaymentAndOpen(pendingPdf.link, pendingPdf.price, auto, pendingPdf.tts, pendingPdf.type === 'DEEP_DIVE')} />}

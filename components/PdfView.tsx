@@ -627,7 +627,7 @@ export const PdfView: React.FC<Props> = ({
            {activeTab === 'DEEP_DIVE' && (
                <div className="p-4 space-y-6 max-w-2xl mx-auto">
                    <div className="flex justify-between items-center mb-4">
-                       <p className="text-xs font-bold text-slate-500 uppercase">{deepDiveTopics.length} Topics</p>
+                       <p className="text-xs font-bold text-slate-500 uppercase">{deepDiveTopics.length} Sections</p>
                        <button
                           onClick={() => {
                               if (isAutoPlaying) {
@@ -654,6 +654,10 @@ export const PdfView: React.FC<Props> = ({
 
                    {deepDiveTopics.map((topic, idx) => {
                       const isActive = topicSpeakingState === idx;
+                      // Detect if it's a "Topic Breakdown" based on title pattern or just index (First is usually Chapter Deep Dive if populated)
+                      // Ideally we'd have a flag, but for now we render them all uniformly.
+                      // If the title was set explicitly in AdminDashboard, it will be used.
+
                       return (
                           <div
                               id={`topic-card-${idx}`}
@@ -661,7 +665,20 @@ export const PdfView: React.FC<Props> = ({
                               className={`bg-white rounded-2xl p-6 shadow-sm border-2 transition-all ${isActive ? 'border-teal-400 ring-2 ring-teal-100 scale-[1.01]' : 'border-transparent'}`}
                           >
                               <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-2">
-                                  <h4 className="text-lg font-black text-slate-800">{topic.title}</h4>
+                                  <div>
+                                      {/* Visual Label for Separation */}
+                                      {idx === 0 && topic.title !== "Introduction" && (
+                                          <span className="text-[10px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded mb-1 inline-block">
+                                              CHAPTER DEEP DIVE
+                                          </span>
+                                      )}
+                                      {idx > 0 && (
+                                          <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded mb-1 inline-block">
+                                              TOPIC {idx}
+                                          </span>
+                                      )}
+                                      <h4 className="text-lg font-black text-slate-800">{topic.title}</h4>
+                                  </div>
                                   <button
                                       onClick={() => handleTopicPlay(idx)}
                                       className={`p-2 rounded-full transition-colors ${isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600 hover:bg-teal-50 hover:text-teal-600'}`}

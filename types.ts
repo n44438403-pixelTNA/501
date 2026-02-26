@@ -867,6 +867,7 @@ export interface HtmlModule {
 
 export interface DeepDiveEntry {
   id: string;
+  title?: string; // NEW: Topic Name
   htmlContent: string;
   pdfLink: string;
 }

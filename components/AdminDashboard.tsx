@@ -4882,16 +4882,16 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                   </button>
                               </div>
 
-                              {/* UNLIMITED DEEP DIVE & PREMIUM MANAGER */}
+                              {/* UNLIMITED DEEP DIVE & PREMIUM MANAGER (TOPICS BREAKDOWN) */}
                               <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
                                   <h4 className="font-bold text-purple-900 mb-4 flex items-center gap-2">
-                                      <Layers size={20} /> Deep Dive & Premium Notes (Unlimited)
+                                      <Layers size={20} /> Topics Breakdown (Deep Dive & Premium)
                                   </h4>
                                   <p className="text-[10px] text-purple-600 mb-4">
-                                      Add multiple entries. Each entry contains <b>HTML (for Deep Dive/TTS)</b> and a <b>PDF Link (for Visuals)</b>.
-                                      <br/>• <b>Quick Revision:</b> Lines marked "Quick Revision" in HTML will be extracted.
-                                      <br/>• <b>Deep Dive:</b> Topics (h1/h2) in HTML will create pages.
-                                      <br/>• <b>Premium:</b> Shows PDF + Plays TTS from HTML.
+                                      Add multiple entries for <b>Topics Breakdown</b>. Each entry represents a specific topic or part.
+                                      <br/>• <b>Title:</b> Displayed as the topic name.
+                                      <br/>• <b>HTML:</b> Used for Deep Dive content, TTS, and Quick Revision extraction.
+                                      <br/>• <b>PDF:</b> Visual document for this topic (Premium view).
                                   </p>
 
                                   <div className="space-y-4 mb-4">
@@ -4903,7 +4903,23 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                                   </button>
                                               </div>
 
-                                              <span className="text-xs font-bold text-purple-400 uppercase">Entry {idx + 1}</span>
+                                              <span className="text-xs font-bold text-purple-400 uppercase">Topic {idx + 1}</span>
+
+                                              {/* TITLE INPUT */}
+                                              <div className="flex items-center bg-slate-50 border border-purple-100 rounded-lg overflow-hidden">
+                                                  <div className="px-3 py-2 text-slate-400 font-bold text-xs">Title</div>
+                                                  <input
+                                                      type="text"
+                                                      value={entry.title || ''}
+                                                      onChange={e => {
+                                                          const updated = [...deepDiveEntries];
+                                                          updated[idx].title = e.target.value;
+                                                          setDeepDiveEntries(updated);
+                                                      }}
+                                                      placeholder="e.g. Introduction to Physics"
+                                                      className="flex-1 bg-transparent p-2 text-xs font-bold outline-none text-slate-800"
+                                                  />
+                                              </div>
 
                                               {/* PDF LINK */}
                                               <div className="flex items-center bg-slate-50 border border-purple-100 rounded-lg overflow-hidden">
@@ -4930,17 +4946,17 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                                       setDeepDiveEntries(updated);
                                                   }}
                                                   className="w-full p-3 border border-purple-100 rounded-lg text-xs font-mono h-32 focus:ring-1 focus:ring-purple-300 outline-none"
-                                                  placeholder="<h1>Topic</h1><p>Content...</p><p>Quick Revision: Key point...</p>"
+                                                  placeholder="<h1>Topic Content</h1><p>Detailed explanation...</p><p>Quick Revision: Key point...</p>"
                                               />
                                           </div>
                                       ))}
                                   </div>
 
                                   <button
-                                      onClick={() => setDeepDiveEntries([...deepDiveEntries, { id: Date.now().toString(), htmlContent: '', pdfLink: '' }])}
+                                      onClick={() => setDeepDiveEntries([...deepDiveEntries, { id: Date.now().toString(), title: '', htmlContent: '', pdfLink: '' }])}
                                       className="w-full py-3 bg-white border border-purple-300 text-purple-600 font-bold rounded-xl hover:bg-purple-50 border-dashed flex items-center justify-center gap-2"
                                   >
-                                      <Plus size={16} /> Add Deep Dive Entry
+                                      <Plus size={16} /> Add Topic Breakdown
                                   </button>
                               </div>
 

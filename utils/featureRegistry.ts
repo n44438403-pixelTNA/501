@@ -673,7 +673,7 @@ export const ALL_FEATURES: Feature[] = [
         label: 'Feature Access',
         group: 'ADVANCED',
         surfaceLevel: 3,
-        adminVisible: true,
+        adminVisible: false,
         adminTab: 'FEATURE_ACCESS',
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'LayoutGrid',

@@ -78,9 +78,10 @@ export const McqView: React.FC<Props> = ({
               .filter(h => new Date(h.date).toDateString() === todayStr)
               .reduce((sum, h) => sum + h.totalQuestions, 0);
 
-          let dailyLimit = settings?.mcqLimitFree || 30;
-          if (user.subscriptionLevel === 'BASIC') dailyLimit = settings?.mcqLimitBasic || 50;
-          if (user.subscriptionLevel === 'ULTRA') dailyLimit = settings?.mcqLimitUltra || 100;
+          const mcqFeature = settings?.featureConfig?.['MCQ_FREE'];
+          let dailyLimit = mcqFeature?.limits?.free ?? settings?.mcqLimitFree ?? 30;
+          if (user.subscriptionLevel === 'BASIC') dailyLimit = mcqFeature?.limits?.basic ?? settings?.mcqLimitBasic ?? 50;
+          if (user.subscriptionLevel === 'ULTRA') dailyLimit = mcqFeature?.limits?.ultra ?? settings?.mcqLimitUltra ?? 100;
 
           if (solvedToday >= dailyLimit) {
               setAlertConfig({
@@ -224,9 +225,10 @@ export const McqView: React.FC<Props> = ({
 
     // Apply Tier Limits (Per Test Limit)
     // Free: 30, Basic: 50, Ultra: All
-    let questionLimit = settings?.mcqLimitFree || 30;
-    if (user.subscriptionLevel === 'BASIC') questionLimit = settings?.mcqLimitBasic || 50;
-    if (user.subscriptionLevel === 'ULTRA') questionLimit = settings?.mcqLimitUltra || 999999;
+    const mcqFeature = settings?.featureConfig?.['MCQ_FREE'];
+    let questionLimit = mcqFeature?.limits?.free ?? settings?.mcqLimitFree ?? 30;
+    if (user.subscriptionLevel === 'BASIC') questionLimit = mcqFeature?.limits?.basic ?? settings?.mcqLimitBasic ?? 50;
+    if (user.subscriptionLevel === 'ULTRA') questionLimit = mcqFeature?.limits?.ultra ?? settings?.mcqLimitUltra ?? 999999;
 
     // Admin Override
     if (user.role === 'ADMIN') questionLimit = 999999;
@@ -268,13 +270,14 @@ export const McqView: React.FC<Props> = ({
       }
 
       // 3. Determine Limit based on Tier
-      let limit = settings?.mcqLimitFree || 30; // Default Free
+      const mcqFeature = settings?.featureConfig?.['MCQ_FREE'];
+      let limit = mcqFeature?.limits?.free ?? settings?.mcqLimitFree ?? 30; // Default Free
 
       if (user.role === 'ADMIN') {
           limit = 9999;
       } else if (user.subscriptionTier && user.subscriptionTier !== 'FREE') {
-          if (user.subscriptionLevel === 'ULTRA') limit = settings?.mcqLimitUltra || 9999;
-          else limit = settings?.mcqLimitBasic || 50; // Basic Limit
+          if (user.subscriptionLevel === 'ULTRA') limit = mcqFeature?.limits?.ultra ?? settings?.mcqLimitUltra ?? 9999;
+          else limit = mcqFeature?.limits?.basic ?? settings?.mcqLimitBasic ?? 50; // Basic Limit
       }
 
       // 4. Slice & Select

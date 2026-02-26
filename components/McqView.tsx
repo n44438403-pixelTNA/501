@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Chapter, User, Subject, SystemSettings, MCQResult, PerformanceTag } from '../types';
 import { CheckCircle, Lock, ArrowLeft, Crown, PlayCircle, HelpCircle, Trophy, Clock, BrainCircuit, FileText } from 'lucide-react';
+import { checkFeatureAccess } from '../utils/permissionUtils';
 import { CustomAlert, CustomConfirm } from './CustomDialogs';
 import { getChapterData, saveUserToLive, saveUserHistory, savePublicActivity } from '../firebase';
 import { generateLocalAnalysis, generateAnalysisJson } from '../utils/analysisUtils';
@@ -151,25 +152,32 @@ export const McqView: React.FC<Props> = ({
       if (mode === 'TEST') {
           // Premium Test Mode
           finalMode = 'PREMIUM';
-          cost = settings?.mcqTestCost ?? 0;
 
-          // Access Check
-          if (user.role !== 'ADMIN') {
-              const isSubscribed = user.isPremium && user.subscriptionEndDate && new Date(user.subscriptionEndDate) > new Date();
+          // Use App Soul for Cost & Access
+          const access = checkFeatureAccess('MCQ_PREMIUM', user, settings || {});
 
-              if (isSubscribed) {
-                  // Access Granted via Subscription
-                  cost = 0;
-              } else {
-                  // Need to pay coins
-                  if (user.credits < cost) {
-                      setAlertConfig({isOpen: true, title: "Low Balance", message: `Insufficient Credits for Premium Test! You need ${cost} coins.`});
-                      setLoading(false);
-                      return;
-                  }
-                  // We will deduct in triggerMcqStart or confirmation
-              }
+          if (!access.hasAccess) {
+             // If locked (either by Tier or explicit Lock)
+             // If cost > 0, it means pay-per-view
+             if (access.cost > 0) {
+                 cost = access.cost;
+             } else {
+                 setAlertConfig({isOpen: true, title: "Locked Feature", message: access.reason === 'FEED_LOCKED' ? "Disabled by Admin." : "Upgrade your plan to access Premium Tests."});
+                 setLoading(false);
+                 return;
+             }
+          } else {
+             // Granted Access (Subscription or Free Tier)
+             // Check if there is still a cost (rare, but possible if configured)
+             cost = access.cost;
           }
+
+          if (user.credits < cost) {
+              setAlertConfig({isOpen: true, title: "Low Balance", message: `Insufficient Credits for Premium Test! You need ${cost} coins.`});
+              setLoading(false);
+              return;
+          }
+
       } else {
           // Free Practice Mode
           finalMode = 'FREE';
@@ -520,28 +528,37 @@ export const McqView: React.FC<Props> = ({
   };
 
   const handleFreeAnalysis = () => {
-      // NEW COST LOGIC FOR FREE ANALYSIS
-      // "free wala mcq banane pe analysis jo free hai ushka cradit lagega 20"
+      // NEW COST LOGIC FOR FREE ANALYSIS controlled by App Soul (MCQ_FREE cost)
       if (mcqMode === 'FREE') {
-          const cost = 20;
-          if (user.credits < cost) {
-              setAlertConfig({isOpen: true, title: "Low Balance", message: `Free Analysis costs ${cost} Coins!`});
-              return;
-          }
+          const access = checkFeatureAccess('MCQ_FREE', user, settings || {});
+          // If a cost is configured in Soul for MCQ_FREE, use it for analysis unlock
+          const cost = access.cost > 0 ? access.cost : 20; // Default to 20 if 0 (backward compat) OR assume 0 means free?
+          // User request: "analysis jo free hai ushka cradit lagega 20".
+          // If App Soul sets it to 0, maybe it should be free?
+          // But strict reading implies manual control. Let's trust App Soul cost if > 0.
 
-          setConfirmConfig({
-              isOpen: true,
-              title: "Unlock Analysis",
-              message: `Unlock answers & mistakes for ${cost} Coins?`,
-              onConfirm: () => {
-                  const updatedUser = { ...user, credits: user.credits - cost };
-                  localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
-                  saveUserToLive(updatedUser);
-                  onUpdateUser(updatedUser);
-                  setConfirmConfig(prev => ({...prev, isOpen: false}));
-                  proceedToAnalysis('FREE');
+          if (cost > 0) {
+              if (user.credits < cost) {
+                  setAlertConfig({isOpen: true, title: "Low Balance", message: `Analysis costs ${cost} Coins!`});
+                  return;
               }
-          });
+
+              setConfirmConfig({
+                  isOpen: true,
+                  title: "Unlock Analysis",
+                  message: `Unlock answers & mistakes for ${cost} Coins?`,
+                  onConfirm: () => {
+                      const updatedUser = { ...user, credits: user.credits - cost };
+                      localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
+                      saveUserToLive(updatedUser);
+                      onUpdateUser(updatedUser);
+                      setConfirmConfig(prev => ({...prev, isOpen: false}));
+                      proceedToAnalysis('FREE');
+                  }
+              });
+          } else {
+             proceedToAnalysis('FREE');
+          }
       } else {
           // Premium users (Premium Mode) already paid or have access
           proceedToAnalysis('FREE');

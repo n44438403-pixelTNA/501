@@ -865,6 +865,19 @@ export interface HtmlModule {
   access: 'FREE' | 'BASIC' | 'ULTRA';
 }
 
+export interface DeepDiveEntry {
+  id: string;
+  htmlContent: string;
+  pdfLink: string;
+}
+
+export interface AdditionalNoteEntry {
+  id: string;
+  title: string;
+  noteContent: string;
+  pdfLink: string;
+}
+
 export interface PremiumNoteSlot {
   id: string;
   title: string;
@@ -944,6 +957,9 @@ export interface LessonContent {
 
   deepDiveNotesHtml?: string; // NEW: Deep Dive Notes (TTS Source)
   competitionDeepDiveNotesHtml?: string; // NEW: Competition Mode Deep Dive Notes
+
+  deepDiveEntries?: DeepDiveEntry[]; // NEW: Unlimited Deep Dive Entries
+  additionalNotes?: AdditionalNoteEntry[]; // NEW: Additional Notes
 
   // NEW TOPIC BASED CONTENT
   topicNotes?: { id: string, title: string, content: string, isPremium: boolean, topic: string }[];

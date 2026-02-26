@@ -3,8 +3,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { Chapter, User, Subject, SystemSettings, HtmlModule, PremiumNoteSlot } from '../types';
-import { FileText, Lock, ArrowLeft, Crown, Star, CheckCircle, AlertCircle, Globe, Maximize, Layers, HelpCircle, Minus, Plus, Volume2, Square, Zap, Headphones, BookOpen, Music, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import { Chapter, User, Subject, SystemSettings, HtmlModule, PremiumNoteSlot, DeepDiveEntry, AdditionalNoteEntry } from '../types';
+import { FileText, Lock, ArrowLeft, Crown, Star, CheckCircle, AlertCircle, Globe, Maximize, Layers, HelpCircle, Minus, Plus, Volume2, Square, Zap, Headphones, BookOpen, Music, Play, Pause, SkipForward, SkipBack, Book, List, Layout } from 'lucide-react';
 import { CustomAlert } from './CustomDialogs';
 import { getChapterData, saveUserToLive } from '../firebase';
 import { CreditConfirmationModal } from './CreditConfirmationModal';
@@ -85,6 +85,11 @@ export const PdfView: React.FC<Props> = ({
   const [activeLang, setActiveLang] = useState<'ENGLISH' | 'HINDI'>('ENGLISH');
   const [pendingPdf, setPendingPdf] = useState<{type: string, price: number, link: string, tts?: string} | null>(null);
   
+  // NEW: TAB STATE
+  const [activeTab, setActiveTab] = useState<'QUICK' | 'DEEP_DIVE' | 'PREMIUM' | 'RESOURCES'>('QUICK');
+  const [quickRevisionPoints, setQuickRevisionPoints] = useState<string[]>([]);
+  const [currentPremiumEntryIdx, setCurrentPremiumEntryIdx] = useState(0);
+
   // DEEP DIVE STATE
   const [isDeepDiveMode, setIsDeepDiveMode] = useState(false);
   const [deepDiveTopics, setDeepDiveTopics] = useState<{ title: string, content: string }[]>([]);
@@ -187,7 +192,7 @@ export const PdfView: React.FC<Props> = ({
   // Alert
   const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, message: string}>({isOpen: false, message: ''});
 
-  // Data Fetching
+  // Data Fetching & Processing
   useEffect(() => {
     if (directResource) {
         setLoading(false);
@@ -205,6 +210,50 @@ export const PdfView: React.FC<Props> = ({
             if (stored) data = JSON.parse(stored);
         }
         setContentData(data || {});
+
+        // PROCESS NEW CONTENT STRUCTURE
+        if (data) {
+            const entries: DeepDiveEntry[] = data.deepDiveEntries || [];
+
+            // 1. QUICK REVISION EXTRACTION
+            const quickPoints: string[] = [];
+            // Regex to find lines containing "Quick Revision" (case insensitive)
+            // Or maybe separate blocks? User said "line dikhega".
+            // Let's extract paragraphs containing the keyword.
+            entries.forEach(entry => {
+                if (entry.htmlContent) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = entry.htmlContent;
+                    const paragraphs = Array.from(tempDiv.querySelectorAll('p, li, div')); // Check broad block tags
+                    paragraphs.forEach(p => {
+                        const text = p.textContent || '';
+                        if (text.toLowerCase().includes('quick revision')) {
+                            // Clean up the text
+                            quickPoints.push(p.innerHTML); // Keep HTML formatting
+                        }
+                    });
+                }
+            });
+            setQuickRevisionPoints(quickPoints);
+
+            // 2. DEEP DIVE TOPICS AGGREGATION
+            // Combine all entries
+            let allTopics: { title: string, content: string }[] = [];
+
+            // If legacy Deep Dive HTML exists, include it first
+            const legacyHtml = syllabusMode === 'SCHOOL' ? data.deepDiveNotesHtml : data.competitionDeepDiveNotesHtml;
+            if (legacyHtml) {
+                allTopics = [...allTopics, ...extractTopicsFromHtml(legacyHtml)];
+            }
+
+            entries.forEach(entry => {
+                if (entry.htmlContent) {
+                    allTopics = [...allTopics, ...extractTopicsFromHtml(entry.htmlContent)];
+                }
+            });
+            setDeepDiveTopics(allTopics);
+        }
+
       } catch (error) {
         console.error("Error loading PDF data:", error);
       } finally {
@@ -212,7 +261,7 @@ export const PdfView: React.FC<Props> = ({
       }
     };
     fetchData();
-  }, [chapter.id, board, classLevel, stream, subject.name, directResource]);
+  }, [chapter.id, board, classLevel, stream, subject.name, directResource, syllabusMode]);
 
   const handlePdfClick = (type: 'FREE' | 'PREMIUM' | 'ULTRA' | 'DEEP_DIVE' | 'AUDIO_SLIDE') => {
       // Reset Deep Dive State
@@ -368,44 +417,119 @@ export const PdfView: React.FC<Props> = ({
       return <AiInterstitial onComplete={onInterstitialComplete} userType={isPremiumUser ? 'PREMIUM' : 'FREE'} imageUrl={aiImage} contentType="PDF" />;
   }
 
-  // DEEP DIVE VIEW
-  if (isDeepDiveMode) {
-      return (
-          <div className="bg-slate-100 min-h-screen pb-20">
-              <div className="sticky top-0 z-30 bg-white border-b border-slate-100 shadow-sm p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                      <button onClick={() => { setIsDeepDiveMode(false); stopAllSpeech(); }} className="p-2 hover:bg-slate-100 rounded-full text-slate-600"><ArrowLeft size={20} /></button>
-                      <h3 className="font-bold text-slate-800">Deep Dive: {chapter.title}</h3>
-                  </div>
+  // --- NEW TABBED VIEW ---
+  return (
+    <div className="bg-slate-50 min-h-screen pb-20 animate-in fade-in slide-in-from-right-8">
+       <CustomAlert
+           isOpen={alertConfig.isOpen}
+           message={alertConfig.message}
+           onClose={() => setAlertConfig({...alertConfig, isOpen: false})}
+       />
 
-                  {/* GLOBAL CONTROLS */}
-                  <div className="flex gap-2">
-                      <button
+       {/* HEADER */}
+       <div className="sticky top-0 z-30 bg-white border-b border-slate-100 shadow-sm flex flex-col">
+           <div className="p-4 flex items-center gap-3">
+               <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full text-slate-600">
+                   <ArrowLeft size={20} />
+               </button>
+               <div className="flex-1">
+                   <h3 className="font-bold text-slate-800 leading-tight line-clamp-1">{chapter.title}</h3>
+                   <div className="flex gap-2 mt-1">
+                     <button onClick={() => setSyllabusMode('SCHOOL')} className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${syllabusMode === 'SCHOOL' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500'}`}>School</button>
+                     <button onClick={() => setSyllabusMode('COMPETITION')} className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${syllabusMode === 'COMPETITION' ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500'}`}>Competition</button>
+                   </div>
+               </div>
+           </div>
+
+           {/* TABS */}
+           <div className="flex overflow-x-auto border-t border-slate-100 scrollbar-hide">
+               {[
+                   { id: 'QUICK', label: 'Quick Revision', icon: Zap },
+                   { id: 'DEEP_DIVE', label: 'Deep Dive', icon: BookOpen },
+                   { id: 'PREMIUM', label: 'Premium Notes', icon: Crown },
+                   { id: 'RESOURCES', label: 'Resources', icon: Layers }
+               ].map(tab => (
+                   <button
+                       key={tab.id}
+                       onClick={() => {
+                           // Basic Access Check for Premium Tabs
+                           if (tab.id === 'PREMIUM' || tab.id === 'DEEP_DIVE') {
+                               // const access = checkFeatureAccess('DEEP_DIVE', user, settings || {});
+                               // if (!access.hasAccess && access.cost > 0) { ... }
+                               // For now, simpler check
+                           }
+                           setActiveTab(tab.id as any);
+                           stopAllSpeech();
+                       }}
+                       className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex flex-col items-center gap-1 border-b-2 transition-all ${activeTab === tab.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
+                   >
+                       <tab.icon size={16} />
+                       {tab.label}
+                   </button>
+               ))}
+           </div>
+       </div>
+
+       {/* CONTENT BODY */}
+       <div className="flex-1 overflow-y-auto">
+
+           {/* 1. QUICK REVISION */}
+           {activeTab === 'QUICK' && (
+               <div className="p-4 space-y-4">
+                   {quickRevisionPoints.length === 0 ? (
+                       <div className="text-center py-12 text-slate-400">
+                           <Zap size={48} className="mx-auto mb-4 opacity-20" />
+                           <p className="text-sm font-bold">No quick revision points found.</p>
+                           <p className="text-xs">Points marked "Quick Revision" in notes appear here.</p>
+                       </div>
+                   ) : (
+                       <div className="space-y-3">
+                           {quickRevisionPoints.map((point, idx) => (
+                               <div key={idx} className="bg-white p-4 rounded-xl border-l-4 border-yellow-400 shadow-sm">
+                                   <div className="prose prose-sm text-slate-700" dangerouslySetInnerHTML={{ __html: point }} />
+                               </div>
+                           ))}
+                       </div>
+                   )}
+               </div>
+           )}
+
+           {/* 2. DEEP DIVE (HTML + SCROLL) */}
+           {activeTab === 'DEEP_DIVE' && (
+               <div className="p-4 space-y-6 max-w-2xl mx-auto">
+                   <div className="flex justify-between items-center mb-4">
+                       <p className="text-xs font-bold text-slate-500 uppercase">{deepDiveTopics.length} Topics</p>
+                       <button
                           onClick={() => {
                               if (isAutoPlaying) {
                                   setIsAutoPlaying(false);
                                   stopSpeech();
                               } else {
                                   setIsAutoPlaying(true);
-                                  setActiveTopicIndex(0); // Start from top or current? User said "Non stop apna chalega"
+                                  setActiveTopicIndex(0);
                               }
                           }}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs transition-all ${isAutoPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-teal-600 text-white shadow-lg'}`}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-bold text-xs transition-all ${isAutoPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-teal-600 text-white shadow'}`}
                       >
-                          {isAutoPlaying ? <Pause size={14} /> : <Play size={14} />}
-                          {isAutoPlaying ? 'Stop Auto' : 'Auto Play All'}
+                          {isAutoPlaying ? <Pause size={12} /> : <Play size={12} />}
+                          {isAutoPlaying ? 'Stop' : 'Auto Play'}
                       </button>
-                  </div>
-              </div>
+                   </div>
 
-              <div className="p-4 space-y-6 max-w-2xl mx-auto snap-y snap-mandatory h-[calc(100vh-80px)] overflow-y-auto">
-                  {deepDiveTopics.map((topic, idx) => {
+                   {deepDiveTopics.length === 0 && (
+                       <div className="text-center py-12 text-slate-400">
+                           <BookOpen size={48} className="mx-auto mb-4 opacity-20" />
+                           <p className="text-sm font-bold">No Deep Dive content available.</p>
+                       </div>
+                   )}
+
+                   {deepDiveTopics.map((topic, idx) => {
                       const isActive = topicSpeakingState === idx;
                       return (
                           <div
                               id={`topic-card-${idx}`}
                               key={idx}
-                              className={`bg-white rounded-2xl p-6 shadow-sm border-2 transition-all snap-center min-h-[50vh] flex flex-col justify-center ${isActive ? 'border-teal-400 ring-2 ring-teal-100 scale-[1.02]' : 'border-transparent'}`}
+                              className={`bg-white rounded-2xl p-6 shadow-sm border-2 transition-all ${isActive ? 'border-teal-400 ring-2 ring-teal-100 scale-[1.01]' : 'border-transparent'}`}
                           >
                               <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-2">
                                   <h4 className="text-lg font-black text-slate-800">{topic.title}</h4>
@@ -423,119 +547,134 @@ export const PdfView: React.FC<Props> = ({
                           </div>
                       );
                   })}
-              </div>
-          </div>
-      );
-  }
-
-  return (
-    <div className="bg-slate-50 min-h-screen pb-20 animate-in fade-in slide-in-from-right-8">
-       <CustomAlert 
-           isOpen={alertConfig.isOpen} 
-           message={alertConfig.message} 
-           onClose={() => setAlertConfig({...alertConfig, isOpen: false})} 
-       />
-
-       {/* STANDARD HEADER */}
-       <div className="sticky top-0 z-20 bg-white border-b border-slate-100 shadow-sm p-4 flex items-center gap-3">
-           <button onClick={() => activePdf ? setActivePdf(null) : onBack()} className="p-2 hover:bg-slate-100 rounded-full text-slate-600">
-               <ArrowLeft size={20} />
-           </button>
-           <div className="flex-1">
-               <h3 className="font-bold text-slate-800 leading-tight line-clamp-1">{chapter.title}</h3>
-               {/* Mode Switchers */}
-               <div className="flex gap-2 mt-1">
-                 <button onClick={() => setSyllabusMode('SCHOOL')} className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${syllabusMode === 'SCHOOL' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500'}`}>School</button>
-                 <button onClick={() => setSyllabusMode('COMPETITION')} className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${syllabusMode === 'COMPETITION' ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500'}`}>Competition</button>
                </div>
-           </div>
-           
-           {/* Standard Controls (Zoom, TTS for standard view) */}
-           {activePdf && (
-               <div className="flex items-center gap-1">
-                   {/* TTS Button for PDF View */}
-                   <button
-                       onClick={() => {
-                           const btn = document.querySelector('[data-tts-trigger]');
-                           if(btn instanceof HTMLElement) btn.click(); // Trigger hidden button inside PDF view if needed or handle directly
-                           // Actually we can just call handleSpeak if we hoist logic, but keeping existing
-                       }}
-                       className="p-2 bg-slate-100 rounded-full"
-                   >
-                       <Volume2 size={18} />
+           )}
+
+           {/* 3. PREMIUM NOTES (PDF + TTS) */}
+           {activeTab === 'PREMIUM' && (
+               <div className="h-[calc(100vh-140px)] flex flex-col">
+                   {/* ENTRY SELECTOR IF MULTIPLE */}
+                   {contentData?.deepDiveEntries && contentData.deepDiveEntries.length > 1 && (
+                       <div className="bg-slate-100 p-2 flex gap-2 overflow-x-auto border-b border-slate-200">
+                           {contentData.deepDiveEntries.map((_: any, i: number) => (
+                               <button
+                                   key={i}
+                                   onClick={() => {
+                                       setCurrentPremiumEntryIdx(i);
+                                       stopAllSpeech();
+                                   }}
+                                   className={`px-3 py-1 text-xs font-bold rounded-full whitespace-nowrap ${currentPremiumEntryIdx === i ? 'bg-purple-600 text-white shadow' : 'bg-white text-slate-500'}`}
+                               >
+                                   Part {i + 1}
+                               </button>
+                           ))}
+                       </div>
+                   )}
+
+                   <div className="flex-1 relative bg-slate-200">
+                       {(() => {
+                           // Determine Content
+                           let pdfLink = '';
+                           let ttsHtml = '';
+
+                           if (contentData?.deepDiveEntries && contentData.deepDiveEntries.length > 0) {
+                               const entry = contentData.deepDiveEntries[currentPremiumEntryIdx];
+                               pdfLink = entry?.pdfLink;
+                               ttsHtml = entry?.htmlContent;
+                           } else {
+                               // Fallback
+                               pdfLink = syllabusMode === 'SCHOOL' ? contentData?.premiumLink : contentData?.competitionPdfPremiumLink;
+                               ttsHtml = syllabusMode === 'SCHOOL' ? contentData?.deepDiveNotesHtml : contentData?.competitionDeepDiveNotesHtml;
+                           }
+
+                           return (
+                               <>
+                                   {pdfLink ? (
+                                       <iframe src={pdfLink} className="w-full h-full border-none" title="PDF Viewer" />
+                                   ) : (
+                                       <div className="flex items-center justify-center h-full text-slate-400 font-bold">
+                                           No PDF attached.
+                                       </div>
+                                   )}
+
+                                   {/* FLOATING AUDIO PLAYER */}
+                                   {ttsHtml && (
+                                       <div className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-xl border border-slate-200 flex items-center gap-2 z-10">
+                                           <button
+                                              onClick={() => {
+                                                  if (isAutoPlaying) {
+                                                      setIsAutoPlaying(false);
+                                                      stopSpeech();
+                                                  } else {
+                                                      setIsAutoPlaying(true);
+                                                      const plainText = ttsHtml.replace(/<[^>]*>?/gm, ' ');
+                                                      speakText(plainText, null, speechRate, 'hi-IN');
+                                                  }
+                                              }}
+                                              className={`p-3 rounded-full text-white shadow-lg transition-all ${isAutoPlaying ? 'bg-red-500 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                                           >
+                                               {isAutoPlaying ? <Pause size={20} /> : <Headphones size={20} />}
+                                           </button>
+                                       </div>
+                                   )}
+                               </>
+                           );
+                       })()}
+                   </div>
+               </div>
+           )}
+
+           {/* 4. RESOURCES (ADDITIONAL NOTES) */}
+           {activeTab === 'RESOURCES' && (
+               <div className="p-4 space-y-4">
+                   <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2 mb-2">
+                       <Layers size={16} className="text-cyan-600" /> Additional Resources
+                   </h4>
+
+                   {/* FREE NOTES (LEGACY SUPPORT) */}
+                   <button onClick={() => handlePdfClick('FREE')} className="w-full p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-3 transition-all">
+                       <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center"><FileText size={20} /></div>
+                       <div className="flex-1 text-left"><h4 className="font-bold text-slate-700 text-sm">Standard Notes</h4><p className="text-[10px] text-slate-400">Basic Reading Material</p></div>
                    </button>
+
+                   {(!contentData?.additionalNotes || contentData.additionalNotes.length === 0) && (
+                       <p className="text-center text-xs text-slate-400 py-4">No additional resources added.</p>
+                   )}
+
+                   {contentData?.additionalNotes?.map((note: AdditionalNoteEntry, idx: number) => (
+                       <button
+                           key={idx}
+                           onClick={() => {
+                               // Smart Open Logic
+                               if (note.pdfLink && note.noteContent) {
+                                   // Open as Premium Style (PDF + TTS) - Just treating as a "link" for now in main viewer?
+                                   // Or trigger interstitial?
+                                   // Simplest: setActivePdf(note.pdfLink) and play TTS if needed.
+                                   setActivePdf(note.pdfLink);
+                                   // Optionally trigger TTS
+                                   const plainText = note.noteContent.replace(/<[^>]*>?/gm, ' ');
+                                   speakText(plainText, null, speechRate, 'hi-IN');
+                               } else if (note.pdfLink) {
+                                   setActivePdf(note.pdfLink);
+                               } else if (note.noteContent) {
+                                   setActivePdf(note.noteContent); // Viewer handles Markdown/HTML string
+                               }
+                           }}
+                           className="w-full p-4 rounded-xl border border-cyan-100 bg-white hover:bg-cyan-50 flex items-center gap-3 transition-all"
+                       >
+                           <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center"><Book size={20} /></div>
+                           <div className="flex-1 text-left">
+                               <h4 className="font-bold text-slate-700 text-sm">{note.title || `Resource ${idx + 1}`}</h4>
+                               <p className="text-[10px] text-slate-400">
+                                   {note.pdfLink && note.noteContent ? 'PDF + Audio' : note.pdfLink ? 'PDF Document' : 'Reading Material'}
+                               </p>
+                           </div>
+                       </button>
+                   ))}
                </div>
            )}
+
        </div>
-
-       {activePdf ? (
-           <div ref={pdfContainerRef} className="h-[calc(100vh-80px)] w-full bg-slate-100 relative overflow-auto">
-               {/* PDF/HTML Viewer Implementation (Same as before) */}
-               {activePdf.startsWith('http') ? (
-                   <iframe src={activePdf} className="w-full h-full border-none" title="Viewer" />
-               ) : (
-                   <div className="absolute inset-0 bg-white p-8 overflow-y-auto prose max-w-none">
-                       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{activePdf}</ReactMarkdown>
-                   </div>
-               )}
-           </div>
-       ) : (
-       <div className="p-6 space-y-4">
-           {loading ? (
-               <div className="space-y-4"><div className="h-24 bg-slate-100 rounded-2xl animate-pulse"></div></div>
-           ) : (
-               <>
-                   {/* FREE NOTES */}
-                   <div className="relative group">
-                       <button onClick={() => handlePdfClick('FREE')} className="w-full p-5 rounded-2xl border-2 border-green-100 bg-white hover:bg-green-50 flex items-center gap-4 transition-all">
-                           <div className="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center border border-green-100"><FileText size={24} /></div>
-                           <div className="flex-1 text-left"><h4 className="font-bold text-slate-800">Free Notes</h4><p className="text-xs text-slate-500">Standard Quality</p></div>
-                       </button>
-                   </div>
-
-                   {/* AUTO TTS NOTES (Formerly Premium Notes) */}
-                   <div className="relative group">
-                       <button onClick={() => handlePdfClick('PREMIUM')} className="w-full p-5 rounded-2xl border-2 border-yellow-200 bg-gradient-to-r from-yellow-50 to-white hover:border-yellow-300 flex items-center gap-4 transition-all">
-                           <div className="absolute top-3 right-3 flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-[10px] font-bold border border-yellow-200"><Zap size={10} /> AUTO TTS</div>
-                           <div className="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center border border-yellow-200"><Volume2 size={24} /></div>
-                           <div className="flex-1 text-left">
-                               <h4 className="font-bold text-slate-800">Auto TTS Notes</h4>
-                               <p className="text-xs text-slate-500">Listen & Read (Premium)</p>
-                           </div>
-                           <div className="flex flex-col items-end">
-                               <span className="text-xs font-black text-yellow-700">{contentData?.price || 5} CR</span>
-                               <span className="text-[10px] text-slate-400">Unlock</span>
-                           </div>
-                       </button>
-                   </div>
-
-                   {/* DEEP DIVE NOTES (Topic Wise) */}
-                   <div className="relative group">
-                       <button onClick={() => handlePdfClick('DEEP_DIVE')} className="w-full p-5 rounded-2xl border-2 border-teal-200 bg-gradient-to-r from-teal-50 to-white hover:border-teal-300 flex items-center gap-4 transition-all">
-                           <div className="absolute top-3 right-3 flex items-center gap-1 bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full text-[10px] font-bold border border-teal-200"><Headphones size={10} /> AUDIO TOPICS</div>
-                           <div className="w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center border border-teal-200"><BookOpen size={24} /></div>
-                           <div className="flex-1 text-left">
-                               <h4 className="font-bold text-slate-800">Deep Dive Topics</h4>
-                               <p className="text-xs text-slate-500">Topic-wise Audio Explanations</p>
-                           </div>
-                           <div className="flex flex-col items-end">
-                               <span className="text-xs font-black text-teal-700">5 CR</span>
-                               <span className="text-[10px] text-slate-400">Unlock</span>
-                           </div>
-                       </button>
-                   </div>
-
-                   {/* AUDIO SLIDE */}
-                   <div className="relative group">
-                       <button onClick={() => handlePdfClick('AUDIO_SLIDE')} className="w-full p-5 rounded-2xl border-2 border-rose-200 bg-gradient-to-r from-rose-50 to-white hover:border-rose-300 flex items-center gap-4 transition-all">
-                           <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center border border-rose-200"><Layers size={24} /></div>
-                           <div className="flex-1 text-left"><h4 className="font-bold text-slate-800">Audio Slides</h4><p className="text-xs text-slate-500">Premium Slides + Audio</p></div>
-                       </button>
-                   </div>
-               </>
-           )}
-       </div>
-       )}
 
        {/* CONFIRMATION & INFO MODALS ... */}
        {pendingPdf && <CreditConfirmationModal title="Unlock Content" cost={pendingPdf.price} userCredits={user.credits} isAutoEnabledInitial={!!user.isAutoDeductEnabled} onCancel={() => setPendingPdf(null)} onConfirm={(auto) => processPaymentAndOpen(pendingPdf.link, pendingPdf.price, auto, pendingPdf.tts, pendingPdf.type === 'DEEP_DIVE')} />}

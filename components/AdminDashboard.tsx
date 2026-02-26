@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { User, ViewState, SystemSettings, Subject, Chapter, MCQItem, RecoveryRequest, ActivityLogEntry, LeaderboardEntry, RecycleBinItem, Stream, Board, ClassLevel, GiftCode, SubscriptionPlan, CreditPackage, SpinReward, HtmlModule, PremiumNoteSlot, ContentInfoConfig, ContentInfoItem, SubscriptionHistoryEntry, UniversalAnalysisLog, ContentType, LessonContent } from '../types';
+import { User, ViewState, SystemSettings, Subject, Chapter, MCQItem, RecoveryRequest, ActivityLogEntry, LeaderboardEntry, RecycleBinItem, Stream, Board, ClassLevel, GiftCode, SubscriptionPlan, CreditPackage, SpinReward, HtmlModule, PremiumNoteSlot, ContentInfoConfig, ContentInfoItem, SubscriptionHistoryEntry, UniversalAnalysisLog, ContentType, LessonContent, DeepDiveEntry, AdditionalNoteEntry } from '../types';
 import { List, LayoutDashboard, Users, Search, Trash2, Save, X, Eye, EyeOff, Shield, Megaphone, CheckCircle, ListChecks, Database, FileText, Monitor, Sparkles, Banknote, BrainCircuit, AlertOctagon, ArrowLeft, Key, Bell, ShieldCheck, Lock, Globe, Layers, Zap, PenTool, RefreshCw, RotateCcw, Plus, LogOut, Download, Upload, CreditCard, Ticket, Video, Image as ImageIcon, Type, Link, FileJson, Activity, AlertTriangle, Gift, Book, Mail, Edit3, MessageSquare, ShoppingBag, Cloud, Rocket, Code2, Layers as LayersIcon, Wifi, WifiOff, Copy, Crown, Gamepad2, Calendar, BookOpen, Image, HelpCircle, Youtube, Play, Star, Trophy, Palette, Settings, Headphones, Layout, Bot, LayoutDashboard as DashboardIcon, Loader2, Gauge, LayoutGrid } from 'lucide-react';
 import { getSubjectsList, DEFAULT_SUBJECTS, DEFAULT_APP_FEATURES, ALL_APP_FEATURES, STUDENT_APP_FEATURES, DEFAULT_CONTENT_INFO_CONFIG, ADMIN_PERMISSIONS, APP_VERSION, STATIC_SYLLABUS, LEVEL_UNLOCKABLE_FEATURES } from '../constants';
 import { fetchChapters, fetchLessonContent } from '../services/groq';
@@ -167,6 +167,11 @@ interface ContentConfig {
     competitionPdfPrice?: number;
     schoolPdfPremiumSlots?: PremiumNoteSlot[];
     competitionPdfPremiumSlots?: PremiumNoteSlot[];
+
+    // NEW: Deep Dive & Additional Notes
+    deepDiveEntries?: DeepDiveEntry[];
+    additionalNotes?: AdditionalNoteEntry[];
+
     videoPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[]; // Legacy
     audioPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[]; // Legacy
     htmlModules?: HtmlModule[]; // NEW: HTML Modules
@@ -630,6 +635,10 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
   const [audioPlaylist, setAudioPlaylist] = useState<{title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[]>([]);
   const [premiumNoteSlots, setPremiumNoteSlots] = useState<PremiumNoteSlot[]>([]);
 
+  // NEW: Deep Dive & Additional Notes State
+  const [deepDiveEntries, setDeepDiveEntries] = useState<DeepDiveEntry[]>([]);
+  const [additionalNotes, setAdditionalNotes] = useState<AdditionalNoteEntry[]>([]);
+
   // UNLIMITED NOTES STATE (NEW)
   const [freeNotesList, setFreeNotesList] = useState<{title: string, url: string, type: 'PDF' | 'HTML', content?: string}[]>([]);
   const [premiumNotesList, setPremiumNotesList] = useState<{title: string, url: string, type: 'PDF' | 'HTML', content?: string}[]>([]);
@@ -870,6 +879,12 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           [syllabusMode === 'SCHOOL' ? 'schoolPdfPremiumSlots' : 'competitionPdfPremiumSlots']: premiumNoteSlots,
           [syllabusMode === 'SCHOOL' ? 'schoolFreeNotesList' : 'competitionFreeNotesList']: freeNotesList,
           [syllabusMode === 'SCHOOL' ? 'schoolPremiumNotesList' : 'competitionPremiumNotesList']: premiumNotesList,
+
+          // NEW: Deep Dive & Additional Notes (Shared or Mode Specific? User said "Admin enter karega". Assuming shared for now or per chapter)
+          // Since structure is unlimited, we store it directly.
+          // If needed per mode, we can prefix. For now, storing as root fields in content object.
+          deepDiveEntries: deepDiveEntries,
+          additionalNotes: additionalNotes,
 
           // Legacy sync (ONLY Update if in SCHOOL mode to protect separation)
           // We DO NOT sync to legacy fields if in Competition mode to prevent pollution
@@ -1830,6 +1845,8 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           setEditingTestMcqs([]);
           setVideoPlaylist([]);
           setAudioPlaylist([]);
+          setDeepDiveEntries([]);
+          setAdditionalNotes([]);
       }
 
       // 2. Fetch from Cloud (Background Sync to ensure Persistence)
@@ -1870,6 +1887,10 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       // Load Topic Content
       setTopicNotes(data.topicNotes || []);
       setTopicVideos(data.topicVideos || []);
+
+      // Load New Lists
+      setDeepDiveEntries(data.deepDiveEntries || []);
+      setAdditionalNotes(data.additionalNotes || []);
   };
 
 
@@ -4840,138 +4861,134 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                   </button>
                               </div>
 
-                              {/* PRIMARY PREMIUM NOTE (MAIN) */}
+                              {/* UNLIMITED DEEP DIVE & PREMIUM MANAGER */}
                               <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                                  <label className="block text-xs font-bold text-purple-800 uppercase mb-1">Primary Premium PDF Link ({syllabusMode})</label>
-                                  <div className="flex items-center bg-white border border-purple-200 rounded-xl overflow-hidden mb-2">
-                                      <div className="bg-purple-50 p-3"><Link size={16} className="text-purple-600" /></div>
-                                      <input
-                                          type="text"
-                                          value={editConfig[getModeField('pdfLink').replace('Link', 'PremiumLink') as keyof ContentConfig] || editConfig.premiumLink || ''}
-                                          onChange={e => setEditConfig({...editConfig, premiumLink: e.target.value})}
-                                          className="flex-1 p-3 outline-none text-sm"
-                                          placeholder="https://... (Shared Link)"
-                                      />
-                                      <button
-                                          onClick={() => generateDirectCode('NOTES', editingChapterId!)}
-                                          className="p-3 bg-yellow-100 text-yellow-600 font-bold hover:bg-yellow-200 border-l border-purple-100"
-                                          title="Generate Chapter Unlock Code"
-                                      >
-                                          <Key size={16} />
-                                      </button>
-                                  </div>
-
-                                  <label className="block text-[10px] font-bold text-purple-700 uppercase mb-1 mt-3">OR Paste Primary Premium Text</label>
-                                  <textarea
-                                      value={editConfig[getModeField('premiumNotesHtml') as keyof ContentConfig] || ''}
-                                      onChange={e => setEditConfig({...editConfig, [getModeField('premiumNotesHtml')]: e.target.value})}
-                                      className="w-full p-3 border border-purple-200 rounded-xl text-sm h-32 focus:ring-2 focus:ring-purple-500 outline-none"
-                                      placeholder={`Paste PREMIUM notes here...`}
-                                  />
-                              </div>
-
-                              {/* UNLIMITED PREMIUM NOTES MANAGER */}
-                              <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
                                   <h4 className="font-bold text-purple-900 mb-4 flex items-center gap-2">
-                                      <Crown size={20} /> Additional Premium Notes ({syllabusMode})
+                                      <Layers size={20} /> Deep Dive & Premium Notes (Unlimited)
                                   </h4>
+                                  <p className="text-[10px] text-purple-600 mb-4">
+                                      Add multiple entries. Each entry contains <b>HTML (for Deep Dive/TTS)</b> and a <b>PDF Link (for Visuals)</b>.
+                                      <br/>• <b>Quick Revision:</b> Lines marked "Quick Revision" in HTML will be extracted.
+                                      <br/>• <b>Deep Dive:</b> Topics (h1/h2) in HTML will create pages.
+                                      <br/>• <b>Premium:</b> Shows PDF + Plays TTS from HTML.
+                                  </p>
 
-                                  <div className="space-y-3 mb-4">
-                                      {premiumNotesList.map((note, idx) => (
-                                          <div key={idx} className="bg-white p-3 rounded-lg border border-purple-100 shadow-sm flex flex-col gap-2">
-                                              <div className="flex flex-wrap gap-2 items-center">
-                                                  <span className="w-6 text-center text-xs font-bold text-purple-600">{idx + 1}</span>
-                                                  <input
-                                                      type="text"
-                                                      value={note.title}
-                                                      onChange={e => {
-                                                          const updated = [...premiumNotesList];
-                                                          updated[idx].title = e.target.value;
-                                                          setPremiumNotesList(updated);
-                                                      }}
-                                                      placeholder="Note Title"
-                                                      className="flex-1 p-2 border rounded text-xs font-bold"
-                                                  />
-                                                  <select
-                                                      value={note.type}
-                                                      onChange={e => {
-                                                          const updated = [...premiumNotesList];
-                                                          updated[idx].type = e.target.value as 'PDF' | 'HTML';
-                                                          setPremiumNotesList(updated);
-                                                      }}
-                                                      className="p-2 border rounded text-xs bg-slate-50"
-                                                  >
-                                                      <option value="PDF">PDF</option>
-                                                      <option value="HTML">HTML</option>
-                                                  </select>
-                                                  <button
-                                                      onClick={() => generateDirectCode('NOTES', (note as any).id || `${editingChapterId}_pnote_${idx}`)}
-                                                      className="p-2 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200"
-                                                      title="Generate Unlock Code"
-                                                  >
-                                                      <Key size={16} />
-                                                  </button>
-                                                  <button onClick={() => setPremiumNotesList(prev => prev.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-600 p-2">
+                                  <div className="space-y-4 mb-4">
+                                      {deepDiveEntries.map((entry, idx) => (
+                                          <div key={idx} className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm space-y-3 relative group">
+                                              <div className="absolute top-2 right-2 flex gap-1">
+                                                  <button onClick={() => setDeepDiveEntries(prev => prev.filter((_, i) => i !== idx))} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded">
                                                       <Trash2 size={16} />
                                                   </button>
                                               </div>
 
-                                              {note.type === 'HTML' ? (
-                                                  <textarea
-                                                      value={note.content || ''}
-                                                      onChange={e => {
-                                                          const updated = [...premiumNotesList];
-                                                          updated[idx].content = e.target.value;
-                                                          setPremiumNotesList(updated);
-                                                      }}
-                                                      className="w-full p-2 border rounded text-xs h-20 font-mono"
-                                                      placeholder="HTML Content..."
-                                                  />
-                                              ) : (
+                                              <span className="text-xs font-bold text-purple-400 uppercase">Entry {idx + 1}</span>
+
+                                              {/* PDF LINK */}
+                                              <div className="flex items-center bg-slate-50 border border-purple-100 rounded-lg overflow-hidden">
+                                                  <div className="px-3 py-2 text-slate-400"><Link size={14} /></div>
                                                   <input
                                                       type="text"
-                                                      value={note.url}
+                                                      value={entry.pdfLink}
                                                       onChange={e => {
-                                                          const updated = [...premiumNotesList];
-                                                          updated[idx].url = e.target.value;
-                                                          setPremiumNotesList(updated);
+                                                          const updated = [...deepDiveEntries];
+                                                          updated[idx].pdfLink = e.target.value;
+                                                          setDeepDiveEntries(updated);
                                                       }}
-                                                      placeholder="PDF URL..."
-                                                      className="w-full p-2 border rounded text-xs text-blue-600"
+                                                      placeholder="Google Drive PDF Link..."
+                                                      className="flex-1 bg-transparent p-2 text-xs font-bold outline-none text-blue-600"
                                                   />
-                                              )}
+                                              </div>
+
+                                              {/* HTML CONTENT */}
+                                              <textarea
+                                                  value={entry.htmlContent}
+                                                  onChange={e => {
+                                                      const updated = [...deepDiveEntries];
+                                                      updated[idx].htmlContent = e.target.value;
+                                                      setDeepDiveEntries(updated);
+                                                  }}
+                                                  className="w-full p-3 border border-purple-100 rounded-lg text-xs font-mono h-32 focus:ring-1 focus:ring-purple-300 outline-none"
+                                                  placeholder="<h1>Topic</h1><p>Content...</p><p>Quick Revision: Key point...</p>"
+                                              />
                                           </div>
                                       ))}
                                   </div>
 
                                   <button
-                                      onClick={() => setPremiumNotesList([...premiumNotesList, {title: '', url: '', type: 'PDF'}])}
-                                      className="w-full py-2 bg-white border border-purple-300 text-purple-600 font-bold rounded-lg hover:bg-purple-50 border-dashed"
+                                      onClick={() => setDeepDiveEntries([...deepDiveEntries, { id: Date.now().toString(), htmlContent: '', pdfLink: '' }])}
+                                      className="w-full py-3 bg-white border border-purple-300 text-purple-600 font-bold rounded-xl hover:bg-purple-50 border-dashed flex items-center justify-center gap-2"
                                   >
-                                      + Add Premium Note
+                                      <Plus size={16} /> Add Deep Dive Entry
                                   </button>
                               </div>
 
-                              {/* DEEP DIVE NOTES (TTS ENABLED) */}
-                              <div className="bg-cyan-50 p-4 rounded-xl border border-cyan-200 mt-4">
-                                  <h4 className="font-bold text-cyan-900 mb-2 flex items-center gap-2">
-                                      <Headphones size={20} /> Deep Dive Notes (TTS Enabled)
+                              {/* ADDITIONAL NOTES MANAGER */}
+                              <div className="bg-cyan-50 p-4 rounded-xl border border-cyan-100 mt-4">
+                                  <h4 className="font-bold text-cyan-900 mb-4 flex items-center gap-2">
+                                      <FileText size={20} /> Additional Notes (Unlimited)
                                   </h4>
-                                  <p className="text-xs text-cyan-700 mb-3">
-                                      These notes will be read aloud in "Audio Slide" mode.
+                                  <p className="text-[10px] text-cyan-600 mb-4">
+                                      Extra resources. Can be PDF Only, HTML Only, or Both (Premium style).
                                   </p>
-                                  <textarea
-                                      value={syllabusMode === 'SCHOOL' ? (editConfig.deepDiveNotesHtml || '') : (editConfig.competitionDeepDiveNotesHtml || '')}
-                                      onChange={e => {
-                                          if (syllabusMode === 'SCHOOL') {
-                                              setEditConfig({...editConfig, deepDiveNotesHtml: e.target.value});
-                                          } else {
-                                              setEditConfig({...editConfig, competitionDeepDiveNotesHtml: e.target.value});
-                                          }
-                                      }}
-                                      className="w-full p-3 border border-cyan-200 rounded-xl text-sm h-40 focus:ring-2 focus:ring-cyan-500 outline-none font-mono"
-                                      placeholder={`Paste text for ${syllabusMode} Deep Dive (TTS) here...`}
-                                  />
+
+                                  <div className="space-y-4 mb-4">
+                                      {additionalNotes.map((note, idx) => (
+                                          <div key={idx} className="bg-white p-4 rounded-xl border border-cyan-100 shadow-sm space-y-3 relative">
+                                              <div className="absolute top-2 right-2 flex gap-1">
+                                                  <button onClick={() => setAdditionalNotes(prev => prev.filter((_, i) => i !== idx))} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded">
+                                                      <Trash2 size={16} />
+                                                  </button>
+                                              </div>
+
+                                              <div className="flex gap-2">
+                                                  <input
+                                                      type="text"
+                                                      value={note.title}
+                                                      onChange={e => {
+                                                          const updated = [...additionalNotes];
+                                                          updated[idx].title = e.target.value;
+                                                          setAdditionalNotes(updated);
+                                                      }}
+                                                      placeholder="Note Title (e.g. Extra Questions)"
+                                                      className="flex-1 p-2 border border-cyan-100 rounded-lg text-xs font-bold outline-none focus:border-cyan-400"
+                                                  />
+                                              </div>
+
+                                              {/* PDF LINK */}
+                                              <input
+                                                  type="text"
+                                                  value={note.pdfLink}
+                                                  onChange={e => {
+                                                      const updated = [...additionalNotes];
+                                                      updated[idx].pdfLink = e.target.value;
+                                                      setAdditionalNotes(updated);
+                                                  }}
+                                                  placeholder="PDF Link (Optional)..."
+                                                  className="w-full p-2 border border-cyan-100 rounded-lg text-xs text-blue-600 outline-none"
+                                              />
+
+                                              {/* HTML CONTENT */}
+                                              <textarea
+                                                  value={note.noteContent}
+                                                  onChange={e => {
+                                                      const updated = [...additionalNotes];
+                                                      updated[idx].noteContent = e.target.value;
+                                                      setAdditionalNotes(updated);
+                                                  }}
+                                                  className="w-full p-2 border border-cyan-100 rounded-lg text-xs font-mono h-20 outline-none"
+                                                  placeholder="HTML Content (Optional)..."
+                                              />
+                                          </div>
+                                      ))}
+                                  </div>
+
+                                  <button
+                                      onClick={() => setAdditionalNotes([...additionalNotes, { id: Date.now().toString(), title: '', noteContent: '', pdfLink: '' }])}
+                                      className="w-full py-3 bg-white border border-cyan-300 text-cyan-600 font-bold rounded-xl hover:bg-cyan-50 border-dashed flex items-center justify-center gap-2"
+                                  >
+                                      <Plus size={16} /> Add Additional Note
+                                  </button>
                               </div>
 
                               {/* TOPIC NOTES MANAGER (NEW) */}

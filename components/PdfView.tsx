@@ -4,7 +4,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Chapter, User, Subject, SystemSettings, HtmlModule, PremiumNoteSlot, DeepDiveEntry, AdditionalNoteEntry } from '../types';
-import { FileText, Lock, ArrowLeft, Crown, Star, CheckCircle, AlertCircle, Globe, Maximize, Layers, HelpCircle, Minus, Plus, Volume2, Square, Zap, Headphones, BookOpen, Music, Play, Pause, SkipForward, SkipBack, Book, List, Layout } from 'lucide-react';
+import { FileText, Lock, ArrowLeft, Crown, Star, CheckCircle, AlertCircle, Globe, Maximize, Layers, HelpCircle, Minus, Plus, Volume2, Square, Zap, Headphones, BookOpen, Music, Play, Pause, SkipForward, SkipBack, Book, List, Layout, ExternalLink } from 'lucide-react';
 import { CustomAlert } from './CustomDialogs';
 import { getChapterData, saveUserToLive } from '../firebase';
 import { CreditConfirmationModal } from './CreditConfirmationModal';
@@ -28,6 +28,16 @@ interface Props {
   initialSyllabusMode?: 'SCHOOL' | 'COMPETITION';
   directResource?: { url: string, access: string };
 }
+
+// Helper to format Google Drive links for embedding
+const formatDriveLink = (link: string) => {
+    if (!link) return '';
+    // If it's a view link, convert to preview
+    if (link.includes('drive.google.com') && (link.includes('/view') || link.endsWith('/view'))) {
+        return link.replace(/\/view.*/, '/preview');
+    }
+    return link;
+};
 
 // Helper to split HTML content into topics (SAFE)
 const extractTopicsFromHtml = (html: string): { title: string, content: string }[] => {
@@ -436,6 +446,45 @@ export const PdfView: React.FC<Props> = ({
       return <AiInterstitial onComplete={onInterstitialComplete} userType={isPremiumUser ? 'PREMIUM' : 'FREE'} imageUrl={aiImage} contentType="PDF" />;
   }
 
+  // PDF OVERLAY (For Active PDF / Resources)
+  if (activePdf) {
+      const formattedLink = formatDriveLink(activePdf);
+      return (
+          <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in fade-in zoom-in-95">
+              <div className="bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
+                  <div className="flex items-center gap-3">
+                      <button onClick={() => { setActivePdf(null); stopAllSpeech(); }} className="p-2 hover:bg-slate-800 rounded-full transition-colors">
+                          <ArrowLeft size={20} />
+                      </button>
+                      <div>
+                          <h3 className="font-bold text-sm leading-tight line-clamp-1">{chapter.title}</h3>
+                          <p className="text-[10px] text-slate-400">PDF Viewer</p>
+                      </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                      <a
+                          href={activePdf}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-xs font-bold flex items-center gap-2 transition-colors"
+                      >
+                          <ExternalLink size={14} />
+                          Open
+                      </a>
+                  </div>
+              </div>
+              <div className="flex-1 bg-slate-100 relative">
+                  <iframe
+                      src={formattedLink}
+                      className="w-full h-full border-none"
+                      title="PDF Viewer"
+                      allow="autoplay"
+                  />
+              </div>
+          </div>
+      );
+  }
+
   // --- NEW TABBED VIEW ---
   return (
     <div className="bg-slate-50 min-h-screen pb-20 animate-in fade-in slide-in-from-right-8">
@@ -619,10 +668,24 @@ export const PdfView: React.FC<Props> = ({
                                ttsHtml = syllabusMode === 'SCHOOL' ? contentData?.deepDiveNotesHtml : contentData?.competitionDeepDiveNotesHtml;
                            }
 
+                           const formattedLink = formatDriveLink(pdfLink);
+
                            return (
                                <>
                                    {pdfLink ? (
-                                       <iframe src={pdfLink} className="w-full h-full border-none" title="PDF Viewer" />
+                                       <div className="relative w-full h-full">
+                                            <iframe src={formattedLink} className="w-full h-full border-none" title="PDF Viewer" allow="autoplay" />
+                                            {/* Open External Button Overlay */}
+                                            <a
+                                                href={pdfLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg border border-slate-200 text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-all z-10 flex items-center gap-2 text-xs font-bold"
+                                            >
+                                                <ExternalLink size={14} />
+                                                Open External
+                                            </a>
+                                       </div>
                                    ) : (
                                        <div className="flex items-center justify-center h-full text-slate-400 font-bold">
                                            No PDF attached.

@@ -118,6 +118,10 @@ export const PdfView: React.FC<Props> = ({
   const [quickRevisionPoints, setQuickRevisionPoints] = useState<string[]>([]);
   const [currentPremiumEntryIdx, setCurrentPremiumEntryIdx] = useState(0);
 
+  // PREMIUM TTS STATE
+  const [premiumChunks, setPremiumChunks] = useState<string[]>([]);
+  const [premiumChunkIndex, setPremiumChunkIndex] = useState(0);
+
   // DEEP DIVE STATE
   const [isDeepDiveMode, setIsDeepDiveMode] = useState(false);
   const [deepDiveTopics, setDeepDiveTopics] = useState<{ title: string, content: string }[]>([]);
@@ -140,15 +144,43 @@ export const PdfView: React.FC<Props> = ({
       stopSpeech();
       setIsAutoPlaying(false);
       setTopicSpeakingState(null);
+      setPremiumChunks([]);
+      setPremiumChunkIndex(0);
   };
 
   useEffect(() => {
     return () => stopAllSpeech();
-  }, [activePdf, isDeepDiveMode]);
+  }, [activePdf, isDeepDiveMode, activeTab]);
 
-  // Deep Dive Auto-Play Logic
+  // PREMIUM AUTO-PLAY LOGIC (Chunked)
   useEffect(() => {
-      if (isAutoPlaying && isDeepDiveMode && deepDiveTopics.length > 0) {
+      if (isAutoPlaying && activeTab === 'PREMIUM' && premiumChunks.length > 0) {
+          if (premiumChunkIndex < premiumChunks.length) {
+              speakText(
+                  premiumChunks[premiumChunkIndex],
+                  null,
+                  speechRate,
+                  'hi-IN',
+                  undefined,
+                  () => {
+                      // On Chunk End
+                      if (isAutoPlaying) { // Ensure user hasn't stopped it
+                          if (premiumChunkIndex + 1 < premiumChunks.length) {
+                              setPremiumChunkIndex(prev => prev + 1);
+                          } else {
+                              setIsAutoPlaying(false);
+                              setPremiumChunkIndex(0);
+                          }
+                      }
+                  }
+              );
+          }
+      }
+  }, [isAutoPlaying, premiumChunkIndex, activeTab, premiumChunks]);
+
+  // DEEP DIVE AUTO-PLAY LOGIC
+  useEffect(() => {
+      if (isAutoPlaying && activeTab === 'DEEP_DIVE' && deepDiveTopics.length > 0) {
           const currentIndex = activeTopicIndex; // Start from current viewed
 
           if (currentIndex < deepDiveTopics.length) {
@@ -178,7 +210,7 @@ export const PdfView: React.FC<Props> = ({
               );
           }
       }
-  }, [isAutoPlaying, activeTopicIndex, isDeepDiveMode]); // Trigger when index updates in auto mode
+  }, [isAutoPlaying, activeTopicIndex, activeTab]); // Trigger when index updates in auto mode
 
   const handleTopicPlay = (index: number) => {
       if (topicSpeakingState === index) {
@@ -797,15 +829,32 @@ export const PdfView: React.FC<Props> = ({
                                            <button
                                               onClick={() => {
                                                   if (isAutoPlaying) {
-                                                      setIsAutoPlaying(false);
-                                                      stopSpeech();
+                                                      stopAllSpeech();
                                                   } else {
+                                                      // START PLAYBACK
+                                                      // 1. Chunking Logic
+                                                      const topics = extractTopicsFromHtml(ttsHtml);
+                                                      let chunks: string[] = [];
+
+                                                      if (topics.length > 0 && topics[0].title !== "Notes") {
+                                                          // Good structure found
+                                                          chunks = topics.map(t => `${t.title}. ${t.content}`);
+                                                      } else {
+                                                          // No structure, fallback to splitting by paragraphs or sentences if extremely long
+                                                          // Basic fallback: just use the text. extractTopicsFromHtml already handles fallback to single note.
+                                                          // Let's improve fallback by splitting large blocks
+                                                          const rawText = topics[0].content;
+                                                          if (rawText.length > 4000) {
+                                                              // Split by regex for sentence endings to avoid timeout
+                                                              chunks = rawText.match(/[^.!?]+[.!?]+/g) || [rawText];
+                                                          } else {
+                                                              chunks = [rawText];
+                                                          }
+                                                      }
+
+                                                      setPremiumChunks(chunks);
+                                                      setPremiumChunkIndex(0);
                                                       setIsAutoPlaying(true);
-                                                      // Strip HTML but keep basic punctuation flow
-                                                      const tempDiv = document.createElement('div');
-                                                      tempDiv.innerHTML = ttsHtml;
-                                                      const plainText = tempDiv.innerText || tempDiv.textContent || '';
-                                                      speakText(plainText, null, speechRate, 'hi-IN', undefined, () => setIsAutoPlaying(false));
                                                   }
                                               }}
                                               className={`p-3 rounded-full text-white shadow-lg transition-all ${isAutoPlaying ? 'bg-red-500 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'}`}

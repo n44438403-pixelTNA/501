@@ -1,5 +1,5 @@
 
-export type FeatureGroup = 'CORE' | 'ANALYSIS' | 'AI' | 'GAME' | 'ADMIN' | 'ADVANCED' | 'CONTENT' | 'TOOLS' | 'REVISION';
+export type FeatureGroup = 'CORE' | 'ANALYSIS' | 'AI' | 'GAME' | 'ADMIN' | 'ADVANCED' | 'CONTENT' | 'TOOLS' | 'REVISION' | 'SOUL';
 
 export interface Feature {
     id: string;
@@ -305,6 +305,17 @@ export const ALL_FEATURES: Feature[] = [
         description: 'Control access to Additional Resources tab.',
         adminTab: 'FEATURE_ACCESS'
     },
+
+    // --- APP SOUL (RARE FEATURES) ---
+    { id: 'QUICK_REVISION', label: 'Quick Revision', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Rapid revision mode control.' },
+    { id: 'MCQ_FREE', label: 'MCQ (Free)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control free MCQ access.' },
+    { id: 'MCQ_PREMIUM', label: 'MCQ (Premium)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control premium MCQ access.' },
+    { id: 'REVISION_HUB_FREE', label: 'Revision Hub (Free)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Basic revision features.' },
+    { id: 'REVISION_HUB_PREMIUM', label: 'Revision Hub (Premium)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Advanced revision features.' },
+    { id: 'TOPIC_CONTENT', label: 'Topic Content', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control topic-specific content visibility.' },
+    { id: 'REQUEST_CONTENT', label: 'Request Content', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Enable/Disable content requests.' },
+    { id: 'AI_STUDIO', label: 'AI Studio', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control AI Studio features.' },
+
 
     // --- ADMIN DASHBOARD FEATURES (Mapped to Admin Tabs) ---
     // GROUP: CORE ADMIN
@@ -723,6 +734,17 @@ export const ALL_FEATURES: Feature[] = [
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'BookOpen',
         color: 'teal'
+    },
+    {
+        id: 'ADMIN_APP_SOUL',
+        label: 'App Soul',
+        group: 'SOUL',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'APP_SOUL',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Hexagon',
+        color: 'violet'
     },
 
     // --- ANALYSIS DUMMIES (Not switchable individually) ---

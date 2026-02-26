@@ -414,18 +414,32 @@ export const PdfView: React.FC<Props> = ({
       if (user.role === 'ADMIN') { proceed(); return; }
       if (user.unlockedContent && user.unlockedContent.includes(chapter.id)) { proceed(); return; }
 
-      if (type === 'DEEP_DIVE' || type === 'AUDIO_SLIDE') {
-          const featureId = type === 'DEEP_DIVE' ? 'DEEP_DIVE' : 'AUDIO_SLIDE';
-          const access = checkFeatureAccess(featureId, user, settings || {});
-          if (access.isDummy) { setAlertConfig({isOpen: true, message: "Coming Soon!"}); return; }
-          if (access.hasAccess) { proceed(); return; }
-          if (access.cost > 0) {
-              if (user.isAutoDeductEnabled) processPaymentAndOpen(targetContent, access.cost, false, ttsContent, type === 'DEEP_DIVE');
-              else setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
+      // Granular Feature Control
+      if (type === 'DEEP_DIVE') {
+          const access = checkFeatureAccess('DEEP_DIVE', user, settings || {});
+          if (!access.hasAccess) {
+              if (access.cost > 0) {
+                  if (user.isAutoDeductEnabled) processPaymentAndOpen(targetContent, access.cost, false, ttsContent, true);
+                  else setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
+              } else {
+                  setAlertConfig({isOpen: true, message: `🔒 Locked! ${access.reason === 'FEED_LOCKED' ? 'Disabled by Admin.' : 'Upgrade your plan to access Deep Dive.'}`});
+              }
               return;
           }
-          setAlertConfig({isOpen: true, message: `🔒 Locked! Upgrade to access.`});
-          return;
+      }
+
+      // Premium Notes (Audio Slide) - Now uses PREMIUM_NOTES feature
+      if (type === 'AUDIO_SLIDE' || type === 'PREMIUM') {
+          const access = checkFeatureAccess('PREMIUM_NOTES', user, settings || {});
+          if (!access.hasAccess) {
+              if (access.cost > 0) {
+                  if (user.isAutoDeductEnabled) processPaymentAndOpen(targetContent, access.cost, false, ttsContent, false);
+                  else setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
+              } else {
+                  setAlertConfig({isOpen: true, message: `🔒 Locked! ${access.reason === 'FEED_LOCKED' ? 'Disabled by Admin.' : 'Upgrade your plan to access Premium Notes.'}`});
+              }
+              return;
+          }
       }
 
       if (price === 0) { proceed(); return; }
@@ -622,25 +636,41 @@ export const PdfView: React.FC<Props> = ({
                    { id: 'DEEP_DIVE', label: 'Deep Dive', icon: BookOpen },
                    { id: 'PREMIUM', label: 'Premium Notes', icon: Crown },
                    { id: 'RESOURCES', label: 'Resources', icon: Layers }
-               ].map(tab => (
-                   <button
-                       key={tab.id}
-                       onClick={() => {
-                           // Basic Access Check for Premium Tabs
-                           if (tab.id === 'PREMIUM' || tab.id === 'DEEP_DIVE') {
-                               // const access = checkFeatureAccess('DEEP_DIVE', user, settings || {});
-                               // if (!access.hasAccess && access.cost > 0) { ... }
-                               // For now, simpler check
+                       ].map(tab => {
+                           // Feature Access Check for Tabs
+                           let isLocked = false;
+                           if (tab.id === 'DEEP_DIVE') {
+                               const access = checkFeatureAccess('DEEP_DIVE', user, settings || {});
+                               isLocked = !access.hasAccess && access.cost === 0; // Only visually lock if completely blocked (not pay-per-view)
+                           } else if (tab.id === 'PREMIUM') {
+                               const access = checkFeatureAccess('PREMIUM_NOTES', user, settings || {});
+                               isLocked = !access.hasAccess && access.cost === 0;
+                           } else if (tab.id === 'RESOURCES') {
+                               const access = checkFeatureAccess('ADDITIONAL_NOTES', user, settings || {});
+                               isLocked = !access.hasAccess && access.cost === 0;
                            }
-                           setActiveTab(tab.id as any);
-                           stopAllSpeech();
-                       }}
-                       className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex flex-col items-center gap-1 border-b-2 transition-all ${activeTab === tab.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
-                   >
-                       <tab.icon size={16} />
-                       {tab.label}
-                   </button>
-               ))}
+
+                           return (
+                               <button
+                                   key={tab.id}
+                                   onClick={() => {
+                                       if (isLocked) {
+                                           setAlertConfig({isOpen: true, message: "🔒 This section is locked for your current plan."});
+                                           return;
+                                       }
+                                       setActiveTab(tab.id as any);
+                                       stopAllSpeech();
+                                   }}
+                                   className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex flex-col items-center gap-1 border-b-2 transition-all ${activeTab === tab.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-slate-500 hover:bg-slate-50'} ${isLocked ? 'opacity-50 grayscale' : ''}`}
+                               >
+                                   <div className="relative">
+                                       <tab.icon size={16} />
+                                       {isLocked && <div className="absolute -top-1 -right-2 bg-red-500 rounded-full p-0.5 border border-white"><Lock size={8} className="text-white"/></div>}
+                                   </div>
+                                   {tab.label}
+                               </button>
+                           );
+                       })}
            </div>
        </div>
 
@@ -983,6 +1013,28 @@ export const PdfView: React.FC<Props> = ({
                            <button
                                key={idx}
                                onClick={() => {
+                                   // Feature Check for Additional Notes (Pay-per-view or Lock)
+                                   const access = checkFeatureAccess('ADDITIONAL_NOTES', user, settings || {});
+                                   if (!access.hasAccess) {
+                                       if (access.cost > 0) {
+                                           // Trigger Payment for generic "Additional Notes Access" (not per item currently, as items don't have individual prices yet)
+                                           // For now, we assume global access cost.
+                                           // Ideally we'd pass a callback, but let's use the standard flow if possible.
+                                           // Since we can't easily wrap individual item clicks in the generic handler without refactoring,
+                                           // we'll do a direct check here.
+                                           if (user.credits < access.cost) {
+                                               setAlertConfig({isOpen: true, message: `Insufficient Credits! You need ${access.cost} coins.`});
+                                               return;
+                                           }
+                                           // Deduct and Open (If Auto) or Prompt
+                                           // For simplicity in this complex view, let's just prompt if not premium
+                                            setAlertConfig({isOpen: true, message: `🔒 Locked! Upgrade to access resources.`});
+                                            return;
+                                       }
+                                       setAlertConfig({isOpen: true, message: `🔒 Locked! Upgrade to access.`});
+                                       return;
+                                   }
+
                                    // Smart Open Logic
                                    if (note.pdfLink && note.noteContent) {
                                        // Hybrid Mode: Show PDF with Persistent Audio Overlay

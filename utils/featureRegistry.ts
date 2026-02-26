@@ -285,6 +285,26 @@ export const ALL_FEATURES: Feature[] = [
         adminVisible: false,
         description: 'Synchronized audio and visual slides.'
     },
+    {
+        id: 'PREMIUM_NOTES',
+        label: 'Premium Notes Access',
+        group: 'CONTENT',
+        surfaceLevel: 1,
+        requiredSubscription: 'BASIC',
+        adminVisible: true,
+        description: 'Control access to Premium (PDF+TTS) notes.',
+        adminTab: 'FEATURE_ACCESS'
+    },
+    {
+        id: 'ADDITIONAL_NOTES',
+        label: 'Additional Resources',
+        group: 'CONTENT',
+        surfaceLevel: 1,
+        requiredSubscription: 'BASIC',
+        adminVisible: true,
+        description: 'Control access to Additional Resources tab.',
+        adminTab: 'FEATURE_ACCESS'
+    },
 
     // --- ADMIN DASHBOARD FEATURES (Mapped to Admin Tabs) ---
     // GROUP: CORE ADMIN

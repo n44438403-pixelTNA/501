@@ -671,10 +671,6 @@ export const PdfView: React.FC<Props> = ({
                                </button>
                            );
                        })}
-                       <tab.icon size={16} />
-                       {tab.label}
-                   </button>
-               ))}
            </div>
        </div>
 

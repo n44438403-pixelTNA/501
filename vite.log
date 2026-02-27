@@ -1,0 +1,348 @@
+
+> students@0.0.0 dev
+> vite
+
+Port 5000 is in use, trying another one...
+
+  VITE v6.4.1  ready in 254 ms
+
+  ➜  Local:   http://localhost:5001/
+  ➜  Network: http://192.168.0.2:5001/
+[BABEL] Note: The code generator has deoptimised the styling of /app/components/AdminDashboard.tsx as it exceeds the max of 500KB.
+3:32:25 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:25 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:25 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:25 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:26 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:26 AM [vite] Internal server error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+      at failureErrorWithLog (/app/node_modules/esbuild/lib/main.js:1467:15)
+      at /app/node_modules/esbuild/lib/main.js:736:50
+      at responseCallbacks.<computed> (/app/node_modules/esbuild/lib/main.js:603:9)
+      at handleIncomingPacket (/app/node_modules/esbuild/lib/main.js:658:12)
+      at Socket.readFromStdout (/app/node_modules/esbuild/lib/main.js:581:7)
+      at Socket.emit (node:events:519:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+3:32:26 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:26 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:26 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:26 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:26 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:26 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:28 AM [vite] (client) ✨ new dependencies optimized: react-dom/client, lucide-react, localforage, firebase/app, firebase/analytics, firebase/firestore, firebase/database, firebase/auth, react-markdown, remark-math, rehype-katex, jspdf, html2canvas, katex, react-pdf, react-qr-code, react-easy-crop
+3:32:28 AM [vite] (client) ✨ optimized dependencies changed. reloading
+[BABEL] Note: The code generator has deoptimised the styling of /app/components/AdminDashboard.tsx as it exceeds the max of 500KB.
+3:32:30 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:30 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:30 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:30 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:31 AM [vite] Internal server error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+      at failureErrorWithLog (/app/node_modules/esbuild/lib/main.js:1467:15)
+      at /app/node_modules/esbuild/lib/main.js:736:50
+      at responseCallbacks.<computed> (/app/node_modules/esbuild/lib/main.js:603:9)
+      at handleIncomingPacket (/app/node_modules/esbuild/lib/main.js:658:12)
+      at Socket.readFromStdout (/app/node_modules/esbuild/lib/main.js:581:7)
+      at Socket.emit (node:events:519:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+3:32:31 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:31 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:31 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:32 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:32 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:32 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:32:32 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+/app/constants.ts:523:12: ERROR: Expected "]" but found "{"
+  Plugin: vite:esbuild
+  File: /app/constants.ts:523:12
+
+  Expected "]" but found "{"
+  521|              { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+  522|
+  523|              { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+     |              ^
+  524|              { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+  525|              { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+
+3:44:40 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx
+3:44:46 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx

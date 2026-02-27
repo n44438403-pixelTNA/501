@@ -4,7 +4,7 @@ import { FULL_SYLLABUS } from './utils/full_syllabus_data';
 // @ts-ignore
 // import { COMPETITION_DATA } from './competition_syllabus';
 
-export const APP_VERSION = "1.0.1"; // NEW: Current App Version
+export const APP_VERSION = "1.0.1";
 export const ADMIN_EMAIL = "nadiman0636indo@gmail.com";
 export const SUPPORT_EMAIL = "nadiman0636indo@gmail.com";
 
@@ -88,38 +88,27 @@ export const DEFAULT_APP_FEATURES = [
     { id: 'f50', title: 'Visual Analytics', enabled: true, order: 50 }
 ];
 
-// Default Subjects (Restricted List)
 export const DEFAULT_SUBJECTS = {
-  // CORE SCIENCES
   physics: { id: 'physics', name: 'Physics', icon: 'physics', color: 'bg-blue-50 text-blue-600' },
   chemistry: { id: 'chemistry', name: 'Chemistry', icon: 'flask', color: 'bg-purple-50 text-purple-600' },
   biology: { id: 'biology', name: 'Biology', icon: 'bio', color: 'bg-green-50 text-green-600' },
   math: { id: 'math', name: 'Mathematics', icon: 'math', color: 'bg-emerald-50 text-emerald-600' },
-
-  // ARTS / COMMERCE
   history: { id: 'history', name: 'History', icon: 'history', color: 'bg-rose-50 text-rose-600' },
   geography: { id: 'geography', name: 'Geography', icon: 'geo', color: 'bg-indigo-50 text-indigo-600' },
   polity: { id: 'polity', name: 'Political Science', icon: 'gov', color: 'bg-amber-50 text-amber-600' },
   economics: { id: 'economics', name: 'Economics', icon: 'social', color: 'bg-cyan-50 text-cyan-600' },
   business: { id: 'business', name: 'Business Studies', icon: 'business', color: 'bg-blue-50 text-blue-600' },
   accounts: { id: 'accounts', name: 'Accountancy', icon: 'accounts', color: 'bg-emerald-50 text-emerald-600' },
-
-  // JUNIOR CORE
   science: { id: 'science', name: 'Science', icon: 'science', color: 'bg-blue-50 text-blue-600' },
   sst: { id: 'sst', name: 'Social Science', icon: 'geo', color: 'bg-orange-50 text-orange-600' },
-
-  // LANGUAGES & EXTRAS
   english: { id: 'english', name: 'English', icon: 'english', color: 'bg-sky-50 text-sky-600' },
   hindi: { id: 'hindi', name: 'Hindi', icon: 'hindi', color: 'bg-orange-50 text-orange-600' },
   sanskrit: { id: 'sanskrit', name: 'Sanskrit', icon: 'book', color: 'bg-yellow-50 text-yellow-600' },
   computer: { id: 'computer', name: 'Computer Science', icon: 'computer', color: 'bg-slate-50 text-slate-600' }
 };
 
-// Helper to get subjects - NOW DYNAMIC
 export const getSubjectsList = (classLevel: string, stream: string | null, board?: string): Subject[] => {
   const isSenior = ['11', '12'].includes(classLevel);
-
-  // 1. Try to load Custom Subjects from LocalStorage
   let pool = { ...DEFAULT_SUBJECTS };
   try {
       const stored = localStorage.getItem('nst_custom_subjects_pool');
@@ -137,7 +126,6 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
   let selectedSubjects: Subject[] = [];
   const commonSubjects = [pool.english, pool.hindi, pool.computer];
 
-  // --- COMPETITION ---
   if (classLevel === 'COMPETITION') {
       selectedSubjects = [
           pool.history,
@@ -150,7 +138,6 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
           pool.math
       ].filter(Boolean);
   }
-  // --- JUNIOR CLASSES (6-10) ---
   else if (!isSenior) {
       selectedSubjects = [
           pool.math,
@@ -162,7 +149,6 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
           pool.computer
       ].filter(Boolean);
   }
-  // --- SENIOR CLASSES (11/12) ---
   else {
       if (stream === 'Science') {
           selectedSubjects = [pool.physics, pool.chemistry, pool.math, pool.biology, ...commonSubjects];
@@ -174,12 +160,10 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
       selectedSubjects = selectedSubjects.filter(Boolean);
   }
 
-  // 3. APPEND CUSTOM SUBJECTS
   customKeys.forEach(key => {
       if (pool[key]) selectedSubjects.push(pool[key]);
   });
 
-  // TRANSLATE FOR BSEB (If Board is BSEB)
   if (board === 'BSEB') {
       const hindiMap: Record<string, string> = {
           'Physics': 'भौतिकी',
@@ -209,11 +193,8 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
   return selectedSubjects;
 };
 
-// --- STATIC SYLLABUS DATA (COMPLETE LIST) ---
-
 export const STATIC_SYLLABUS: Record<string, string[]> = FULL_SYLLABUS;
 
-// --- ADMIN PERMISSIONS LIST (30+ Controls) ---
 export const ADMIN_PERMISSIONS = [
     'VIEW_DASHBOARD', 'VIEW_USERS', 'MANAGE_USERS', 'DELETE_USERS',
     'MANAGE_SUBS', 'GRANT_FREE_SUB', 'VIEW_REVENUE',
@@ -226,9 +207,7 @@ export const ADMIN_PERMISSIONS = [
     'VIEW_DEMANDS', 'APPROVE_LOGIN_REQS', 'DEPLOY_APP', 'RESET_SYSTEM'
 ];
 
-// --- ALL APP FEATURES (200+) - Comprehensive List ---
 export const ALL_APP_FEATURES = [
-    // --- DASHBOARD & MENU ---
     { id: 'MY_COURSE', title: 'My Course', enabled: true },
     { id: 'MY_ANALYSIS', title: 'My Analysis', enabled: true },
     { id: 'STUDY_GOAL_PERF', title: 'Study Goal Performance', enabled: true },
@@ -241,8 +220,6 @@ export const ALL_APP_FEATURES = [
     { id: 'FLOATING_BTN', title: 'Floating Button', enabled: true },
     { id: 'STORE_PAGE', title: 'Store Page', enabled: true },
     { id: 'UNIVERSAL_INFO', title: 'Universal Information', enabled: true },
-
-    // --- REVISION HUB ---
     { id: 'REVISION_HUB', title: 'Revision Hub (Base)', enabled: true },
     { id: 'REVISION_HUB_FREE', title: 'Free Revision Hub', enabled: true },
     { id: 'REVISION_HUB_PREMIUM', title: 'Premium Revision Hub', enabled: true },
@@ -256,44 +233,30 @@ export const ALL_APP_FEATURES = [
     { id: 'YESTERDAY_REPORT', title: 'Yesterday Report', enabled: true },
     { id: 'START_REVISION', title: 'Start Revision Button', enabled: true },
     { id: 'MASTERY_30_DAY', title: '30 Day Mastery', enabled: true },
-
-    // --- CONTENT: VIDEO ---
     { id: 'WHATS_NEW_VIDEO', title: 'Whats New Video Lectures', enabled: true },
     { id: 'FREE_VIDEOS', title: 'Free Videos', enabled: true },
     { id: 'PREMIUM_VIDEOS', title: 'Premium Videos', enabled: true },
     { id: 'VIDEO_LIB', title: 'Video Library', enabled: true },
-
-    // --- CONTENT: NOTES ---
     { id: 'NOTES_LIB', title: 'Notes Library', enabled: true },
     { id: 'FREE_NOTES', title: 'Free Notes', enabled: true },
     { id: 'PREMIUM_NOTES', title: 'Premium Notes', enabled: true },
     { id: 'TOPIC_NOTES', title: 'Topic Notes', enabled: true },
     { id: 'RECOMMEND_NOTES', title: 'Recommended Notes', enabled: true },
-
-    // --- CONTENT: MCQ ---
     { id: 'MCQ_LIB', title: 'MCQ Library', enabled: true },
     { id: 'FREE_MCQ', title: 'Free MCQ', enabled: true },
     { id: 'PREMIUM_MCQ', title: 'Premium MCQ', enabled: true },
     { id: 'MISTAKES_PAGE', title: 'Mistakes Page', enabled: true },
     { id: 'RECENT_TESTS', title: 'Recent Tests', enabled: true },
-
-    // --- AUDIO & TTS ---
     { id: 'AUDIO_LIB', title: 'Audio Library', enabled: true },
     { id: 'TTS_FEATURE', title: 'Text-to-Speech (TTS)', enabled: true },
-
-    // --- AI FEATURES ---
     { id: 'AI_HUB_BANNER', title: 'AI Hub Banner', enabled: true },
     { id: 'DEEP_ANALYSIS', title: 'Deep Analysis', enabled: true },
     { id: 'AI_CHAT_TURBO', title: 'AI Chat Turbo', enabled: true },
     { id: 'AI_INSIGHT_MAP', title: 'AI Insight Roadmap', enabled: true },
     { id: 'PREMIUM_ANALYSIS', title: 'Premium Analysis', enabled: true },
-
-    // --- GAMIFICATION ---
     { id: 'PLAY_GAME', title: 'Play Game', enabled: true },
     { id: 'REDEEM_PRIZES', title: 'Redeem Prizes', enabled: true },
     { id: 'DISCOUNT_EVENT', title: 'Discount Event', enabled: true },
-
-    // --- ANALYTICS & STATS ---
     { id: 'ACCURACY_STAT', title: 'Accuracy Stat', enabled: true },
     { id: 'SPEED_STAT', title: 'Speed Stat', enabled: true },
     { id: 'PERF_TREND', title: 'Performance Trend', enabled: true },
@@ -307,11 +270,7 @@ export const ALL_APP_FEATURES = [
     { id: 'TOPIC_BREAKDOWN', title: 'Topic Breakdown', enabled: true },
     { id: 'TOPIC_DIST', title: 'Topic Strength Distribution', enabled: true },
     { id: 'DOWNLOAD_ANALYSIS', title: 'Download Full Analysis', enabled: true },
-
-    // --- MISC ---
     { id: 'REQUEST_CONTENT', title: 'Requested Content', enabled: true },
-
-    // --- LEGACY (Keep compatible) ---
     { id: 'f4', title: 'Weekly Tests', enabled: true },
     { id: 'f5', title: 'Live Leaderboard', enabled: true },
     { id: 'f6', title: 'Engagement Rewards', enabled: true },
@@ -413,7 +372,6 @@ export const ALL_APP_FEATURES = [
     { id: 'f103', title: 'Gesture Control', enabled: true }
 ];
 
-// --- LEVEL SYSTEM FEATURES (Unlocks) ---
 export const LEVEL_UNLOCKABLE_FEATURES = [
     { id: 'MCQ_PRACTICE', label: 'MCQ Practice Zone' },
     { id: 'AUDIO_LIBRARY', label: 'Audio Library & Podcasts' },
@@ -425,7 +383,6 @@ export const LEVEL_UNLOCKABLE_FEATURES = [
     { id: 'WEEKLY_TESTS', label: 'Weekly Tests' }
 ];
 
-// --- LEVEL UP CONFIGURATION (1-50) ---
 export const LEVEL_UP_CONFIG = [
     { level: 1, featureId: 'BASIC_ACCESS', label: 'Basic App Access', description: 'Video Lectures & Notes' },
     { level: 2, featureId: 'PDF_DOWNLOAD', label: 'PDF Download', description: 'Download Notes Offline' },
@@ -479,9 +436,19 @@ export const LEVEL_UP_CONFIG = [
     { level: 50, featureId: 'ULTIMATE_ACCESS', label: 'Ultimate Badge', description: 'Legend Status Unlocked' }
 ];
 
-// --- PLAN COMPARISON MATRIX (UPDATED) ---
-// Now acts as the Single Source of Truth for App Control via App Soul.
-// Each feature has an ID mapped to the codebase logic.
+export const NSTA_DEFAULT_FEATURES = [
+    { category: '📑 NOTES', id: 'QUICK_REVISION', label: 'Quick Revision', visible: true, limits: { free: 2, basic: undefined, ultra: undefined }, creditCost: 0 },
+    { category: '📑 NOTES', id: 'DEEP_DIVE', label: 'Deep Dive Notes', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: {}, creditCost: 0 },
+    { category: '📑 NOTES', id: 'PREMIUM_NOTES', label: 'Premium Notes', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: undefined, ultra: undefined }, creditCost: 5 },
+    { category: '📑 NOTES', id: 'ADDITIONAL_NOTES', label: 'Additional Resources', visible: true, limits: { free: 1, basic: undefined, ultra: undefined }, creditCost: 0 },
+    { category: '🎬 VIDEO', id: 'VIDEO_ACCESS', label: 'Video Lectures', visible: true, limits: { free: 2, basic: undefined, ultra: undefined }, creditCost: 0 },
+    { category: '🎧 AUDIO', id: 'AUDIO_LIBRARY', label: 'Audio Library', visible: true, allowedTiers: ['ULTRA'], limits: {}, creditCost: 0 },
+    { category: '📝 MCQ', id: 'MCQ_FREE', label: 'Free Practice', visible: true, limits: { free: 50, basic: undefined, ultra: undefined }, creditCost: 0 },
+    { category: '📝 MCQ', id: 'MCQ_PREMIUM', label: 'Premium Tests', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: {}, creditCost: 0 },
+    { category: '🔄 REVISION', id: 'REVISION_HUB', label: 'Revision Hub', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: 1, ultra: undefined }, creditCost: 0 },
+    { category: '🤖 AI HUB', id: 'AI_HUB_CONTROL', label: 'AI Hub Access', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: 5, ultra: undefined }, creditCost: 2 },
+];
+
 export const DEFAULT_PLAN_COMPARISON = [
     {
         name: "1. CORE LEARNING FEATURES",
@@ -583,7 +550,6 @@ export const DEFAULT_PLAN_COMPARISON = [
     }
 ];
 
-// --- STUDENT FACING FEATURES (Filtered) ---
 export const STUDENT_APP_FEATURES = ALL_APP_FEATURES.filter(f =>
     !['f17', 'f18', 'f19', 'f20', 'f34', 'f37', 'f43', 'f44', 'f45', 'f46', 'f47', 'f48', 'f89', 'f90', 'f91', 'f92', 'f88', 'f87'].includes(f.id)
 );

@@ -9,7 +9,7 @@ interface Props {
     onBack: () => void;
 }
 
-// Mapping of Feature IDs to the user's specific request list
+// Mapping of Feature IDs to the user's specific request list - UPDATED
 const SOUL_FEATURES = [
     'QUICK_REVISION',
     'DEEP_DIVE',
@@ -25,12 +25,7 @@ const SOUL_FEATURES = [
     'MY_ANALYSIS',
     'TOPIC_CONTENT',
     'REQUEST_CONTENT',
-    'MS_RECOMMEND',
-    'MS_OMR',
-    'MS_AI_INSIGHTS',
-    'MS_MISTAKES',
-    'MS_ANALYSIS',
-    'MS_OFFICIAL'
+    // Removed Marksheet features as requested
 ];
 
 export const AppSoul: React.FC<Props> = ({ settings, onUpdateSettings, onBack }) => {

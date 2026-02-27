@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SystemSettings, User } from '../types';
-import { FeatureMatrixModal } from './FeatureMatrixModal';
+// import { FeatureMatrixModal } from './FeatureMatrixModal';
 import { Crown, User as UserIcon, ShoppingBag, X, Zap, Menu, ChevronUp } from 'lucide-react';
 
 interface Props {

@@ -38,12 +38,17 @@ export default async function handler(req: Request) {
     // 1. Determine API Key
     let apiKey = key;
     if (!apiKey) {
-        // Fallback to ENV
-        const keysRaw = process.env.GROQ_API_KEYS;
+        // Fallback to ENV (Try Plural first, then Singular)
+        let keysRaw = process.env.GROQ_API_KEYS;
+        if (!keysRaw) {
+            keysRaw = process.env.GROQ_API_KEY;
+        }
+
         if (keysRaw) {
             const keys = keysRaw.split(",").map(k => k.trim()).filter(Boolean);
             if (keys.length > 0) {
                 apiKey = keys[Math.floor(Math.random() * keys.length)];
+                console.log(`Using server-side key (masked): ${apiKey.substring(0, 4)}...`);
             }
         }
     }

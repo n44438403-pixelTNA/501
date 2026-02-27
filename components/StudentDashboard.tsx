@@ -1276,11 +1276,26 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                   value={profileData.classLevel}
                                   onChange={(e) => setProfileData({...profileData, classLevel: e.target.value as any})}
                                   className="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50"
-                                  disabled={!user.isPremium && user.classLevel !== 'COMPETITION'} // Lock if free unless upgrading to Competition? No, logic is confusing. Let's just lock it if not Admin/SubAdmin based on user request.
                               >
                                   {['6','7','8','9','10','11','12'].map(c => <option key={c} value={c}>Class {c}</option>)}
                               </select>
-                              {(!user.role || user.role === 'STUDENT') && <p className="text-[10px] text-red-500 mt-1">Class change is restricted. Contact Admin.</p>}
+                              <div className="flex items-center justify-between mt-1">
+                                  <p className="text-[10px] text-slate-500">
+                                      Daily Limit: {
+                                          user.subscriptionLevel === 'ULTRA' ? '3' :
+                                          user.subscriptionLevel === 'BASIC' ? '2' : '1'
+                                      } changes
+                                  </p>
+                                  <p className="text-[10px] text-blue-600 font-bold">
+                                      Remaining: {
+                                          (() => {
+                                              const limit = user.subscriptionLevel === 'ULTRA' ? 3 : user.subscriptionLevel === 'BASIC' ? 2 : 1;
+                                              const used = parseInt(localStorage.getItem(`nst_class_changes_${user.id}_${new Date().toDateString()}`) || '0');
+                                              return Math.max(0, limit - used);
+                                          })()
+                                      }
+                                  </p>
+                              </div>
                           </div>
 
                           {(['11','12'].includes(profileData.classLevel) || profileData.classLevel === 'COMPETITION') && (
@@ -1326,17 +1341,28 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                           <button onClick={() => setEditMode(false)} className="flex-1 py-3 text-slate-500 font-bold bg-slate-100 rounded-xl hover:bg-slate-200">Cancel</button>
                           <button
                               onClick={() => {
+                                  // Check Class Change Limit
+                                  if (profileData.classLevel !== user.classLevel) {
+                                      const limit = user.subscriptionLevel === 'ULTRA' ? 3 : user.subscriptionLevel === 'BASIC' ? 2 : 1;
+                                      const todayKey = `nst_class_changes_${user.id}_${new Date().toDateString()}`;
+                                      const used = parseInt(localStorage.getItem(todayKey) || '0');
+
+                                      if (used >= limit) {
+                                          showAlert(`Daily class change limit reached (${limit})! Upgrade to increase.`, "ERROR");
+                                          return;
+                                      }
+
+                                      // Increment Usage
+                                      localStorage.setItem(todayKey, (used + 1).toString());
+                                  }
+
                                   // Update User
                                   const updates: Partial<User> = {
+                                      classLevel: profileData.classLevel as any,
                                       board: profileData.board as any,
                                       stream: profileData.stream as any
                                   };
                                   if (profileData.newPassword) updates.password = profileData.newPassword;
-
-                                  // Only update Class if allowed (Admins, Premium Users, or Competition Students)
-                                  if (user.role === 'ADMIN' || user.role === 'SUB_ADMIN' || user.classLevel === 'COMPETITION' || user.isPremium) {
-                                      updates.classLevel = profileData.classLevel as any;
-                                  }
 
                                   handleUserUpdate({...user, ...updates});
                                   setEditMode(false);
@@ -1675,7 +1701,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                 <div className="w-64 bg-white h-full shadow-2xl relative z-10 flex flex-col slide-in-from-left duration-300">
                     <div className="p-6 bg-slate-900 text-white rounded-br-3xl relative overflow-hidden">
                         <h2 className="text-2xl font-black italic mb-1 relative z-10">{settings?.appName || 'App'}</h2>
-                        <p className="text-xs text-slate-400 relative z-10">Student Menu</p>
                         <button onClick={() => setShowSidebar(false)} className="absolute top-4 right-4 text-white/50 hover:text-white z-20">
                             <X size={24} />
                         </button>

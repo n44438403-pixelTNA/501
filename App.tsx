@@ -28,7 +28,7 @@ import { RewardPopup } from './components/RewardPopup';
 import { CreditConfirmationModal } from './components/CreditConfirmationModal';
 import { CustomAlert, CustomConfirm } from './components/CustomDialogs';
 import { MarksheetCard } from './components/MarksheetCard';
-import { DailyChallengePopup } from './components/DailyChallengePopup';
+// import { DailyChallengePopup } from './components/DailyChallengePopup';
 import { UpdatePopup } from './components/UpdatePopup'; // NEW
 import { ErrorBoundary } from './components/ErrorBoundary'; // NEW
 import { generateDailyChallengeQuestions } from './utils/challengeGenerator';
@@ -2357,7 +2357,17 @@ const App: React.FC = () => {
       {activeReward && <RewardPopup reward={activeReward} onClaim={handleClaimReward} onIgnore={handleIgnoreReward} />}
       
       {/* POPUP QUEUE MANAGER */}
-      {/* Daily Challenge Popup Removed as per Request */}
+      {/* {popupQueue.length > 0 && !showPremiumModal && !activeWeeklyTest && (
+          <>
+            {popupQueue[0] === 'CHALLENGE' && (
+                <DailyChallengePopup
+                    onStart={handleStartDailyChallenge}
+                    onClose={() => handlePopupClose('CHALLENGE')}
+                    rewardPercentage={state.settings.dailyChallengeConfig?.rewardPercentage || 90}
+                />
+            )}
+          </>
+      )} */}
 
       {lastTestResult && state.user && (
           <MarksheetCard

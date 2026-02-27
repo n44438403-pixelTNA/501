@@ -233,7 +233,7 @@ export const NstaFeatureManager: React.FC<Props> = ({ settings, onUpdateSettings
             </div>
 
             {/* STICKY SAVE BUTTON - ADJUSTED Z-INDEX AND POSITION */}
-            <div className="fixed bottom-24 right-6 z-[1000]">
+            <div className="fixed bottom-10 right-6 z-[1000] pb-safe">
                 <button
                     onClick={saveChanges}
                     className="px-8 py-4 bg-green-600 text-white font-black rounded-full shadow-2xl hover:bg-green-700 hover:scale-105 transition-all flex items-center gap-3 border-4 border-white animate-bounce-slow"

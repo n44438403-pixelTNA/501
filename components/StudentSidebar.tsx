@@ -13,17 +13,24 @@ interface Props {
 
 export const StudentSidebar: React.FC<Props> = ({ isOpen, onClose, onNavigate, user, onLogout, settings }) => {
 
-    const rawItems: { id: StudentTab, icon: any, label: string, color: string, featureId?: string }[] = [
-        { id: 'REDEEM', icon: Gift, label: 'Redeem', color: 'text-pink-600' },
-        { id: 'GAME', icon: Gamepad2, label: 'Game', color: 'text-orange-600', featureId: 'f9' },
-        { id: 'SUB_HISTORY', icon: CreditCard, label: 'My Plan', color: 'text-blue-600', featureId: 'f11' },
-        { id: 'STORE', icon: Crown, label: 'Premium', color: 'text-yellow-600', featureId: 'f12' },
-        { id: 'HISTORY', icon: History, label: 'History', color: 'text-slate-600', featureId: 'f21' },
-        { id: 'ANALYTICS', icon: Trophy, label: 'Test Analysis', color: 'text-teal-600', featureId: 'f50' },
-        { id: 'AI_HISTORY', icon: BrainCircuit, label: 'AI History', color: 'text-indigo-600', featureId: 'f101' },
-        { id: 'PRIZES', icon: Award, label: 'Prizes', color: 'text-purple-600', featureId: 'f6' },
-        { id: 'LEADERBOARD', icon: Trophy, label: 'Leaderboard', color: 'text-yellow-500', featureId: 'f5' },
-        { id: 'PROFILE', icon: User, label: 'Profile', color: 'text-slate-800', featureId: 'f13' },
+    const rawItems: { id: StudentTab, icon: any, label: string, color: string, featureId?: string, category?: string }[] = [
+        // --- LEARNING & PROGRESS ---
+        { id: 'HISTORY', icon: History, label: 'History', color: 'text-slate-600', featureId: 'f21', category: 'LEARNING' },
+        { id: 'ANALYTICS', icon: Trophy, label: 'Test Analysis', color: 'text-teal-600', featureId: 'f50', category: 'LEARNING' },
+        { id: 'AI_HISTORY', icon: BrainCircuit, label: 'AI History', color: 'text-indigo-600', featureId: 'f101', category: 'LEARNING' },
+
+        // --- PREMIUM & REWARDS ---
+        { id: 'STORE', icon: Crown, label: 'Premium Store', color: 'text-yellow-600', featureId: 'f12', category: 'PREMIUM' },
+        { id: 'SUB_HISTORY', icon: CreditCard, label: 'My Plan', color: 'text-blue-600', featureId: 'f11', category: 'PREMIUM' },
+        { id: 'REDEEM', icon: Gift, label: 'Redeem Code', color: 'text-pink-600', category: 'PREMIUM' },
+
+        // --- FUN & GAMES ---
+        { id: 'GAME', icon: Gamepad2, label: 'Play Game', color: 'text-orange-600', featureId: 'f9', category: 'FUN' },
+        { id: 'PRIZES', icon: Award, label: 'Prizes', color: 'text-purple-600', featureId: 'f6', category: 'FUN' },
+        { id: 'LEADERBOARD', icon: Trophy, label: 'Leaderboard', color: 'text-yellow-500', featureId: 'f5', category: 'FUN' },
+
+        // --- ACCOUNT ---
+        { id: 'PROFILE', icon: User, label: 'My Profile', color: 'text-slate-800', featureId: 'f13', category: 'ACCOUNT' },
     ];
 
     const menuItems = rawItems.filter(item => {
@@ -31,6 +38,13 @@ export const StudentSidebar: React.FC<Props> = ({ isOpen, onClose, onNavigate, u
         if (settings?.hiddenFeatures?.includes(item.featureId)) return false;
         return true;
     });
+
+    const groupedItems: Record<string, typeof menuItems> = {
+        'LEARNING': menuItems.filter(i => i.category === 'LEARNING'),
+        'PREMIUM': menuItems.filter(i => i.category === 'PREMIUM'),
+        'FUN': menuItems.filter(i => i.category === 'FUN'),
+        'ACCOUNT': menuItems.filter(i => i.category === 'ACCOUNT'),
+    };
 
     if (!isOpen) return null;
 
@@ -62,32 +76,43 @@ export const StudentSidebar: React.FC<Props> = ({ isOpen, onClose, onNavigate, u
                     </button>
                 </div>
 
-                {/* Menu Items */}
-                <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                    {menuItems.map((item) => {
-                        const badge = item.featureId ? settings?.featureBadges?.[item.featureId] : undefined;
+                {/* Menu Items (Categorized) */}
+                <div className="flex-1 overflow-y-auto py-2 px-3 space-y-4">
+                    {['LEARNING', 'PREMIUM', 'FUN', 'ACCOUNT'].map(cat => {
+                        const items = groupedItems[cat];
+                        if (!items || items.length === 0) return null;
+
                         return (
-                        <button
-                            key={item.id}
-                            onClick={() => {
-                                onNavigate(item.id);
-                                onClose();
-                            }}
-                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-all group relative"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg bg-slate-50 group-hover:bg-white group-hover:shadow-sm transition-all ${item.color}`}>
-                                    <item.icon size={20} />
-                                </div>
-                                <span className="font-bold text-slate-700 text-sm group-hover:text-slate-900">{item.label}</span>
+                            <div key={cat} className="space-y-1">
+                                <p className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{cat}</p>
+                                {items.map((item) => {
+                                    const badge = item.featureId ? settings?.featureBadges?.[item.featureId] : undefined;
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => {
+                                                onNavigate(item.id);
+                                                onClose();
+                                            }}
+                                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-all group relative"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg bg-slate-50 group-hover:bg-white group-hover:shadow-sm transition-all ${item.color}`}>
+                                                    <item.icon size={20} />
+                                                </div>
+                                                <span className="font-bold text-slate-700 text-sm group-hover:text-slate-900">{item.label}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {badge === 'NEW' && <span className="text-[10px] font-black bg-green-500 text-white px-2 py-0.5 rounded-full animate-pulse">NEW</span>}
+                                                {badge === 'UPGRADE' && <span className="text-[10px] font-black bg-purple-500 text-white px-2 py-0.5 rounded-full">PRO</span>}
+                                                <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-500" />
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
-                            <div className="flex items-center gap-2">
-                                {badge === 'NEW' && <span className="text-[10px] font-black bg-green-500 text-white px-2 py-0.5 rounded-full animate-pulse">NEW</span>}
-                                {badge === 'UPGRADE' && <span className="text-[10px] font-black bg-purple-500 text-white px-2 py-0.5 rounded-full">PRO</span>}
-                                <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-500" />
-                            </div>
-                        </button>
-                    )})}
+                        );
+                    })}
                 </div>
 
                 {/* Footer Actions */}

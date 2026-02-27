@@ -346,3 +346,4 @@ Port 5000 is in use, trying another one...
 
 3:44:40 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx
 3:44:46 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx
+3:54:09 AM [vite] (client) hmr update /components/FeatureMatrixModal.tsx

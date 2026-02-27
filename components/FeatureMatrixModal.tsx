@@ -14,6 +14,7 @@ interface Props {
 export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings, discountActive }) => {
   if (!isOpen) return null;
 
+
   // Merge dynamic config with defaults to ensure all rows exist
   const featureConfig = settings?.featureConfig || {};
   const mergedFeatures = NSTA_DEFAULT_FEATURES.map(def => {
@@ -49,13 +50,31 @@ export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings,
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
       <div className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
 
+
+  // Use default static comparison if dynamic one not available in settings
+  // The plan matrix is "driven" by this constant, but "locked" by settings.featureConfig
+  const planData = settings?.planComparison || DEFAULT_PLAN_COMPARISON;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+
         {/* HEADER */}
-        <div className="bg-slate-900 p-6 flex justify-between items-center shrink-0 border-b border-slate-800">
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 flex justify-between items-center shrink-0 relative overflow-hidden">
+            {discountActive && (
+                <div className="absolute top-0 right-0 bg-yellow-400 text-red-900 text-xs font-black px-4 py-1 transform rotate-45 translate-x-4 translate-y-2 shadow-lg animate-pulse">
+                    FLAME SALE ACTIVE!
+                </div>
+            )}
             <div>
                 <h2 className="text-2xl font-black text-white flex items-center gap-2">
-                    <Crown className="text-yellow-400 fill-yellow-400" /> Plan Matrix
+                    <Crown className="text-yellow-400 fill-yellow-400" /> App Future Access
                 </h2>
+
                 <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Feature Comparison & Availability</p>
+
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Plan Comparison Matrix</p>
+
             </div>
             <button onClick={onClose} className="p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors">
                 <X size={24} />

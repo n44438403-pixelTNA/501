@@ -281,7 +281,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   }, [user.id, user.createdAt, user.redeemedReferralCode]);
 
   const handleSupportEmail = () => {
-    const email = "nadim841442@gmail.com";
+    const email = settings?.supportEmail || "nadiman0636indo@gmail.com";
     const subject = encodeURIComponent(`Support Request: ${user.name} (ID: ${user.id})`);
     const body = encodeURIComponent(`Student Details:\nName: ${user.name}\nUID: ${user.id}\nEmail: ${user.email}\n\nIssue Description:\n`);
     window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
@@ -656,6 +656,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
           { id: 'PRIZES', label: 'Prizes', icon: Trophy, color: 'yellow', action: () => { onTabChange('PRIZES'); setShowSidebar(false); } },
           { id: 'REQUEST', label: 'Request Content', icon: Megaphone, color: 'purple', action: () => { setShowRequestModal(true); setShowSidebar(false); }, featureId: 'REQUEST_CONTENT' },
           { id: 'GUIDE', label: 'App Guide', icon: HelpCircle, color: 'cyan', action: () => { setShowStudentGuide(true); setShowSidebar(false); } }, // NEW
+          { id: 'SUPPORT', label: 'Admin Support', icon: MessageSquare, color: 'rose', action: handleSupportEmail },
       ];
 
       return items.map(item => {

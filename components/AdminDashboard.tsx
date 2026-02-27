@@ -161,6 +161,8 @@ interface ContentConfig {
 
     schoolVideoPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
     competitionVideoPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
+    schoolPremiumVideoPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
+    competitionPremiumVideoPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
     schoolAudioPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
     competitionAudioPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
     schoolPdfLink?: string;
@@ -586,6 +588,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       
       // 1. Save current UI state to local config
       const currentVideoField = syllabusMode === 'SCHOOL' ? 'schoolVideoPlaylist' : 'competitionVideoPlaylist';
+      const currentPremiumVideoField = syllabusMode === 'SCHOOL' ? 'schoolPremiumVideoPlaylist' : 'competitionPremiumVideoPlaylist';
       const currentAudioField = syllabusMode === 'SCHOOL' ? 'schoolAudioPlaylist' : 'competitionAudioPlaylist';
       const currentSlotsField = syllabusMode === 'SCHOOL' ? 'schoolPdfPremiumSlots' : 'competitionPdfPremiumSlots';
       const currentFreeNotesField = syllabusMode === 'SCHOOL' ? 'schoolFreeNotesList' : 'competitionFreeNotesList';
@@ -598,6 +601,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       const updatedConfig = {
           ...editConfig,
           [currentVideoField]: videoPlaylist,
+          [currentPremiumVideoField]: premiumVideoPlaylist,
           [currentAudioField]: audioPlaylist,
           [currentSlotsField]: premiumNoteSlots,
           [currentFreeNotesField]: freeNotesList,
@@ -613,6 +617,8 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           // @ts-ignore
           setVideoPlaylist(updatedConfig.schoolVideoPlaylist || updatedConfig.videoPlaylist || []);
           // @ts-ignore
+          setPremiumVideoPlaylist(updatedConfig.schoolPremiumVideoPlaylist || []);
+          // @ts-ignore
           setAudioPlaylist(updatedConfig.schoolAudioPlaylist || updatedConfig.audioPlaylist || []);
           // @ts-ignore
           setPremiumNoteSlots(updatedConfig.schoolPdfPremiumSlots || updatedConfig.premiumNoteSlots || []);
@@ -627,6 +633,8 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       } else {
           // @ts-ignore
           setVideoPlaylist(updatedConfig.competitionVideoPlaylist || []);
+          // @ts-ignore
+          setPremiumVideoPlaylist(updatedConfig.competitionPremiumVideoPlaylist || []);
           // @ts-ignore
           setAudioPlaylist(updatedConfig.competitionAudioPlaylist || []);
           // @ts-ignore
@@ -648,6 +656,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
   const [isSettingsSaving, setIsSettingsSaving] = useState(false);
   const [editConfig, setEditConfig] = useState<ContentConfig>({ freeLink: '', premiumLink: '', price: 0 });
   const [videoPlaylist, setVideoPlaylist] = useState<{title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[]>([]);
+  const [premiumVideoPlaylist, setPremiumVideoPlaylist] = useState<{title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[]>([]);
   const [audioPlaylist, setAudioPlaylist] = useState<{title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[]>([]);
   const [premiumNoteSlots, setPremiumNoteSlots] = useState<PremiumNoteSlot[]>([]);
 
@@ -891,6 +900,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           
           // DYNAMIC SAVE: Save current UI arrays to the correct mode-specific field
           [syllabusMode === 'SCHOOL' ? 'schoolVideoPlaylist' : 'competitionVideoPlaylist']: videoPlaylist,
+          [syllabusMode === 'SCHOOL' ? 'schoolPremiumVideoPlaylist' : 'competitionPremiumVideoPlaylist']: premiumVideoPlaylist,
           [syllabusMode === 'SCHOOL' ? 'schoolAudioPlaylist' : 'competitionAudioPlaylist']: audioPlaylist,
           [syllabusMode === 'SCHOOL' ? 'schoolPdfPremiumSlots' : 'competitionPdfPremiumSlots']: premiumNoteSlots,
           [syllabusMode === 'SCHOOL' ? 'schoolFreeNotesList' : 'competitionFreeNotesList']: freeNotesList,
@@ -1865,6 +1875,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           setEditingMcqs([]);
           setEditingTestMcqs([]);
           setVideoPlaylist([]);
+          setPremiumVideoPlaylist([]);
           setAudioPlaylist([]);
           setDeepDiveEntries([]);
           setAdditionalNotes([]);
@@ -1893,6 +1904,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       // STRICT SEPARATION: Only fallback to legacy for SCHOOL mode
       if (syllabusMode === 'SCHOOL') {
           setVideoPlaylist(data.schoolVideoPlaylist || data.videoPlaylist || []);
+          setPremiumVideoPlaylist(data.schoolPremiumVideoPlaylist || []);
           setAudioPlaylist(data.schoolAudioPlaylist || data.audioPlaylist || []); 
           setPremiumNoteSlots(data.schoolPdfPremiumSlots || data.premiumNoteSlots || []);
           setFreeNotesList(data.schoolFreeNotesList || []);
@@ -1902,6 +1914,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           setAdditionalNotes(data.schoolAdditionalNotes || data.additionalNotes || []);
       } else {
           setVideoPlaylist(data.competitionVideoPlaylist || []); // No fallback
+          setPremiumVideoPlaylist(data.competitionPremiumVideoPlaylist || []);
           setAudioPlaylist(data.competitionAudioPlaylist || []); // No fallback
           setPremiumNoteSlots(data.competitionPdfPremiumSlots || []); // No fallback
           setFreeNotesList(data.competitionFreeNotesList || []);
@@ -5215,6 +5228,82 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                   <button onClick={saveChapterContent} className="w-full mt-2 bg-purple-600 text-white font-bold py-3 rounded-xl shadow hover:bg-purple-700 transition flex items-center justify-center gap-2">
                                       <Save size={18} /> Save Topic Videos
                                   </button>
+                              </div>
+
+                              {/* PREMIUM SERIES MANAGER */}
+                              <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200">
+                                  <div className="flex items-center gap-2 mb-3">
+                                      <Crown size={20} className="text-yellow-600" />
+                                      <h4 className="font-bold text-yellow-900">Premium Video Series (Google Drive)</h4>
+                                  </div>
+
+                                  <p className="text-xs text-yellow-800 mb-4 bg-white p-2 rounded border border-yellow-100">
+                                      Add exclusive Premium Google Drive links here. These will appear in a special "Premium Series" section for Ultra users.
+                                  </p>
+
+                                  <div className="space-y-3 mb-4">
+                                      {premiumVideoPlaylist.map((vid, i) => (
+                                          <div key={i} className="flex flex-col gap-2 bg-white p-3 rounded-lg border border-yellow-100 shadow-sm">
+                                              <div className="flex flex-wrap gap-2 items-center">
+                                                  <span className="w-8 text-center text-xs font-bold text-yellow-500 bg-yellow-50 rounded py-2">{i + 1}</span>
+
+                                                  <input
+                                                      type="text"
+                                                      value={vid.title || ''}
+                                                      onChange={(e) => {
+                                                          const updated = [...premiumVideoPlaylist];
+                                                          updated[i] = {...updated[i], title: e.target.value};
+                                                          setPremiumVideoPlaylist(updated);
+                                                      }}
+                                                      placeholder="Episode Title"
+                                                      className="flex-1 min-w-[150px] p-2 border border-slate-200 rounded text-xs font-bold focus:border-yellow-400 focus:ring-1 focus:ring-yellow-200"
+                                                  />
+
+                                                  <button
+                                                      onClick={() => generateDirectCode('VIDEO', `${editingChapterId}_prem_${i}`)}
+                                                      className="p-2 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200"
+                                                      title="Generate Unlock Code"
+                                                  >
+                                                      <Key size={16} />
+                                                  </button>
+
+                                                  <button
+                                                      onClick={() => {
+                                                          const updated = premiumVideoPlaylist.filter((_, idx) => idx !== i);
+                                                          setPremiumVideoPlaylist(updated);
+                                                      }}
+                                                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                  >
+                                                      <Trash2 size={16} />
+                                                  </button>
+                                              </div>
+
+                                              <input
+                                                  type="text"
+                                                  value={vid.url || ''}
+                                                  onChange={(e) => {
+                                                      const updated = [...premiumVideoPlaylist];
+                                                      updated[i] = {...updated[i], url: e.target.value};
+                                                      setPremiumVideoPlaylist(updated);
+                                                  }}
+                                                  placeholder="Google Drive Link (e.g. drive.google.com/file/...)"
+                                                  className="w-full p-2 border border-slate-200 rounded text-xs font-mono text-blue-600 bg-slate-50 focus:bg-white transition-colors"
+                                              />
+                                          </div>
+                                      ))}
+                                  </div>
+
+                                  <div className="flex gap-2">
+                                      <button
+                                          onClick={() => setPremiumVideoPlaylist([...premiumVideoPlaylist, {title: '', url: '', price: 10, access: 'ULTRA'}])}
+                                          className="flex-1 py-3 bg-white border-2 border-dashed border-yellow-300 text-yellow-700 font-bold rounded-xl hover:bg-yellow-50 transition-all"
+                                      >
+                                          + Add Premium Video
+                                      </button>
+                                      <button onClick={saveChapterContent} className="flex-1 bg-yellow-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-yellow-700 transition-all flex items-center justify-center gap-2">
+                                          <Save size={18} /> Save Premium Series
+                                      </button>
+                                  </div>
                               </div>
 
                           <div className="space-y-6 bg-gradient-to-br from-rose-50 to-pink-50 p-6 rounded-xl border border-rose-200 opacity-50 pointer-events-none grayscale">

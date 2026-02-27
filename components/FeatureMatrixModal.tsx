@@ -109,11 +109,6 @@ export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings,
 
                                 <div className="p-4 pl-6 flex items-center gap-3 text-sm font-bold text-slate-700 border-r border-slate-50">
                                     {feature.label}
-                                    {feature.creditCost > 0 && (
-                                        <span className="text-[9px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md border border-orange-200 font-black flex items-center gap-1">
-                                            <Zap size={8} className="fill-orange-700"/> {feature.creditCost} Cr
-                                        </span>
-                                    )}
                                 </div>
                                 <div className="p-4 flex items-center justify-center text-xs font-medium text-slate-600 border-r border-slate-50 text-center">
                                     {getLimitDisplay(feature, 'free')}

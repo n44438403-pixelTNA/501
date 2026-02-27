@@ -128,9 +128,6 @@ export const NstaFeatureManager: React.FC<Props> = ({ settings, onUpdateSettings
                     <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 flex items-center gap-2">
                         <Plus size={16} /> Add Feature
                     </button>
-                    <button onClick={saveChanges} className="px-6 py-2 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 flex items-center gap-2">
-                        <Save size={16} /> Save Changes
-                    </button>
                 </div>
             </div>
 
@@ -233,6 +230,16 @@ export const NstaFeatureManager: React.FC<Props> = ({ settings, onUpdateSettings
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* STICKY SAVE BUTTON */}
+            <div className="fixed bottom-6 right-6 z-50">
+                <button
+                    onClick={saveChanges}
+                    className="px-8 py-4 bg-green-600 text-white font-black rounded-full shadow-2xl hover:bg-green-700 hover:scale-105 transition-all flex items-center gap-3 border-4 border-white"
+                >
+                    <Save size={24} /> SAVE CHANGES
+                </button>
             </div>
 
             {/* Add Modal */}

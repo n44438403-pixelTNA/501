@@ -725,7 +725,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       WEEKLY: { BASIC: 49, ULTRA: 99 },
       MONTHLY: { BASIC: 199, ULTRA: 399 },
       "3_MONTHLY": { BASIC: 499, ULTRA: 899 },
-      YEARLY: { BASIC: 999, ULTRA: 1999 },
+      YEARLY: { BASIC: 1999, ULTRA: 4999 },
       LIFETIME: { BASIC: 4999, ULTRA: 9999 }
   });
 
@@ -3241,6 +3241,110 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                               />
                           </div>
                       </div>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* --- PREMIUM VIDEO MANAGEMENT TAB (NEW) --- */}
+      {activeTab === 'PREMIUM_VIDEO_MANAGER' && (
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 animate-in slide-in-from-right">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                  <button onClick={() => setActiveTab('DASHBOARD')} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200"><ArrowLeft size={20} /></button>
+                  <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                      <Crown size={24} className="text-yellow-600" /> Premium Video Manager
+                  </h3>
+              </div>
+
+              <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200">
+                  <p className="text-sm text-yellow-800 mb-4 font-bold bg-white p-3 rounded-lg border border-yellow-100">
+                      Manage premium videos using Google Drive links. These videos will be organized by subject and chapter in the student dashboard.
+                  </p>
+
+                  <SubjectSelector />
+
+                  <div className="space-y-4 mb-6">
+                      {!editingChapterId ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto pr-2">
+                              {selChapters.length === 0 && <p className="col-span-full text-center text-slate-400 text-sm py-8">Select a subject to view chapters.</p>}
+                              {selChapters.map((ch) => (
+                                  <div key={ch.id} className="bg-white p-3 rounded-xl border border-yellow-100 shadow-sm flex flex-col gap-2">
+                                      <div className="flex justify-between items-center">
+                                          <h5 className="font-bold text-slate-800 text-xs truncate w-3/4" title={ch.title}>{ch.title}</h5>
+                                      </div>
+                                      <button
+                                          onClick={() => loadChapterContent(ch.id)}
+                                          className="mt-2 w-full py-2 bg-yellow-600 text-white rounded-lg text-xs font-bold shadow-md hover:bg-yellow-700 flex items-center justify-center gap-2"
+                                      >
+                                          <Edit3 size={14} /> Manage Videos
+                                      </button>
+                                  </div>
+                              ))}
+                          </div>
+                      ) : (
+                          <div className="bg-white p-4 rounded-xl border border-yellow-200">
+                              <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                                  <div>
+                                      <h4 className="font-black text-slate-800 text-lg">{selChapters.find(c => c.id === editingChapterId)?.title}</h4>
+                                      <p className="text-xs text-slate-500">Premium Video Playlist</p>
+                                  </div>
+                                  <button onClick={() => setEditingChapterId(null)} className="text-xs font-bold text-slate-400 hover:text-slate-600">Close Editor</button>
+                              </div>
+
+                              <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 mb-4">
+                                  {premiumVideoPlaylist.map((vid, idx) => (
+                                      <div key={idx} className="flex flex-col gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                          <div className="flex gap-2 items-center">
+                                              <span className="w-6 text-center text-xs font-bold text-slate-400">{idx + 1}</span>
+                                              <input
+                                                  type="text"
+                                                  value={vid.title}
+                                                  onChange={(e) => {
+                                                      const updated = [...premiumVideoPlaylist];
+                                                      updated[idx].title = e.target.value;
+                                                      setPremiumVideoPlaylist(updated);
+                                                  }}
+                                                  placeholder="Video Title"
+                                                  className="flex-1 p-2 border border-slate-200 rounded text-xs font-bold"
+                                              />
+                                              <button
+                                                  onClick={() => {
+                                                      const updated = premiumVideoPlaylist.filter((_, i) => i !== idx);
+                                                      setPremiumVideoPlaylist(updated);
+                                                  }}
+                                                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                              >
+                                                  <Trash2 size={16} />
+                                              </button>
+                                          </div>
+                                          <input
+                                              type="text"
+                                              value={vid.url}
+                                              onChange={(e) => {
+                                                  const updated = [...premiumVideoPlaylist];
+                                                  updated[idx].url = e.target.value;
+                                                  setPremiumVideoPlaylist(updated);
+                                              }}
+                                              placeholder="Google Drive Link / YouTube URL"
+                                              className="w-full p-2 border border-slate-200 rounded text-xs font-mono text-blue-600 bg-white ml-8"
+                                          />
+                                      </div>
+                                  ))}
+                              </div>
+
+                              <div className="flex gap-2">
+                                  <button
+                                      onClick={() => setPremiumVideoPlaylist([...premiumVideoPlaylist, { title: '', url: '', price: 10, access: 'ULTRA' }])}
+                                      className="flex-1 py-3 bg-yellow-50 text-yellow-700 rounded-xl text-xs font-bold border border-yellow-200 hover:bg-yellow-100 flex items-center justify-center gap-2 border-dashed"
+                                  >
+                                      <Plus size={16} /> Add Video
+                                  </button>
+                                  <button onClick={saveChapterContent} className="flex-1 bg-yellow-600 text-white font-bold py-3 rounded-xl shadow hover:bg-yellow-700 transition flex items-center justify-center gap-2">
+                                      <Save size={16} /> Save Changes
+                                  </button>
+                              </div>
+                          </div>
+                      )}
                   </div>
               </div>
           </div>

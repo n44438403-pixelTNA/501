@@ -1796,21 +1796,30 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                       onUpdateUser={handleUserUpdate}
                       onNavigateContent={(type, chapterId, topicName, subjectName) => {
                           setTopicFilter(topicName);
-                          if (type === 'PDF') {
+                          // Handle Navigation based on Type
+                          if (type === 'PDF' || type === 'VIDEO' || type === 'MCQ') {
                               setLoadingChapters(true);
                               const lang = user.board === 'BSEB' ? 'Hindi' : 'English';
                               fetchChapters(user.board || 'CBSE', user.classLevel || '10', user.stream || 'Science', null, lang).then(allChapters => {
                                   const ch = allChapters.find(c => c.id === chapterId);
                                   if (ch) {
-                                      onTabChange('PDF');
+                                      // Switch Tab
+                                      onTabChange(type as any); // Type cast as StudentTab
+
+                                      // Resolve Subject
                                       const subjects = getSubjectsList(user.classLevel || '10', user.stream || 'Science', user.board);
                                       let targetSubject = selectedSubject;
-                                      if (subjectName) { targetSubject = subjects.find(s => s.name === subjectName) || subjects[0]; } else if (!targetSubject) { targetSubject = subjects[0]; }
+                                      if (subjectName) { targetSubject = subjects.find(s => s.name === subjectName) || subjects[0]; }
+                                      else if (!targetSubject) { targetSubject = subjects[0]; }
+
+                                      // Set Context
                                       setSelectedSubject(targetSubject);
                                       setSelectedChapter(ch);
                                       setContentViewStep('PLAYER');
                                       setFullScreen(true);
-                                  } else { showAlert("Content not found or not loaded.", "ERROR"); }
+                                  } else {
+                                      showAlert("Content not found or not loaded.", "ERROR");
+                                  }
                                   setLoadingChapters(false);
                               });
                           }

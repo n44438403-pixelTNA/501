@@ -213,13 +213,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
                 </div>
             </div>
 
-            {/* PLAN MODAL */}
-            <FeatureMatrixModal
-                isOpen={showPlanModal}
-                onClose={() => setShowPlanModal(false)}
-                settings={settings}
-                discountActive={isFlashSaleActive}
-            />
+            {/* PLAN MODAL REMOVED */}
         </>
     );
 };

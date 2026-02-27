@@ -331,7 +331,7 @@ export const ALL_FEATURES: Feature[] = [
         label: 'App Soul',
         group: 'SOUL',
         surfaceLevel: 3,
-        adminVisible: false, // HIDDEN FROM FEATURE ACCESS PAGE (As requested)
+        adminVisible: true,
         adminTab: 'APP_SOUL',
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'Hexagon',

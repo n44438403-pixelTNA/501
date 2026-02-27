@@ -10,3 +10,5 @@ Port 5001 is in use, trying another one...
 2:45:36 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx, /components/admin/AppSoul.tsx
 2:47:33 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/RevisionHub.tsx, /components/FeatureMatrixModal.tsx
 2:48:21 AM [vite] (client) hmr update /components/admin/AppSoul.tsx
+3:05:42 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx, /components/admin/AppSoul.tsx
+3:06:54 AM [vite] (client) hmr update /components/admin/FeatureAccessPage.tsx

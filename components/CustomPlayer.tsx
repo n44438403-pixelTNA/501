@@ -52,11 +52,10 @@ export const CustomPlayer: React.FC<CustomPlayerProps> = ({
     }
 
     return (
-        <div className="relative w-full h-full bg-black group overflow-hidden rounded-2xl shadow-2xl border border-white/5" style={{ minHeight: '300px' }}>
+        <div className="fixed inset-0 z-[9999] bg-black w-full h-full flex flex-col items-center justify-center">
              <iframe 
                 src={embedUrl} 
-                className="w-full h-full absolute inset-0 scale-[1.01]" 
-                style={{ border: 'none' }}
+                className="w-full h-full border-none max-w-7xl max-h-screen aspect-video"
                 allow="autoplay; encrypted-media; fullscreen; picture-in-picture" 
                 allowFullScreen
                 title="NSTA PLAYER"

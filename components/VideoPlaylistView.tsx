@@ -307,9 +307,19 @@ export const VideoPlaylistView: React.FC<Props> = ({
            </div>
        </div>
 
-       {/* PLAYER AREA */}
-       {activeVideo ? (
-           <div className="aspect-video bg-black w-full sticky top-[73px] z-10 relative shadow-2xl">
+       {/* PLAYER AREA - Minimalist Full Screen Mode */}
+       {activeVideo && (
+           <div className="fixed inset-0 z-[9999] bg-black">
+               {/* Minimal Back Button */}
+               <div className="absolute top-4 left-4 z-[10000]">
+                   <button
+                       onClick={() => setActiveVideo(null)}
+                       className="bg-black/50 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/70 border border-white/20 shadow-lg"
+                   >
+                       <ArrowLeft size={24} />
+                   </button>
+               </div>
+
                <CustomPlayer 
                    videoUrl={activeVideo.url} 
                    brandingText={settings?.playerBrandingText} 
@@ -318,7 +328,7 @@ export const VideoPlaylistView: React.FC<Props> = ({
                    blockShare={settings?.playerBlockShare ?? true}
                />
            </div>
-       ) : null}
+       )}
 
        {/* PLAYLIST */}
        <div className="p-4">

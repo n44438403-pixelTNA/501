@@ -543,26 +543,19 @@ export const PdfView: React.FC<Props> = ({
       return <AiInterstitial onComplete={onInterstitialComplete} userType={isPremiumUser ? 'PREMIUM' : 'FREE'} imageUrl={aiImage} contentType="PDF" />;
   }
 
-  // PDF OVERLAY (For Active PDF / Resources)
+  // PDF OVERLAY (Zen Mode for Premium/Additional)
   if (activePdf) {
       const formattedLink = formatDriveLink(activePdf);
       return (
-          <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in fade-in zoom-in-95">
-              <div className="bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
-                  <div className="flex items-center gap-3">
-                      <button onClick={() => { setActivePdf(null); stopAllSpeech(); }} className="p-2 hover:bg-slate-800 rounded-full transition-colors">
-                          <ArrowLeft size={20} />
-                      </button>
-                      <div>
-                          <h3 className="font-bold text-sm leading-tight line-clamp-1">{chapter.title}</h3>
-                          <p className="text-[10px] text-slate-400">PDF Viewer</p>
-                      </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      {/* External Link Disabled */}
-                  </div>
+          <div className="fixed inset-0 z-[9999] bg-black flex flex-col animate-in fade-in zoom-in-95 h-screen w-screen overflow-hidden">
+              {/* Minimal Floating Controls */}
+              <div className="absolute top-4 left-4 z-50">
+                  <button onClick={() => { setActivePdf(null); stopAllSpeech(); }} className="bg-black/50 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/70 border border-white/20 shadow-lg">
+                      <ArrowLeft size={24} />
+                  </button>
               </div>
-              <div className="flex-1 bg-slate-100 relative">
+
+              <div className="flex-1 relative w-full h-full">
                   <iframe
                       src={formattedLink}
                       className="w-full h-full border-none"
@@ -571,31 +564,26 @@ export const PdfView: React.FC<Props> = ({
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox"
                   />
                   {/* Invisible Overlay to block top bar clicks if iframe sandbox isn't enough */}
-                  <div className="absolute top-0 left-0 w-full h-12 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+                  <div className="absolute top-0 left-0 w-full h-16 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
               </div>
           </div>
       );
   }
 
-  // RESOURCE OVERLAY (Handles Text-Only AND PDF+Text)
+  // RESOURCE OVERLAY (Handles Text-Only AND PDF+Text) - ZEN MODE
   if (activeNoteContent) {
       const hasPdf = !!activeNoteContent.pdfUrl;
       const formattedLink = hasPdf ? formatDriveLink(activeNoteContent.pdfUrl!) : '';
 
       return (
-          <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in fade-in zoom-in-95">
-              <div className="bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
-                  <div className="flex items-center gap-3">
-                      <button onClick={() => { setActiveNoteContent(null); stopAllSpeech(); }} className="p-2 hover:bg-slate-800 rounded-full transition-colors">
-                          <ArrowLeft size={20} />
-                      </button>
-                      <div>
-                          <h3 className="font-bold text-sm leading-tight line-clamp-1">{activeNoteContent.title}</h3>
-                          <p className="text-[10px] text-slate-400">Resource Viewer</p>
-                      </div>
-                  </div>
+          <div className="fixed inset-0 z-[9999] bg-black flex flex-col animate-in fade-in zoom-in-95 h-screen w-screen overflow-hidden">
+              {/* Minimal Floating Controls */}
+              <div className="absolute top-4 left-4 z-50 flex gap-4">
+                  <button onClick={() => { setActiveNoteContent(null); stopAllSpeech(); }} className="bg-black/50 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/70 border border-white/20 shadow-lg">
+                      <ArrowLeft size={24} />
+                  </button>
 
-                  {/* TTS Controls */}
+                  {/* TTS Toggle */}
                   <button
                       onClick={() => {
                           if (isAutoPlaying) {
@@ -606,18 +594,17 @@ export const PdfView: React.FC<Props> = ({
                               speakText(plainText, null, speechRate, 'hi-IN', undefined, () => setIsAutoPlaying(false));
                           }
                       }}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-bold text-xs transition-all ${isAutoPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      className={`bg-black/50 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/70 border border-white/20 shadow-lg ${isAutoPlaying ? 'text-red-400 border-red-400 animate-pulse' : ''}`}
                   >
-                      {isAutoPlaying ? <Pause size={14} /> : <Headphones size={14} />}
-                      {isAutoPlaying ? 'Stop' : 'Listen'}
+                      {isAutoPlaying ? <Pause size={24} /> : <Headphones size={24} />}
                   </button>
               </div>
 
-              <div className="flex-1 bg-slate-100 relative flex flex-col">
+              <div className="flex-1 relative flex flex-col w-full h-full">
                   {hasPdf ? (
-                      // PDF VIEW WITH AUDIO OVERLAY
+                      // PDF VIEW (Full Screen)
                       <>
-                          <div className="flex-1 relative">
+                          <div className="flex-1 relative w-full h-full">
                               <iframe
                                   src={formattedLink}
                                   className="w-full h-full border-none"
@@ -625,19 +612,16 @@ export const PdfView: React.FC<Props> = ({
                                   allow="autoplay"
                                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox"
                               />
-                              <div className="absolute top-0 left-0 w-full h-12 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+                              <div className="absolute top-0 left-0 w-full h-16 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
                           </div>
-                          {/* Mini Player Status */}
-                          {isAutoPlaying && (
-                              <div className="absolute bottom-4 right-4 bg-slate-900/90 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg animate-pulse flex items-center gap-2">
-                                  <Headphones size={12} /> Playing Audio...
-                              </div>
-                          )}
                       </>
                   ) : (
-                      // TEXT ONLY VIEW
-                      <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
-                          <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-200 prose prose-slate prose-sm lg:prose-base" dangerouslySetInnerHTML={{ __html: activeNoteContent.content }} />
+                      // TEXT ONLY VIEW (Dark Mode Reader)
+                      <div className="flex-1 overflow-y-auto p-6 bg-slate-900 text-slate-300">
+                          <div className="max-w-4xl mx-auto pt-16">
+                              <h2 className="text-2xl font-black text-white mb-6">{activeNoteContent.title}</h2>
+                              <div className="prose prose-invert prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: activeNoteContent.content }} />
+                          </div>
                       </div>
                   )}
               </div>

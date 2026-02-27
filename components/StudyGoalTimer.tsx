@@ -33,41 +33,41 @@ export const StudyGoalTimer: React.FC<Props> = ({ dailyStudySeconds, targetSecon
     };
 
     return (
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col items-center">
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col items-center">
 
-            <div className="flex justify-between w-full mb-4">
+            <div className="flex justify-between w-full mb-3">
                 <div className="flex items-center gap-2">
-                    <Clock className="text-blue-600" size={20} />
-                    <h3 className="font-black text-slate-800 text-sm uppercase">Study Goal</h3>
+                    <Clock className="text-blue-600" size={16} />
+                    <h3 className="font-black text-slate-800 text-xs uppercase">Study Goal</h3>
                 </div>
                 <button
                     onClick={() => setIsEditing(!isEditing)}
-                    className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded hover:bg-slate-100 flex items-center gap-1"
+                    className="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded hover:bg-slate-100 flex items-center gap-1"
                 >
-                    <Edit3 size={12} /> {isEditing ? 'Close' : 'Edit Goal'}
+                    <Edit3 size={10} /> {isEditing ? 'Close' : 'Edit'}
                 </button>
             </div>
 
-            {/* CIRCULAR TIMER */}
-            <div className="relative w-40 h-40 mb-6">
+            {/* CIRCULAR TIMER - Compact Mobile */}
+            <div className="relative w-32 h-32 mb-3">
                 <svg className="w-full h-full transform -rotate-90">
                     {/* Track */}
                     <circle
-                        cx="80"
-                        cy="80"
+                        cx="64"
+                        cy="64"
                         r={radius}
                         fill="none"
                         stroke="#f1f5f9"
-                        strokeWidth="12"
+                        strokeWidth="10"
                     />
                     {/* Progress */}
                     <circle
-                        cx="80"
-                        cy="80"
+                        cx="64"
+                        cy="64"
                         r={radius}
                         fill="none"
                         stroke={progress >= 100 ? "#22c55e" : "#3b82f6"}
-                        strokeWidth="12"
+                        strokeWidth="10"
                         strokeLinecap="round"
                         strokeDasharray={circumference}
                         strokeDashoffset={offset}
@@ -75,10 +75,10 @@ export const StudyGoalTimer: React.FC<Props> = ({ dailyStudySeconds, targetSecon
                     />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className={`text-2xl font-black ${progress >= 100 ? 'text-green-600' : 'text-slate-800'}`}>
+                    <span className={`text-xl font-black ${progress >= 100 ? 'text-green-600' : 'text-slate-800'}`}>
                         {formatTime(dailyStudySeconds)}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase">
                         Target: {Math.round(targetSeconds / 3600)}h
                     </span>
                 </div>

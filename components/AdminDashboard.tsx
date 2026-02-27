@@ -21,7 +21,7 @@ import { SyllabusManager } from './SyllabusManager';
 import { FeatureGroupList } from './admin/FeatureGroupList';
 import { ALL_FEATURES } from '../utils/featureRegistry';
 import { DocumentationTab } from './admin/DocumentationTab';
-import { AppSoul } from './admin/AppSoul';
+import { AdminFeatureControlPanel } from './admin/AdminFeatureControlPanel';
 // @ts-ignore
 import JSZip from 'jszip';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -122,9 +122,8 @@ type AdminTab =
   | 'POWER_MANAGER'
   | 'REVISION_LOGIC' // NEW
   | 'PLAN_MATRIX'
-  | 'FEATURE_ACCESS' // NEW
+  | 'UNIFIED_CONTROL' // NEW (Replaces App Soul/Feature Access)
   | 'EVENT_MANAGER' // NEW
-  | 'APP_SOUL' // NEW
   | 'DOCUMENTATION'; // NEW
 
 interface ContentConfig {
@@ -9736,21 +9735,9 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
           </div>
       )}
 
-      {/* --- FEATURE ACCESS PAGE --- */}
-      {activeTab === 'FEATURE_ACCESS' && (
-          <FeatureAccessPage
-              settings={localSettings}
-              onUpdateSettings={(s) => {
-                  setLocalSettings(s);
-                  handleSaveSettings(s);
-              }}
-              onBack={() => setActiveTab('DASHBOARD')}
-          />
-      )}
-
-      {/* --- APP SOUL (SPECIAL FEATURES) --- */}
-      {activeTab === 'APP_SOUL' && (
-          <AppSoul
+      {/* --- UNIFIED FEATURE CONTROL (Replaces App Soul/Feature Access) --- */}
+      {activeTab === 'UNIFIED_CONTROL' && (
+          <AdminFeatureControlPanel
               settings={localSettings}
               onUpdateSettings={(s) => {
                   setLocalSettings(s);

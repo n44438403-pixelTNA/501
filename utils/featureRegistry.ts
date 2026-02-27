@@ -291,7 +291,7 @@ export const ALL_FEATURES: Feature[] = [
         group: 'CONTENT',
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',
-        adminVisible: true,
+        adminVisible: false,
         description: 'Control access to Premium (PDF+TTS) notes.',
         adminTab: 'FEATURE_ACCESS'
     },
@@ -301,7 +301,7 @@ export const ALL_FEATURES: Feature[] = [
         group: 'CONTENT',
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',
-        adminVisible: true,
+        adminVisible: false,
         description: 'Control access to Additional Resources tab.',
         adminTab: 'FEATURE_ACCESS'
     },
@@ -331,11 +331,22 @@ export const ALL_FEATURES: Feature[] = [
         label: 'App Soul',
         group: 'SOUL',
         surfaceLevel: 3,
-        adminVisible: true,
+        adminVisible: false,
         adminTab: 'APP_SOUL',
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'Hexagon',
         color: 'violet'
+    },
+    {
+        id: 'ADMIN_UNIFIED_CONTROL',
+        label: 'Feature Control',
+        group: 'SOUL',
+        surfaceLevel: 3,
+        adminVisible: true,
+        adminTab: 'UNIFIED_CONTROL',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Sliders',
+        color: 'indigo'
     },
     // GROUP: CORE ADMIN
     {
@@ -692,7 +703,7 @@ export const ALL_FEATURES: Feature[] = [
         label: 'Feature Access',
         group: 'ADVANCED',
         surfaceLevel: 3,
-        adminVisible: true,
+        adminVisible: false,
         adminTab: 'FEATURE_ACCESS',
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'LayoutGrid',

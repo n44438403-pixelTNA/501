@@ -12,3 +12,8 @@ Port 5001 is in use, trying another one...
 2:48:21 AM [vite] (client) hmr update /components/admin/AppSoul.tsx
 3:05:42 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx, /components/admin/AppSoul.tsx
 3:06:54 AM [vite] (client) hmr update /components/admin/FeatureAccessPage.tsx
+3:24:15 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx, /components/admin/AppSoul.tsx
+3:28:19 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/RevisionHub.tsx, /components/FeatureMatrixModal.tsx
+3:29:32 AM [vite] (client) hmr update /components/FeatureMatrixModal.tsx
+3:30:28 AM [vite] (client) hmr update /components/AdminDashboard.tsx
+[BABEL] Note: The code generator has deoptimised the styling of /app/components/AdminDashboard.tsx as it exceeds the max of 500KB.

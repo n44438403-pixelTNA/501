@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { X, Check, Lock, AlertTriangle, Crown, List, Shield, Zap, Sparkles, BookOpen, Star, Layout, MessageSquare, Gamepad2, Trophy, Video, FileText, Headphones } from 'lucide-react';
 import { SystemSettings } from '../types';
 import { DEFAULT_PLAN_COMPARISON } from '../constants';
@@ -14,6 +14,34 @@ export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings,
   if (!isOpen) return null;
 
   const featureConfig = settings?.featureConfig || {};
+
+  // DYNAMIC CONTENT LOGIC
+  // If `settings.customFeatureList` exists (from AdminFeatureControlPanel), convert it to grouped format.
+  // Else use `DEFAULT_PLAN_COMPARISON` from constants.
+  const planContent = useMemo(() => {
+      if (settings?.customFeatureList && settings.customFeatureList.length > 0) {
+          const grouped: Record<string, any[]> = {};
+
+          settings.customFeatureList.forEach((item: any) => {
+              if (!grouped[item.category]) {
+                  grouped[item.category] = [];
+              }
+              grouped[item.category].push({
+                  id: item.key,
+                  name: item.label,
+                  free: item.free,
+                  basic: item.basic,
+                  ultra: item.ultra
+              });
+          });
+
+          return Object.keys(grouped).map(cat => ({
+              name: cat,
+              features: grouped[cat]
+          }));
+      }
+      return DEFAULT_PLAN_COMPARISON;
+  }, [settings?.customFeatureList]);
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
@@ -49,7 +77,7 @@ export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings,
 
                 {/* TABLE BODY */}
                 <div className="space-y-8">
-                    {DEFAULT_PLAN_COMPARISON.map((section, idx) => (
+                    {planContent.map((section: any, idx: number) => (
                         <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                             <div className="bg-slate-100 px-4 py-3 border-b border-slate-200">
                                 <h3 className="font-black text-slate-700 text-sm uppercase">{section.name}</h3>

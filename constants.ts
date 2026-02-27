@@ -479,99 +479,46 @@ export const LEVEL_UP_CONFIG = [
     { level: 50, featureId: 'ULTIMATE_ACCESS', label: 'Ultimate Badge', description: 'Legend Status Unlocked' }
 ];
 
-// --- PLAN COMPARISON MATRIX (DEFAULT) ---
+// --- PLAN COMPARISON MATRIX (DEFAULT - NSTA UNIFIED) ---
 export const DEFAULT_PLAN_COMPARISON = [
     {
-        name: "1. CORE LEARNING FEATURES",
+        name: "📑 NOTES",
         features: [
-            { id: 'NOTES_ACCESS', name: "PDF Notes Library", free: "🔒 First 2 Chapters", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
-            { id: 'VIDEO_ACCESS', name: "Video Lectures", free: "🔒 First 2 Videos", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
-            { id: 'TOPIC_CONTENT', name: "Topic-wise Notes", free: "❌ Locked", basic: "✅ Full Access", ultra: "✅ Full Access" },
-            { id: 'AUDIO_LIBRARY', name: "Audio / Podcast", free: "❌ Locked", basic: "❌ Locked", ultra: "✅ Premium Only" },
-            { id: 'SEARCH', name: "Search Capability", free: "✅ Basic", basic: "✅ Advanced", ultra: "✅ Advanced" },
-            { id: 'DOWNLOAD_PDF', name: "Save / Offline Mode", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'WATERMARK', name: "PDF Watermark", free: "⚠️ Free User", basic: "❌ No", ultra: "❌ No" }
+            { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ 2 Topics", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
+            { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Full Access", ultra: "✅ Full Access" },
+            { id: 'PREMIUM_NOTES', name: "Premium Notes", free: "❌ Locked", basic: "👁️ View Only", ultra: "📥 Download" },
+            { id: 'ADDITIONAL_NOTES', name: "Additional Notes", free: "✅ Basic", basic: "✅ Full Access", ultra: "✅ Full Access" }
         ]
     },
     {
-        name: "2. REVISION HUB (USP)",
+        name: "🎬 VIDEO",
         features: [
-            { id: 'REVISION_HUB', name: "Revision Hub Access", free: "❌ Locked", basic: "⚠️ 1 Day/Week", ultra: "✅ Daily" },
-            { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'EXCELLENT_TAB', name: "Excellent (80%+) Tab", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'AI_PLAN', name: "Auto AI Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'MISTAKE_PATTERN', name: "Mistake Pattern Analysis", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'MASTERY', name: "30-Day Mastery Logic", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'ONE_CLICK', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
+            { id: 'VIDEO_ACCESS', name: "Video Lectures", free: "🔒 Demo", basic: "✅ All Classes", ultra: "✅ All Classes" }
         ]
     },
     {
-        name: "3. MCQ SYSTEM",
+        name: "🎧 AUDIO",
         features: [
-            { id: 'MCQ_FREE', name: "Daily MCQ Limit", free: "30 Questions", basic: "50 Questions", ultra: "100 Questions" },
-            { id: 'EXAM_TIMER', name: "Exam Mode Timer", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'MS_ANALYSIS', name: "Detailed Solutions", free: "❌ Only Right/Wrong", basic: "✅ Text Solution", ultra: "✅ AI Explanation" },
-            { id: 'RE_ATTEMPT', name: "Re-attempt Wrong", free: "❌ No", basic: "✅ Yes", ultra: "✅ Instant" },
-            { id: 'BULK_MCQ', name: "Topic-wise Bulk MCQ", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Full Access" },
-            { id: 'HISTORY', name: "History & Logs", free: "⚠️ 3 Days", basic: "✅ Full History", ultra: "✅ Full History" },
-            { id: 'PALETTE', name: "Question Palette", free: "✅ Yes", basic: "✅ Yes", ultra: "✅ Yes" }
+            { id: 'AUDIO_LIBRARY', name: "Audio Library", free: "❌ Locked", basic: "❌ Locked", ultra: "✅ Premium" }
         ]
     },
     {
-        name: "4. AI & SMART FEATURES",
+        name: "📝 MCQ",
         features: [
-            { id: 'AI_CHAT', name: "AI Tutor Chat", free: "❌ No", basic: "🔒 5 Chats/day", ultra: "✅ Unlimited" },
-            { id: 'SMART_SORT', name: "Smart Topic Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'WEAK_DETECT', name: "Weakness Detection", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'DYNAMIC_PLAN', name: "Dynamic Study Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" }
+            { id: 'FREE_PRACTICE', name: "Free Practice", free: "✅ 50 Daily", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
+            { id: 'PREMIUM_TEST', name: "Premium Test", free: "❌ Locked", basic: "✅ Topic-wise", ultra: "✅ AI Adaptive" }
         ]
     },
     {
-        name: "5. TTS / STUDY TOOLS",
+        name: "🔄 REVISION",
         features: [
-            { id: 'TTS_FEATURE', name: "Text-to-Speech (TTS)", free: "⚠️ 1 min demo", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
-            { id: 'SPEED_CONTROL', name: "Speed Control", free: "❌ No", basic: "❌ No", ultra: "✅ 0.5x – 2x" },
-            { id: 'AUTO_SCROLL', name: "Auto Scroll", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'FOCUS_MODE', name: "Focus Mode", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'TIMER', name: "Study Timer", free: "✅ Basic", basic: "✅ Analytics", ultra: "✅ Analytics" }
+            { id: 'REVISION_HUB', name: "Revision Hub", free: "❌ Locked", basic: "⚠️ 1 Day Data", ultra: "✅ 30-Day Mastery" }
         ]
     },
     {
-        name: "6. GAMIFICATION & ECONOMY",
+        name: "🤖 AI HUB",
         features: [
-            { id: 'EARN_CREDITS', name: "Coins / Credits Earning", free: "✅ Normal", basic: "✅ 1.5x Multiplier", ultra: "✅ 3x Multiplier" },
-            { id: 'SPIN', name: "Spin & Win", free: "1 per day", basic: "5 per day", ultra: "10 per day" },
-            { id: 'STREAK', name: "Daily Streak Protection", free: "✅ Yes", basic: "✅ Yes", ultra: "✅ Freeze (No loss)" },
-            { id: 'LEADERBOARD', name: "Leaderboard Access", free: "View Only", basic: "Participate", ultra: "Top Badge" },
-            { id: 'DOUBLE_CREDIT', name: "Double Credit Events", free: "❌ No", basic: "⚠️ Sometimes", ultra: "✅ Always Active" }
-        ]
-    },
-    {
-        name: "7. CONTENT REQUEST SYSTEM",
-        features: [
-            { id: 'REQUEST_CONTENT', name: "Request New Content", free: "❌ No", basic: "✅ Yes", ultra: "✅ VIP Access" },
-            { id: 'PRIORITY', name: "Priority Level", free: "Low", basic: "Normal", ultra: "Top Priority" },
-            { id: 'PROMISE', name: "Admin Promise", free: "❌ No", basic: "❌ No", ultra: "24h Delivery" }
-        ]
-    },
-    {
-        name: "8. ACCOUNT & SECURITY",
-        features: [
-            { id: 'GUEST', name: "Guest Mode", free: "✅ Yes", basic: "❌ No", ultra: "❌ No" },
-            { id: 'DEVICE_LIMIT', name: "Device Login Limit", free: "1 Device", basic: "1 Device", ultra: "Multi-Device" },
-            { id: 'GHOST', name: "Ghost Login (Admin)", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'PROFILE', name: "Profile Edit", free: "Basic Info", basic: "Full Profile", ultra: "Full Profile" }
-        ]
-    },
-    {
-        name: "9. ADMIN POWER (ULTRA EXCLUSIVE)",
-        features: [
-            { id: 'SPY', name: "Live User Spy", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'LOGIN_AS', name: "Login As User", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'TARGETED', name: "Targeted Notifications", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'FLASH', name: "Flash Sale Auto Trigger", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'ABANDON', name: "Payment Abandon Discount", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'CREDIT_CTRL', name: "Credit Control Panel", free: "❌ No", basic: "❌ No", ultra: "✅ Active" }
+            { id: 'AI_HUB_CONTROL', name: "AI Hub Control", free: "❌ Locked", basic: "🔒 5 Chats/Day", ultra: "✅ Unlimited Turbo" }
         ]
     }
 ];

@@ -632,10 +632,10 @@ export const PdfView: React.FC<Props> = ({
            {/* TABS */}
            <div className="flex overflow-x-auto border-t border-slate-100 scrollbar-hide">
                {[
-                   { id: 'QUICK', label: 'Quick Revision', icon: Zap },
-                   { id: 'DEEP_DIVE', label: 'Deep Dive', icon: BookOpen },
-                   { id: 'PREMIUM', label: 'Premium Notes', icon: Crown },
-                   { id: 'RESOURCES', label: 'Resources', icon: Layers }
+                   { id: 'QUICK', label: 'Quick', icon: Zap },
+                   { id: 'DEEP_DIVE', label: 'Concept', icon: BookOpen },
+                   { id: 'PREMIUM', label: 'Retention', icon: Crown },
+                   { id: 'RESOURCES', label: 'Extended', icon: Layers }
                        ].map(tab => {
                            // Feature Access Check for Tabs
                            let isLocked = false;

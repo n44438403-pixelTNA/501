@@ -53,7 +53,10 @@ export const LessonActionModal: React.FC<Props> = ({ chapter, onClose, onSelect,
                             <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                 <FileText size={18} />
                             </div>
-                            <span className="font-bold text-slate-600 text-xs group-hover:text-blue-600">Notes</span>
+                            <div className="text-center">
+                                <span className="font-bold text-slate-600 text-xs group-hover:text-blue-600 block">Notes</span>
+                                <span className="text-[9px] text-slate-400 font-medium leading-tight block mt-0.5">Complete Chapter Explanation</span>
+                            </div>
                         </button>
 
                         <button
@@ -63,7 +66,10 @@ export const LessonActionModal: React.FC<Props> = ({ chapter, onClose, onSelect,
                             <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
                                 <CheckSquare size={18} />
                             </div>
-                            <span className="font-bold text-slate-600 text-xs group-hover:text-purple-600">Test</span>
+                            <div className="text-center">
+                                <span className="font-bold text-slate-600 text-xs group-hover:text-purple-600 block">Test</span>
+                                <span className="text-[9px] text-slate-400 font-medium leading-tight block mt-0.5">Practice & Test Yourself</span>
+                            </div>
                         </button>
 
                         <button
@@ -73,7 +79,10 @@ export const LessonActionModal: React.FC<Props> = ({ chapter, onClose, onSelect,
                             <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white transition-colors">
                                 <Video size={18} />
                             </div>
-                            <span className="font-bold text-slate-600 text-xs group-hover:text-rose-600">Video</span>
+                            <div className="text-center">
+                                <span className="font-bold text-slate-600 text-xs group-hover:text-rose-600 block">Video</span>
+                                <span className="text-[9px] text-slate-400 font-medium leading-tight block mt-0.5">Concept Clarity</span>
+                            </div>
                         </button>
 
                         <button
@@ -83,7 +92,10 @@ export const LessonActionModal: React.FC<Props> = ({ chapter, onClose, onSelect,
                             <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors">
                                 <Headphones size={18} />
                             </div>
-                            <span className="font-bold text-slate-600 text-xs group-hover:text-amber-600">Audio</span>
+                            <div className="text-center">
+                                <span className="font-bold text-slate-600 text-xs group-hover:text-amber-600 block">Audio</span>
+                                <span className="text-[9px] text-slate-400 font-medium leading-tight block mt-0.5">Quick Revision Mode</span>
+                            </div>
                         </button>
                     </div>
                 </div>

@@ -2357,17 +2357,7 @@ const App: React.FC = () => {
       {activeReward && <RewardPopup reward={activeReward} onClaim={handleClaimReward} onIgnore={handleIgnoreReward} />}
       
       {/* POPUP QUEUE MANAGER */}
-      {popupQueue.length > 0 && (
-        <>
-            {popupQueue[0] === 'CHALLENGE' && state.user && (
-                <DailyChallengePopup
-                    rewardPercentage={state.settings.dailyChallengeConfig?.rewardPercentage || 90}
-                    onStart={handleStartDailyChallenge}
-                    onClose={() => handlePopupClose('CHALLENGE')}
-                />
-            )}
-        </>
-      )}
+      {/* Daily Challenge Popup Removed as per Request */}
 
       {lastTestResult && state.user && (
           <MarksheetCard

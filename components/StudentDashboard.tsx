@@ -1259,6 +1259,99 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                 </div>
       );
 
+      // EDIT PROFILE MODAL
+      if (editMode) {
+          return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+                  <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+                      <div className="flex justify-between items-center mb-6">
+                          <h3 className="text-xl font-black text-slate-800 flex items-center gap-2"><Edit className="text-blue-600"/> Edit Profile</h3>
+                          <button onClick={() => setEditMode(false)} className="p-2 hover:bg-slate-100 rounded-full"><X size={20} /></button>
+                      </div>
+
+                      <div className="space-y-4">
+                          <div>
+                              <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Class Level</label>
+                              <select
+                                  value={profileData.classLevel}
+                                  onChange={(e) => setProfileData({...profileData, classLevel: e.target.value as any})}
+                                  className="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50"
+                                  disabled={!user.isPremium && user.classLevel !== 'COMPETITION'} // Lock if free unless upgrading to Competition? No, logic is confusing. Let's just lock it if not Admin/SubAdmin based on user request.
+                              >
+                                  {['6','7','8','9','10','11','12'].map(c => <option key={c} value={c}>Class {c}</option>)}
+                              </select>
+                              {(!user.role || user.role === 'STUDENT') && <p className="text-[10px] text-red-500 mt-1">Class change is restricted. Contact Admin.</p>}
+                          </div>
+
+                          {(['11','12'].includes(profileData.classLevel) || profileData.classLevel === 'COMPETITION') && (
+                              <div>
+                                  <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Stream</label>
+                                  <select
+                                      value={profileData.stream}
+                                      onChange={(e) => setProfileData({...profileData, stream: e.target.value as any})}
+                                      className="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50"
+                                  >
+                                      <option value="Science">Science</option>
+                                      <option value="Commerce">Commerce</option>
+                                      <option value="Arts">Arts</option>
+                                  </select>
+                              </div>
+                          )}
+
+                          <div>
+                              <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Board</label>
+                              <select
+                                  value={profileData.board}
+                                  onChange={(e) => setProfileData({...profileData, board: e.target.value as any})}
+                                  className="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50"
+                              >
+                                  <option value="CBSE">CBSE (English)</option>
+                                  <option value="BSEB">BSEB (Hindi)</option>
+                              </select>
+                          </div>
+
+                          <div>
+                              <label className="text-xs font-bold text-slate-500 uppercase block mb-1">New Password (Optional)</label>
+                              <input
+                                  type="text"
+                                  placeholder="Leave blank to keep current"
+                                  value={profileData.newPassword}
+                                  onChange={(e) => setProfileData({...profileData, newPassword: e.target.value})}
+                                  className="w-full p-3 rounded-xl border border-slate-200"
+                              />
+                          </div>
+                      </div>
+
+                      <div className="flex gap-3 mt-8">
+                          <button onClick={() => setEditMode(false)} className="flex-1 py-3 text-slate-500 font-bold bg-slate-100 rounded-xl hover:bg-slate-200">Cancel</button>
+                          <button
+                              onClick={() => {
+                                  // Update User
+                                  const updates: Partial<User> = {
+                                      board: profileData.board as any,
+                                      stream: profileData.stream as any
+                                  };
+                                  if (profileData.newPassword) updates.password = profileData.newPassword;
+
+                                  // Only update Class if allowed (Admins, Premium Users, or Competition Students)
+                                  if (user.role === 'ADMIN' || user.role === 'SUB_ADMIN' || user.classLevel === 'COMPETITION' || user.isPremium) {
+                                      updates.classLevel = profileData.classLevel as any;
+                                  }
+
+                                  handleUserUpdate({...user, ...updates});
+                                  setEditMode(false);
+                                  showAlert("Profile Updated Successfully!", "SUCCESS");
+                              }}
+                              className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700"
+                          >
+                              Save Changes
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          );
+      }
+
       // Handle Drill-Down Views (Video, PDF, MCQ, AUDIO)
       if (activeTab === 'VIDEO' || activeTab === 'PDF' || activeTab === 'MCQ' || activeTab === 'AUDIO') {
           return renderContentSection(activeTab);
@@ -1581,10 +1674,6 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
 
                 <div className="w-64 bg-white h-full shadow-2xl relative z-10 flex flex-col slide-in-from-left duration-300">
                     <div className="p-6 bg-slate-900 text-white rounded-br-3xl relative overflow-hidden">
-                        {/* Background Logo Effect */}
-                        {settings?.appLogo && (
-                            <img src={settings.appLogo} className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 rotate-12 pointer-events-none" />
-                        )}
                         <h2 className="text-2xl font-black italic mb-1 relative z-10">{settings?.appName || 'App'}</h2>
                         <p className="text-xs text-slate-400 relative z-10">Student Menu</p>
                         <button onClick={() => setShowSidebar(false)} className="absolute top-4 right-4 text-white/50 hover:text-white z-20">

@@ -43,11 +43,12 @@ export const callGroqApi = async (messages: any[], model: string = "llama-3.1-8b
 
     if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Groq API Error: ${response.status} - ${errorText}`);
+        console.error(`Groq API Error: ${response.status} - ${errorText}`);
+        return "⚠️ AI Service is currently unavailable. Please check your connection or try again later.";
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    return data.choices?.[0]?.message?.content || "No response generated.";
 };
 
 // NEW: Tool Support
@@ -67,11 +68,12 @@ export const callGroqApiWithTools = async (messages: any[], tools: any[], model:
 
     if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Groq API Error: ${response.status} - ${errorText}`);
+        console.error(`Groq API Error: ${response.status} - ${errorText}`);
+        return { content: "⚠️ AI Error." };
     }
 
     const data = await response.json();
-    return data.choices[0].message; // Returns full message object { content, tool_calls }
+    return data.choices?.[0]?.message || { content: "No response." };
 };
 
 // STREAMING API CALL

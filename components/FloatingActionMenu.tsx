@@ -178,18 +178,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
                         </div>
 
                         {/* Menu Grid */}
-                        <div className="grid grid-cols-3 gap-4">
-                            {/* PLAN */}
-                            <button
-                                onClick={() => { setIsOpen(false); setShowPlanModal(true); }}
-                                className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-purple-50 border border-purple-100 hover:bg-purple-100 transition-colors group"
-                            >
-                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-purple-600 group-hover:scale-110 transition-transform">
-                                    <Crown size={24} />
-                                </div>
-                                <span className="text-xs font-bold text-purple-900">View Plans</span>
-                            </button>
-
+                        <div className="grid grid-cols-2 gap-4">
                             {/* STORE */}
                             <button
                                 onClick={() => { setIsOpen(false); onOpenStore(); }}

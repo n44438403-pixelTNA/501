@@ -296,6 +296,16 @@ export const ALL_FEATURES: Feature[] = [
         adminTab: 'FEATURE_ACCESS'
     },
     {
+        id: 'PREMIUM_VIDEO',
+        label: 'Premium Video',
+        group: 'CONTENT',
+        surfaceLevel: 1,
+        requiredSubscription: 'ULTRA',
+        adminVisible: true,
+        description: 'Control access to Premium Video Series (Google Drive).',
+        adminTab: 'FEATURE_ACCESS'
+    },
+    {
         id: 'ADDITIONAL_NOTES',
         label: 'Additional Notes',
         group: 'CONTENT',

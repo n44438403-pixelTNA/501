@@ -442,6 +442,7 @@ export const NSTA_DEFAULT_FEATURES = [
     { category: '📑 NOTES', id: 'PREMIUM_NOTES', label: 'Premium Notes', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: undefined, ultra: undefined }, creditCost: 5 },
     { category: '📑 NOTES', id: 'ADDITIONAL_NOTES', label: 'Additional Resources', visible: true, limits: { free: 1, basic: undefined, ultra: undefined }, creditCost: 0 },
     { category: '🎬 VIDEO', id: 'VIDEO_ACCESS', label: 'Video Lectures', visible: true, limits: { free: 2, basic: undefined, ultra: undefined }, creditCost: 0 },
+    { category: '🎬 VIDEO', id: 'PREMIUM_VIDEO', label: 'Premium Video Series', visible: true, allowedTiers: ['ULTRA'], limits: {}, creditCost: 10 },
     { category: '🎧 AUDIO', id: 'AUDIO_LIBRARY', label: 'Audio Library', visible: true, allowedTiers: ['ULTRA'], limits: {}, creditCost: 0 },
     { category: '📝 MCQ', id: 'MCQ_FREE', label: 'Free Practice', visible: true, limits: { free: 50, basic: undefined, ultra: undefined }, creditCost: 0 },
     { category: '📝 MCQ', id: 'MCQ_PREMIUM', label: 'Premium Tests', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: {}, creditCost: 0 },

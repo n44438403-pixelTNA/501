@@ -137,14 +137,14 @@ export const NstaFeatureManager: React.FC<Props> = ({ settings, onUpdateSettings
                 </div>
             </div>
 
-            {/* Category Filter */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            {/* Category Filter - Horizontal Scroll */}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide touch-pan-x">
                 {categories.map(cat => (
                     <button
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                            activeCategory === cat ? 'bg-violet-600 text-white shadow-md' : 'bg-white text-slate-500 border border-slate-200'
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all border shrink-0 ${
+                            activeCategory === cat ? 'bg-violet-600 text-white border-violet-600 shadow-md' : 'bg-white text-slate-500 border-slate-200'
                         }`}
                     >
                         {cat}
@@ -239,12 +239,13 @@ export const NstaFeatureManager: React.FC<Props> = ({ settings, onUpdateSettings
             </div>
 
             {/* STICKY SAVE BUTTON - COMPACT MOBILE */}
-            <div className="fixed bottom-4 right-4 z-[1000] flex justify-end">
+            <div className="fixed bottom-8 right-6 z-[9999] flex justify-end safe-area-bottom">
                 <button
                     onClick={saveChanges}
-                    className="w-14 h-14 bg-green-600 text-white rounded-full shadow-xl hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center border-4 border-white animate-pulse"
+                    className="w-12 h-12 bg-green-600 text-white rounded-full shadow-2xl hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center border-2 border-white"
+                    title="Save Changes"
                 >
-                    <Save size={24} />
+                    <Save size={20} />
                 </button>
             </div>
 

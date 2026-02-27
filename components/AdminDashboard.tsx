@@ -2695,10 +2695,10 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
               <div className="flex justify-end mb-4 px-2">
                   <button 
                       onClick={() => onToggleDarkMode && onToggleDarkMode(!isDarkMode)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isDarkMode ? 'bg-slate-800 text-yellow-400 border border-slate-700' : 'bg-white text-slate-600 border border-slate-200'}`}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${isDarkMode ? 'bg-slate-800 text-yellow-400 border border-slate-700' : 'bg-white text-slate-600 border border-slate-200'}`}
                   >
-                      {isDarkMode ? <Sparkles size={14} /> : <Zap size={14} />}
-                      {isDarkMode ? 'Dark Mode On' : 'Dark Mode Off'}
+                      {isDarkMode ? <Sparkles size={12} /> : <Zap size={12} />}
+                      {isDarkMode ? 'Dark' : 'Light'}
                   </button>
               </div>
 
@@ -2720,8 +2720,8 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                   settings={localSettings}
               />
               <div className="mt-4 flex justify-end">
-                  <button onClick={() => onNavigate('STUDENT_DASHBOARD')} className="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-md">
-                      <LogOut size={20} /> Exit Admin Panel
+                  <button onClick={() => onNavigate('STUDENT_DASHBOARD')} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-md text-xs">
+                      <LogOut size={16} /> Exit
                   </button>
               </div>
           </div>

@@ -153,7 +153,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
 
     return (
         <>
-            {/* MAIN FAB BUTTON (Draggable) */}
+            {/* MAIN FAB BUTTON (Draggable - Mobile Optimized) */}
             <div
                 ref={buttonRef}
                 className="fixed z-[9990] flex flex-col items-center gap-3 touch-none select-none"
@@ -168,12 +168,12 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             >
                 <button
                     onClick={toggleMenu}
-                    className={`relative w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 border-4 border-white ${isFlashSaleActive ? 'bg-gradient-to-r from-red-500 to-pink-600 animate-pulse' : 'bg-slate-900'} ${isOpen ? 'rotate-90 scale-0' : 'rotate-0 scale-100'}`}
+                    className={`relative w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 border-2 border-white/50 backdrop-blur-md ${isFlashSaleActive ? 'bg-gradient-to-r from-red-500 to-pink-600 animate-pulse' : 'bg-slate-900/90'} ${isOpen ? 'rotate-90 scale-0' : 'rotate-0 scale-100'}`}
                 >
                     {settings.appLogo ? (
-                        <img src={settings.appLogo} alt="Menu" className="w-12 h-12 rounded-full object-cover" />
+                        <img src={settings.appLogo} alt="Menu" className="w-10 h-10 rounded-full object-cover" />
                     ) : (
-                        <Menu size={32} className="text-white" />
+                        <Menu size={24} className="text-white" />
                     )}
 
                     {/* Flash Sale Badge */}

@@ -102,9 +102,9 @@ export const FeatureGroupList: React.FC<Props> = ({ onNavigate, activeTab, count
                             </div>
                         </button>
 
-                        {/* CONTENT GRID */}
+                        {/* CONTENT GRID - HORIZONTAL SCROLL FOR MOBILE */}
                         {isExpanded && (
-                            <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 animate-in slide-in-from-top-2 duration-200">
+                            <div className="p-2 flex flex-wrap gap-2 overflow-x-auto justify-center sm:justify-start">
                                 {groupFeatures.map(feature => {
                                     const isActive = activeTab === feature.adminTab;
                                     const count = counts?.[feature.id];
@@ -114,7 +114,7 @@ export const FeatureGroupList: React.FC<Props> = ({ onNavigate, activeTab, count
                                             key={feature.id}
                                             onClick={() => onNavigate(feature.adminTab!)}
                                             className={`
-                                                relative p-4 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-2 group
+                                                relative p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-1 group w-[80px] shrink-0
                                                 ${isActive
                                                     ? `bg-${feature.color || 'blue'}-50 border-${feature.color || 'blue'}-500 shadow-md transform scale-[1.02]`
                                                     : `bg-white border-slate-100 hover:border-${feature.color || 'blue'}-300 hover:shadow-lg hover:-translate-y-1`
@@ -122,16 +122,16 @@ export const FeatureGroupList: React.FC<Props> = ({ onNavigate, activeTab, count
                                             `}
                                         >
                                             <div className={`
-                                                p-3 rounded-full transition-all duration-200 relative
+                                                p-2 rounded-full transition-all duration-200 relative
                                                 ${isActive
                                                     ? `bg-${feature.color || 'blue'}-600 text-white shadow-lg`
                                                     : `bg-${feature.color || 'blue'}-50 text-${feature.color || 'blue'}-600 group-hover:scale-110`
                                                 }
                                             `}>
-                                                {renderIcon(feature.icon || 'Circle', 20)}
+                                                {renderIcon(feature.icon || 'Circle', 16)}
                                             </div>
                                             <span className={`
-                                                font-bold text-xs text-center transition-colors
+                                                font-bold text-[9px] text-center transition-colors leading-tight truncate w-full
                                                 ${isActive ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-800'}
                                             `}>
                                                 {feature.label}

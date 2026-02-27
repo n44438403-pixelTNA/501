@@ -308,8 +308,8 @@ export const ALL_FEATURES: Feature[] = [
 
     // --- APP SOUL (RARE FEATURES) ---
     { id: 'QUICK_REVISION', label: 'Quick Revision', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Rapid revision mode control.' },
-    { id: 'MCQ_FREE', label: 'MCQ (Free)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control free MCQ access.' },
-    { id: 'MCQ_PREMIUM', label: 'MCQ (Premium)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control premium MCQ access.' },
+    { id: 'MCQ_FREE', label: 'Free Practice', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control free MCQ access.' },
+    { id: 'MCQ_PREMIUM', label: 'Premium Test', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control premium MCQ access.' },
     { id: 'REVISION_HUB_FREE', label: 'Revision Hub (Free)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Basic revision features.' },
     { id: 'REVISION_HUB_PREMIUM', label: 'Revision Hub (Premium)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Advanced revision features.' },
     { id: 'TOPIC_CONTENT', label: 'Topic Content', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control topic-specific content visibility.' },

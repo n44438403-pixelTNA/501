@@ -497,6 +497,8 @@ export const DEFAULT_PLAN_COMPARISON = [
         name: "2. REVISION HUB (USP)",
         features: [
             { name: "Revision Hub Access", free: "❌ Locked", basic: "⚠️ 1 Day/Week", ultra: "✅ Daily" },
+            { name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
+            { name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
             { name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { name: "Excellent (80%+) Tab", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { name: "Auto AI Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
@@ -521,6 +523,8 @@ export const DEFAULT_PLAN_COMPARISON = [
         name: "4. AI & SMART FEATURES",
         features: [
             { name: "AI Tutor Chat", free: "❌ No", basic: "🔒 5 Chats/day", ultra: "✅ Unlimited" },
+            { name: "AI Studio", free: "❌ No", basic: "❌ No", ultra: "✅ Full Access" },
+            { name: "AI Insights", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Detailed" },
             { name: "Smart Topic Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { name: "Weakness Detection", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { name: "Dynamic Study Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" }
@@ -530,6 +534,8 @@ export const DEFAULT_PLAN_COMPARISON = [
         name: "5. TTS / STUDY TOOLS",
         features: [
             { name: "Text-to-Speech (TTS)", free: "⚠️ 1 min demo", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
+            { name: "Premium Notes (Audio)", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+            { name: "Additional Resources", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
             { name: "Speed Control", free: "❌ No", basic: "❌ No", ultra: "✅ 0.5x – 2x" },
             { name: "Auto Scroll", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { name: "Focus Mode", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
@@ -549,7 +555,7 @@ export const DEFAULT_PLAN_COMPARISON = [
     {
         name: "7. CONTENT REQUEST SYSTEM",
         features: [
-            { name: "Request New Content", free: "❌ No", basic: "✅ Yes", ultra: "✅ VIP Access" },
+            { name: "Request Content", free: "❌ No", basic: "✅ Yes", ultra: "✅ VIP Access" },
             { name: "Priority Level", free: "Low", basic: "Normal", ultra: "Top Priority" },
             { name: "Admin Promise", free: "❌ No", basic: "❌ No", ultra: "24h Delivery" }
         ]
@@ -557,6 +563,9 @@ export const DEFAULT_PLAN_COMPARISON = [
     {
         name: "8. ACCOUNT & SECURITY",
         features: [
+            { name: "Detailed Analysis", free: "❌ Paid (20 Cr)", basic: "✅ Free", ultra: "✅ Free" },
+            { name: "Official Marksheet", free: "✅ Yes", basic: "✅ Yes", ultra: "✅ Yes" },
+            { name: "Mistakes Review", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
             { name: "Guest Mode", free: "✅ Yes", basic: "❌ No", ultra: "❌ No" },
             { name: "Device Login Limit", free: "1 Device", basic: "1 Device", ultra: "Multi-Device" },
             { name: "Ghost Login (Admin)", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },

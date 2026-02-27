@@ -317,12 +317,12 @@ export const ALL_FEATURES: Feature[] = [
     { id: 'AI_STUDIO', label: 'AI Studio', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control AI Studio features.' },
 
     // --- MARKSHEET FEATURES (App Soul Controlled) ---
-    { id: 'MS_RECOMMEND', label: 'Recommend Notes', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Recommend Notes tab in Marksheet.' },
-    { id: 'MS_OMR', label: 'OMR', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control OMR tab in Marksheet.' },
-    { id: 'MS_AI_INSIGHTS', label: 'AI Insights', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control AI Insights tab in Marksheet.' },
-    { id: 'MS_MISTAKES', label: 'Mistakes', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Mistakes tab in Marksheet.' },
-    { id: 'MS_ANALYSIS', label: 'Analysis', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Analysis tab in Marksheet.' },
-    { id: 'MS_OFFICIAL', label: 'Official Marksheet', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Official Marksheet tab.' },
+    { id: 'MS_RECOMMEND', label: 'Recommend Notes', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control Recommend Notes tab in Marksheet.' },
+    { id: 'MS_OMR', label: 'OMR', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control OMR tab in Marksheet.' },
+    { id: 'MS_AI_INSIGHTS', label: 'AI Insights', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control AI Insights tab in Marksheet.' },
+    { id: 'MS_MISTAKES', label: 'Mistakes', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control Mistakes tab in Marksheet.' },
+    { id: 'MS_ANALYSIS', label: 'Analysis', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control Analysis tab in Marksheet.' },
+    { id: 'MS_OFFICIAL', label: 'Official Marksheet', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control Official Marksheet tab.' },
 
 
     // --- ADMIN DASHBOARD FEATURES (Mapped to Admin Tabs) ---
@@ -681,7 +681,7 @@ export const ALL_FEATURES: Feature[] = [
         label: 'Feature Access',
         group: 'ADVANCED',
         surfaceLevel: 3,
-        adminVisible: false,
+        adminVisible: true,
         adminTab: 'FEATURE_ACCESS',
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'LayoutGrid',
@@ -748,7 +748,7 @@ export const ALL_FEATURES: Feature[] = [
         label: 'App Soul',
         group: 'SOUL',
         surfaceLevel: 3,
-        adminVisible: true,
+        adminVisible: false,
         adminTab: 'APP_SOUL',
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'Hexagon',

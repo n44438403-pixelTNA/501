@@ -226,83 +226,81 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
                             </button>
                         </div>
 
-                        {/* Menu Grid */}
-                        <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto p-1">
-                            {/* FIXED: STORE */}
-                            <button
-                                onClick={() => { setIsOpen(false); onOpenStore(); }}
-                                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors group"
-                            >
-                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-600 group-hover:scale-110 transition-transform">
-                                    <ShoppingBag size={20} />
-                                </div>
-                                <span className="text-[10px] font-bold text-blue-900 text-center leading-tight">Store</span>
-                            </button>
+                        {/* PLAN MATRIX STYLE LAYOUT */}
+                        <div className="flex flex-col max-h-[60vh] overflow-y-auto">
 
-                            {/* FIXED: PROFILE */}
-                            <button
-                                onClick={() => { setIsOpen(false); onOpenProfile(); }}
-                                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors group"
-                            >
-                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-600 group-hover:scale-110 transition-transform">
-                                    <UserIcon size={20} />
-                                </div>
-                                <span className="text-[10px] font-bold text-slate-900 text-center leading-tight">Profile</span>
-                            </button>
+                            {/* FIXED ACTIONS ROW */}
+                            <div className="grid grid-cols-2 gap-3 mb-4 shrink-0">
+                                <button
+                                    onClick={() => { setIsOpen(false); onOpenStore(); }}
+                                    className="flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-700 transition-all"
+                                >
+                                    <ShoppingBag size={18} /> Visit Store
+                                </button>
+                                <button
+                                    onClick={() => { setIsOpen(false); onOpenProfile(); }}
+                                    className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800 text-white font-bold shadow-lg hover:bg-slate-900 transition-all"
+                                >
+                                    <UserIcon size={18} /> Profile
+                                </button>
+                            </div>
 
-                            {/* DYNAMIC ITEMS */}
-                            {dynamicMenuItems.map(item => {
-                                const Icon = getIconComponent(item.icon);
-                                const access = checkFeatureAccess(item.id, user, settings);
-                                const isLocked = !access.hasAccess;
+                            {/* MATRIX HEADER */}
+                            <div className="grid grid-cols-12 gap-2 bg-slate-100 p-2 rounded-t-xl border-b border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
+                                <div className="col-span-5 pl-2">Feature</div>
+                                <div className="col-span-2 text-center text-green-600">Free</div>
+                                <div className="col-span-2 text-center text-blue-600">Basic</div>
+                                <div className="col-span-3 text-center text-purple-600">Ultra</div>
+                            </div>
 
-                                // Helper to format tiers
-                                const getTierBadge = () => {
-                                    if (item.allowedTiers?.includes('FREE')) return <span className="text-[8px] bg-green-100 text-green-700 px-1 rounded">FREE</span>;
-                                    if (item.allowedTiers?.includes('BASIC')) return <span className="text-[8px] bg-blue-100 text-blue-700 px-1 rounded">BASIC</span>;
-                                    if (item.allowedTiers?.includes('ULTRA')) return <span className="text-[8px] bg-purple-100 text-purple-700 px-1 rounded">ULTRA</span>;
-                                    return null;
-                                };
+                            {/* DYNAMIC MATRIX ROWS */}
+                            <div className="bg-white border border-slate-100 rounded-b-xl overflow-hidden">
+                                {dynamicMenuItems.map((item, idx) => {
+                                    const Icon = getIconComponent(item.icon);
 
-                                return (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => {
-                                            if (isLocked) {
-                                                alert(`Locked: ${access.reason}`);
-                                                return;
-                                            }
-                                            setIsOpen(false);
-                                            if (onNavigate && item.path) onNavigate(item.path);
-                                            else console.log("Navigate to", item.id);
-                                        }}
-                                        className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition-all group relative overflow-hidden ${isLocked ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 hover:border-indigo-200 hover:shadow-md'}`}
-                                    >
-                                        <div className="relative w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center shadow-sm text-slate-600 group-hover:scale-110 transition-transform group-hover:bg-indigo-50 group-hover:text-indigo-600">
-                                            <Icon size={18} />
-                                            {isLocked && (
-                                                <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 border border-white">
-                                                    <Lock size={8} className="text-white" />
+                                    // Helpers for Limits
+                                    const getLimit = (tier: string) => {
+                                        if (!item.allowedTiers?.includes(tier)) return <Lock size={10} className="mx-auto text-slate-300" />;
+                                        const limit = item.limits?.[tier.toLowerCase()];
+                                        return limit !== undefined ? `${limit}` : <Zap size={10} className="mx-auto text-yellow-500 fill-yellow-500" />;
+                                    };
+
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => {
+                                                setIsOpen(false);
+                                                if (onNavigate && item.path) onNavigate(item.path);
+                                            }}
+                                            className={`grid grid-cols-12 gap-2 p-3 border-b border-slate-50 items-center hover:bg-slate-50 transition-colors cursor-pointer ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
+                                        >
+                                            {/* Feature Name */}
+                                            <div className="col-span-5 flex items-center gap-2">
+                                                <div className={`p-1.5 rounded-lg ${item.color ? `bg-${item.color}-100 text-${item.color}-600` : 'bg-slate-100 text-slate-500'}`}>
+                                                    <Icon size={14} />
                                                 </div>
-                                            )}
-                                        </div>
+                                                <span className="text-xs font-bold text-slate-700 leading-tight line-clamp-2">{item.label}</span>
+                                            </div>
 
-                                        <div className="flex flex-col items-center w-full">
-                                            <span className="text-[10px] font-bold text-slate-700 text-center leading-tight line-clamp-1 mb-1">{item.label}</span>
+                                            {/* Free Tier */}
+                                            <div className="col-span-2 text-center text-[10px] font-bold text-slate-600">
+                                                {getLimit('FREE')}
+                                            </div>
 
-                                            {/* INFO ROW: TIERS & COST */}
-                                            <div className="flex flex-wrap justify-center gap-1 w-full px-1">
-                                                {getTierBadge()}
-                                                {item.creditCost > 0 && (
-                                                    <span className="text-[8px] bg-yellow-100 text-yellow-800 px-1 rounded flex items-center gap-0.5">
-                                                        <Zap size={6} fill="currentColor" /> {item.creditCost}
-                                                    </span>
-                                                )}
+                                            {/* Basic Tier */}
+                                            <div className="col-span-2 text-center text-[10px] font-bold text-slate-600 bg-blue-50/30 py-1 rounded">
+                                                {getLimit('BASIC')}
+                                            </div>
+
+                                            {/* Ultra Tier */}
+                                            <div className="col-span-3 text-center text-[10px] font-bold text-slate-600 bg-purple-50/30 py-1 rounded flex items-center justify-center gap-1">
+                                                {getLimit('ULTRA')}
+                                                {item.creditCost > 0 && <span className="text-[8px] bg-yellow-100 text-yellow-800 px-1 rounded border border-yellow-200">{item.creditCost}cr</span>}
                                             </div>
                                         </div>
-                                    </button>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         {/* Footer / Tip */}

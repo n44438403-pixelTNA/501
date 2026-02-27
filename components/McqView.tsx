@@ -743,87 +743,51 @@ export const McqView: React.FC<Props> = ({
            )}
 
            {/* FREE PRACTICE */}
-           {(() => {
-               const access = checkFeatureAccess('MCQ_FREE', user, settings || {});
-               const isLocked = !access.hasAccess && access.reason === 'FEED_LOCKED';
-
-               return (
-                   <button
-                       onClick={() => {
-                           if (isLocked) {
-                               setAlertConfig({isOpen: true, title: "Locked", message: "Free Practice is currently disabled by Admin."});
-                               return;
-                           }
-                           handleStart('PRACTICE');
-                       }}
-                       disabled={loading}
-                       className={`w-full p-6 rounded-3xl border-2 transition-all group text-left relative overflow-hidden ${
-                           isLocked
-                           ? 'bg-slate-100 border-slate-200 opacity-60 grayscale cursor-not-allowed'
-                           : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50'
-                       }`}
-                   >
-                       <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                           <HelpCircle size={80} className="text-blue-600" />
-                       </div>
-                       <div className="relative z-10">
-                           <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 relative">
-                               <CheckCircle size={24} />
-                               {isLocked && <div className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full"><Lock size={12}/></div>}
-                           </div>
-                           <h4 className="text-xl font-black text-slate-800 mb-1">Free Practice</h4>
-                           <p className="text-sm text-slate-500 mb-4">
-                               {user.subscriptionTier !== 'FREE' ? 'Unlimited Standard Practice' : 'Basic practice mode. Analysis costs 20 Coins.'}
-                           </p>
-                           <span className={`px-4 py-2 rounded-lg text-xs font-bold shadow-lg ${isLocked ? 'bg-slate-400 text-white' : 'bg-blue-600 text-white shadow-blue-200'}`}>
-                               {isLocked ? 'LOCKED' : 'START NOW'}
-                           </span>
-                       </div>
-                   </button>
-               );
-           })()}
+           <button
+               onClick={() => handleStart('PRACTICE')}
+               disabled={loading}
+               className="w-full p-6 rounded-3xl border-2 border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50 transition-all group text-left relative overflow-hidden"
+           >
+               <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                   <HelpCircle size={80} className="text-blue-600" />
+               </div>
+               <div className="relative z-10">
+                   <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
+                       <CheckCircle size={24} />
+                   </div>
+                   <h4 className="text-xl font-black text-slate-800 mb-1">Free Practice</h4>
+                   <p className="text-sm text-slate-500 mb-4">
+                       {user.subscriptionTier !== 'FREE' ? 'Unlimited Standard Practice' : 'Basic practice mode. Analysis costs 20 Coins.'}
+                   </p>
+                   <span className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg shadow-blue-200">START NOW</span>
+               </div>
+           </button>
 
            {/* PREMIUM TEST */}
-           {(() => {
-               const access = checkFeatureAccess('MCQ_PREMIUM', user, settings || {});
-               // If strict feed lock, hide or lock visually. If pay-per-view, show cost.
-               const isLocked = !access.hasAccess && access.reason === 'FEED_LOCKED';
-               const cost = access.cost > 0 ? access.cost : (settings?.mcqTestCost || 0);
-
-               return (
-                   <button
-                       onClick={() => handleStart('TEST')}
-                       disabled={loading}
-                       className={`w-full p-6 rounded-3xl border-2 transition-all group text-left relative overflow-hidden ${
-                           isLocked
-                           ? 'bg-slate-100 border-slate-200 opacity-60 grayscale cursor-not-allowed'
-                           : 'bg-white border-slate-200 hover:border-purple-300 hover:bg-purple-50'
-                       }`}
-                   >
-                       <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                           <Trophy size={80} className="text-purple-600" />
-                       </div>
-                       <div className="relative z-10">
-                           <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mb-4 relative">
-                               <PlayCircle size={24} />
-                               {isLocked && <div className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full"><Lock size={12}/></div>}
-                           </div>
-                           <h4 className="text-xl font-black text-slate-800 mb-1">Premium Test</h4>
-                           <p className="text-sm text-slate-500 mb-4">
-                               Instant Explanations + Auto-Read + Full Analysis.
-                           </p>
-                           <div className="flex items-center gap-2">
-                               <span className={`px-4 py-2 rounded-lg text-xs font-bold shadow-lg ${isLocked ? 'bg-slate-400 text-white' : 'bg-purple-600 text-white shadow-purple-200'}`}>
-                                   {isLocked ? 'LOCKED' : 'START TEST'}
-                               </span>
-                               {cost > 0 && user.subscriptionTier === 'FREE' && !isLocked && (
-                                   <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-1 rounded-full">{cost} CR</span>
-                               )}
-                           </div>
-                       </div>
-                   </button>
-               );
-           })()}
+           <button
+               onClick={() => handleStart('TEST')}
+               disabled={loading}
+               className="w-full p-6 rounded-3xl border-2 border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50 transition-all group text-left relative overflow-hidden"
+           >
+               <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                   <Trophy size={80} className="text-purple-600" />
+               </div>
+               <div className="relative z-10">
+                   <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mb-4">
+                       <PlayCircle size={24} />
+                   </div>
+                   <h4 className="text-xl font-black text-slate-800 mb-1">Premium Test</h4>
+                   <p className="text-sm text-slate-500 mb-4">
+                       Instant Explanations + Auto-Read + Full Analysis.
+                   </p>
+                   <div className="flex items-center gap-2">
+                       <span className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg shadow-purple-200">START TEST</span>
+                       {(settings?.mcqTestCost || 0) > 0 && user.subscriptionTier === 'FREE' && (
+                           <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-1 rounded-full">{settings?.mcqTestCost} CR</span>
+                       )}
+                   </div>
+               </div>
+           </button>
            
            {loading && <div className="text-center py-4 text-slate-500 font-bold animate-pulse">Loading Questions...</div>}
        </div>

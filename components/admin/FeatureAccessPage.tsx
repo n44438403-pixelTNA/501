@@ -347,10 +347,10 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
                                     <div className="flex flex-wrap gap-2 mb-4">
                                         <button
                                             onClick={() => handleToggle(feature.id, 'visible')}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold text-[10px] flex-1 justify-center whitespace-nowrap ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200 border border-red-200'}`}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold text-[10px] flex-1 justify-center whitespace-nowrap ${feature.visible ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'}`}
                                         >
-                                            {feature.visible ? <ToggleRight size={14} /> : <Lock size={14} />}
-                                            {feature.visible ? 'ACTIVE' : 'LOCKED'}
+                                            {feature.visible ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                                            {feature.visible ? 'FEED' : 'MATRIX'}
                                         </button>
                                     </div>
 

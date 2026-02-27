@@ -161,8 +161,6 @@ interface ContentConfig {
 
     schoolVideoPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
     competitionVideoPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
-    schoolPremiumVideoPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
-    competitionPremiumVideoPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
     schoolAudioPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
     competitionAudioPlaylist?: {title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[];
     schoolPdfLink?: string;
@@ -588,7 +586,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       
       // 1. Save current UI state to local config
       const currentVideoField = syllabusMode === 'SCHOOL' ? 'schoolVideoPlaylist' : 'competitionVideoPlaylist';
-      const currentPremiumVideoField = syllabusMode === 'SCHOOL' ? 'schoolPremiumVideoPlaylist' : 'competitionPremiumVideoPlaylist';
       const currentAudioField = syllabusMode === 'SCHOOL' ? 'schoolAudioPlaylist' : 'competitionAudioPlaylist';
       const currentSlotsField = syllabusMode === 'SCHOOL' ? 'schoolPdfPremiumSlots' : 'competitionPdfPremiumSlots';
       const currentFreeNotesField = syllabusMode === 'SCHOOL' ? 'schoolFreeNotesList' : 'competitionFreeNotesList';
@@ -601,7 +598,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       const updatedConfig = {
           ...editConfig,
           [currentVideoField]: videoPlaylist,
-          [currentPremiumVideoField]: premiumVideoPlaylist,
           [currentAudioField]: audioPlaylist,
           [currentSlotsField]: premiumNoteSlots,
           [currentFreeNotesField]: freeNotesList,
@@ -617,8 +613,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           // @ts-ignore
           setVideoPlaylist(updatedConfig.schoolVideoPlaylist || updatedConfig.videoPlaylist || []);
           // @ts-ignore
-          setPremiumVideoPlaylist(updatedConfig.schoolPremiumVideoPlaylist || []);
-          // @ts-ignore
           setAudioPlaylist(updatedConfig.schoolAudioPlaylist || updatedConfig.audioPlaylist || []);
           // @ts-ignore
           setPremiumNoteSlots(updatedConfig.schoolPdfPremiumSlots || updatedConfig.premiumNoteSlots || []);
@@ -633,8 +627,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       } else {
           // @ts-ignore
           setVideoPlaylist(updatedConfig.competitionVideoPlaylist || []);
-          // @ts-ignore
-          setPremiumVideoPlaylist(updatedConfig.competitionPremiumVideoPlaylist || []);
           // @ts-ignore
           setAudioPlaylist(updatedConfig.competitionAudioPlaylist || []);
           // @ts-ignore
@@ -656,7 +648,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
   const [isSettingsSaving, setIsSettingsSaving] = useState(false);
   const [editConfig, setEditConfig] = useState<ContentConfig>({ freeLink: '', premiumLink: '', price: 0 });
   const [videoPlaylist, setVideoPlaylist] = useState<{title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[]>([]);
-  const [premiumVideoPlaylist, setPremiumVideoPlaylist] = useState<{title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[]>([]);
   const [audioPlaylist, setAudioPlaylist] = useState<{title: string, url: string, price?: number, access?: 'FREE' | 'BASIC' | 'ULTRA'}[]>([]);
   const [premiumNoteSlots, setPremiumNoteSlots] = useState<PremiumNoteSlot[]>([]);
 
@@ -900,7 +891,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           
           // DYNAMIC SAVE: Save current UI arrays to the correct mode-specific field
           [syllabusMode === 'SCHOOL' ? 'schoolVideoPlaylist' : 'competitionVideoPlaylist']: videoPlaylist,
-          [syllabusMode === 'SCHOOL' ? 'schoolPremiumVideoPlaylist' : 'competitionPremiumVideoPlaylist']: premiumVideoPlaylist,
           [syllabusMode === 'SCHOOL' ? 'schoolAudioPlaylist' : 'competitionAudioPlaylist']: audioPlaylist,
           [syllabusMode === 'SCHOOL' ? 'schoolPdfPremiumSlots' : 'competitionPdfPremiumSlots']: premiumNoteSlots,
           [syllabusMode === 'SCHOOL' ? 'schoolFreeNotesList' : 'competitionFreeNotesList']: freeNotesList,
@@ -1198,7 +1188,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
 
   // Clear selections when switching main tabs
   useEffect(() => {
-      if (!['SYLLABUS_MANAGER', 'CONTENT_PDF', 'CONTENT_VIDEO', 'CONTENT_MCQ', 'CONTENT_TEST', 'CONTENT_NOTES', 'BULK_UPLOAD'].includes(activeTab)) {
+      if (!['SYLLABUS_MANAGER', 'CONTENT_PDF', 'CONTENT_VIDEO', 'CONTENT_MCQ', 'CONTENT_TEST', 'CONTENT_NOTES', 'CONTENT_HTML', 'BULK_UPLOAD'].includes(activeTab)) {
           setSelSubject(null);
           setEditingChapterId(null);
       }
@@ -1875,7 +1865,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           setEditingMcqs([]);
           setEditingTestMcqs([]);
           setVideoPlaylist([]);
-          setPremiumVideoPlaylist([]);
           setAudioPlaylist([]);
           setDeepDiveEntries([]);
           setAdditionalNotes([]);
@@ -1904,7 +1893,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       // STRICT SEPARATION: Only fallback to legacy for SCHOOL mode
       if (syllabusMode === 'SCHOOL') {
           setVideoPlaylist(data.schoolVideoPlaylist || data.videoPlaylist || []);
-          setPremiumVideoPlaylist(data.schoolPremiumVideoPlaylist || []);
           setAudioPlaylist(data.schoolAudioPlaylist || data.audioPlaylist || []); 
           setPremiumNoteSlots(data.schoolPdfPremiumSlots || data.premiumNoteSlots || []);
           setFreeNotesList(data.schoolFreeNotesList || []);
@@ -1914,7 +1902,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
           setAdditionalNotes(data.schoolAdditionalNotes || data.additionalNotes || []);
       } else {
           setVideoPlaylist(data.competitionVideoPlaylist || []); // No fallback
-          setPremiumVideoPlaylist(data.competitionPremiumVideoPlaylist || []);
           setAudioPlaylist(data.competitionAudioPlaylist || []); // No fallback
           setPremiumNoteSlots(data.competitionPdfPremiumSlots || []); // No fallback
           setFreeNotesList(data.competitionFreeNotesList || []);
@@ -4511,12 +4498,12 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
       )}
 
       {/* 3. CONTENT MANAGERS (PDF, VIDEO, MCQ, TEST, IMAGE) */}
-      {['CONTENT_PDF', 'CONTENT_VIDEO', 'CONTENT_AUDIO', 'CONTENT_MCQ', 'CONTENT_TEST'].includes(activeTab) && (
+      {['CONTENT_PDF', 'CONTENT_VIDEO', 'CONTENT_AUDIO', 'CONTENT_MCQ', 'CONTENT_TEST', 'CONTENT_HTML'].includes(activeTab) && (
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 animate-in slide-in-from-right">
               <div className="flex items-center gap-4 mb-6 border-b pb-4">
                   <button onClick={() => setActiveTab('DASHBOARD')} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200"><ArrowLeft size={20} /></button>
                   <h3 className="text-xl font-black text-slate-800">
-                      {activeTab === 'CONTENT_PDF' ? 'PDF Study Material' : activeTab === 'CONTENT_VIDEO' ? 'Video Lectures' : activeTab === 'CONTENT_AUDIO' ? 'Audio Library' : activeTab === 'CONTENT_MCQ' ? 'Practice MCQs' : 'Weekly Tests - Multi-Subject'}
+                      {activeTab === 'CONTENT_PDF' ? 'PDF Study Material' : activeTab === 'CONTENT_VIDEO' ? 'Video Lectures' : activeTab === 'CONTENT_AUDIO' ? 'Audio Library' : activeTab === 'CONTENT_MCQ' ? 'Practice MCQs' : activeTab === 'CONTENT_HTML' ? 'Interactive HTML Modules' : 'Weekly Tests - Multi-Subject'}
                   </h3>
               </div>
               
@@ -4527,7 +4514,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                           {id: 'CONTENT_PDF', label: 'PDF / Notes', icon: FileText},
                           {id: 'CONTENT_VIDEO', label: 'Videos', icon: Video},
                           {id: 'CONTENT_MCQ', label: 'MCQs', icon: CheckCircle},
-                          {id: 'CONTENT_AUDIO', label: 'Audio', icon: Headphones},
+                          {id: 'CONTENT_HTML', label: 'HTML', icon: Globe},
                       ].map(tab => (
                           <button 
                               key={tab.id}
@@ -4698,7 +4685,6 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                       </div>
                                   ))}
                               </div>
-                              <button onClick={() => saveChapterContent()} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow hover:bg-blue-700 sticky bottom-0 z-10 border-2 border-white">Save All MCQs</button>
                           </div>
                       )}
                   </div>
@@ -4737,13 +4723,13 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                       <>
                           <div className="mb-4 flex gap-2 overflow-x-auto pb-2 border-b border-slate-200">
                              {/* TAB SWITCHER WITHIN EDITOR */}
-                             {['CONTENT_PDF', 'CONTENT_VIDEO', 'CONTENT_MCQ', 'CONTENT_AUDIO'].map(tab => (
+                             {['CONTENT_PDF', 'CONTENT_VIDEO', 'CONTENT_MCQ', 'CONTENT_HTML'].map(tab => (
                                  <button
                                      key={tab}
                                      onClick={() => setActiveTab(tab as any)}
                                      className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${activeTab === tab ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 border border-slate-200'}`}
                                  >
-                                     {tab === 'CONTENT_PDF' ? 'PDF' : tab === 'CONTENT_VIDEO' ? 'Videos' : tab === 'CONTENT_MCQ' ? 'MCQ' : 'Audio'}
+                                     {tab === 'CONTENT_PDF' ? 'PDF' : tab === 'CONTENT_VIDEO' ? 'Videos' : tab === 'CONTENT_MCQ' ? 'MCQ' : 'HTML Modules'}
                                  </button>
                              ))}
                           </div>
@@ -5150,11 +5136,8 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                       />
                                       <span className="text-xs font-bold text-slate-500">Hide Notes</span>
                                   </label>
-                                  <button onClick={() => generateDirectCode('NOTES', editingChapterId!)} className="px-4 bg-yellow-400 text-black font-bold py-3 rounded-xl shadow hover:bg-yellow-500 flex items-center justify-center gap-2">
-                                      <Key size={16} /> Code
-                                  </button>
+                                  <button onClick={() => saveChapterContent()} className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl shadow hover:bg-blue-700">Save PDF Links</button>
                               </div>
-                              <button onClick={() => saveChapterContent()} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow hover:bg-blue-700 sticky bottom-0 z-10 border-2 border-white">Save PDF Links</button>
                           </div>
                       )}
 
@@ -5229,84 +5212,8 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                       + Add Topic Video
                                   </button>
 
-                                  <button onClick={saveChapterContent} className="w-full mt-2 bg-purple-600 text-white font-bold py-3 rounded-xl shadow hover:bg-purple-700 transition flex items-center justify-center gap-2 sticky bottom-0 z-10 border-2 border-white">
+                                  <button onClick={saveChapterContent} className="w-full mt-2 bg-purple-600 text-white font-bold py-3 rounded-xl shadow hover:bg-purple-700 transition flex items-center justify-center gap-2">
                                       <Save size={18} /> Save Topic Videos
-                                  </button>
-                              </div>
-
-                              {/* PREMIUM SERIES MANAGER */}
-                              <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200">
-                                  <div className="flex items-center gap-2 mb-3">
-                                      <Crown size={20} className="text-yellow-600" />
-                                      <h4 className="font-bold text-yellow-900">Premium Video Series (Google Drive)</h4>
-                                  </div>
-
-                                  <p className="text-xs text-yellow-800 mb-4 bg-white p-2 rounded border border-yellow-100">
-                                      Add exclusive Premium Google Drive links here. These will appear in a special "Premium Series" section for Ultra users.
-                                  </p>
-
-                                  <div className="space-y-3 mb-4">
-                                      {premiumVideoPlaylist.map((vid, i) => (
-                                          <div key={i} className="flex flex-col gap-2 bg-white p-3 rounded-lg border border-yellow-100 shadow-sm">
-                                              <div className="flex flex-wrap gap-2 items-center">
-                                                  <span className="w-8 text-center text-xs font-bold text-yellow-500 bg-yellow-50 rounded py-2">{i + 1}</span>
-
-                                                  <input
-                                                      type="text"
-                                                      value={vid.title || ''}
-                                                      onChange={(e) => {
-                                                          const updated = [...premiumVideoPlaylist];
-                                                          updated[i] = {...updated[i], title: e.target.value};
-                                                          setPremiumVideoPlaylist(updated);
-                                                      }}
-                                                      placeholder="Episode Title"
-                                                      className="flex-1 min-w-[150px] p-2 border border-slate-200 rounded text-xs font-bold focus:border-yellow-400 focus:ring-1 focus:ring-yellow-200"
-                                                  />
-
-                                                  <button
-                                                      onClick={() => generateDirectCode('VIDEO', `${editingChapterId}_prem_${i}`)}
-                                                      className="p-2 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200"
-                                                      title="Generate Unlock Code"
-                                                  >
-                                                      <Key size={16} />
-                                                  </button>
-
-                                                  <button
-                                                      onClick={() => {
-                                                          const updated = premiumVideoPlaylist.filter((_, idx) => idx !== i);
-                                                          setPremiumVideoPlaylist(updated);
-                                                      }}
-                                                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                  >
-                                                      <Trash2 size={16} />
-                                                  </button>
-                                              </div>
-
-                                              <input
-                                                  type="text"
-                                                  value={vid.url || ''}
-                                                  onChange={(e) => {
-                                                      const updated = [...premiumVideoPlaylist];
-                                                      updated[i] = {...updated[i], url: e.target.value};
-                                                      setPremiumVideoPlaylist(updated);
-                                                  }}
-                                                  placeholder="Google Drive Link (e.g. drive.google.com/file/...)"
-                                                  className="w-full p-2 border border-slate-200 rounded text-xs font-mono text-blue-600 bg-slate-50 focus:bg-white transition-colors"
-                                              />
-                                          </div>
-                                      ))}
-                                  </div>
-
-                                  <div className="flex gap-2">
-                                      <button
-                                          onClick={() => setPremiumVideoPlaylist([...premiumVideoPlaylist, {title: '', url: '', price: 10, access: 'ULTRA'}])}
-                                          className="flex-1 py-3 bg-white border-2 border-dashed border-yellow-300 text-yellow-700 font-bold rounded-xl hover:bg-yellow-50 transition-all"
-                                      >
-                                          + Add Premium Video
-                                      </button>
-                                  </div>
-                                  <button onClick={saveChapterContent} className="w-full mt-2 bg-yellow-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-yellow-700 transition-all flex items-center justify-center gap-2 sticky bottom-0 z-10 border-2 border-white">
-                                      <Save size={18} /> Save Premium Series
                                   </button>
                               </div>
 
@@ -5563,17 +5470,82 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                       />
                                       <span className="text-xs font-bold text-slate-500">Hide Audio</span>
                                   </label>
-                                  <button onClick={() => generateDirectCode('AUDIO', editingChapterId!)} className="px-4 bg-yellow-400 text-black font-bold py-3 rounded-xl shadow hover:bg-yellow-500 flex items-center justify-center gap-2">
-                                      <Key size={16} /> Code
+                                  <button onClick={saveChapterContent} className="flex-1 bg-pink-600 text-white font-bold py-3 rounded-xl shadow hover:bg-pink-700 transition">
+                                      💾 Save Audio Playlist
                                   </button>
                               </div>
-
-                              <button onClick={saveChapterContent} className="w-full bg-pink-600 text-white font-bold py-3 rounded-xl shadow hover:bg-pink-700 transition sticky bottom-0 z-10 border-2 border-white">
-                                  💾 Save Audio Playlist
-                              </button>
                           </div>
                       )}
 
+                      {/* HTML MODULES EDITOR */}
+                      {activeTab === 'CONTENT_HTML' && (
+                          <div className="space-y-6 bg-gradient-to-br from-indigo-50 to-cyan-50 p-6 rounded-xl border border-indigo-200">
+                              <div className="flex items-center gap-2 mb-3">
+                                  <Globe size={20} className="text-indigo-600" />
+                                  <h4 className="font-bold text-indigo-900">Interactive HTML Modules (10 Slots)</h4>
+                              </div>
+                              <p className="text-xs text-indigo-700 mb-4 bg-white p-2 rounded border border-indigo-100">
+                                  Enter Google Drive Link for HTML file. Must be shared publicly.
+                              </p>
+
+                              <div className="space-y-3">
+                                  {Array.from({length: 10}).map((_, i) => {
+                                      const modules = editConfig.htmlModules || [];
+                                      const mod = modules[i] || { id: `html-${i}`, title: '', url: '', price: 5, access: 'BASIC' };
+
+                                      const updateModule = (field: string, val: any) => {
+                                          const newModules = [...modules];
+                                          while(newModules.length <= i) {
+                                              newModules.push({ id: `html-${newModules.length}`, title: '', url: '', price: 5, access: 'BASIC' });
+                                          }
+                                          newModules[i] = { ...newModules[i], [field]: val };
+                                          setEditConfig({ ...editConfig, htmlModules: newModules });
+                                      };
+
+                                      return (
+                                          <div key={i} className="flex flex-col gap-2 bg-white p-3 rounded-lg border border-indigo-100">
+                                              <div className="flex gap-2 items-center">
+                                                  <span className="w-8 text-center text-xs font-bold text-indigo-500 bg-indigo-50 rounded py-2">{i + 1}</span>
+                                                  <input
+                                                      type="text"
+                                                      value={mod.title}
+                                                      onChange={e => updateModule('title', e.target.value)}
+                                                      placeholder={`Module Title (e.g. Lab ${i+1})`}
+                                                      className="flex-1 p-2 border border-slate-200 rounded text-xs font-bold"
+                                                  />
+                                                  <select
+                                                      value={mod.access}
+                                                      onChange={e => updateModule('access', e.target.value)}
+                                                      className="w-24 p-2 border border-slate-200 rounded text-xs bg-slate-50"
+                                                  >
+                                                      <option value="FREE">Free</option>
+                                                      <option value="BASIC">Basic</option>
+                                                      <option value="ULTRA">Ultra</option>
+                                                  </select>
+                                                  <div className="w-16">
+                                                      <input
+                                                          type="number"
+                                                          value={mod.price}
+                                                          onChange={e => updateModule('price', Number(e.target.value))}
+                                                          className="w-full p-2 border border-slate-200 rounded text-xs text-center font-bold"
+                                                          placeholder="Price"
+                                                      />
+                                                  </div>
+                                              </div>
+                                              <input
+                                                  type="text"
+                                                  value={mod.url}
+                                                  onChange={e => updateModule('url', e.target.value)}
+                                                  placeholder="Google Drive Link (e.g. https://drive.google.com/file/...)"
+                                                  className="w-full p-2 border border-slate-200 rounded text-xs font-mono text-blue-600"
+                                              />
+                                          </div>
+                                      );
+                                  })}
+                              </div>
+                              <button onClick={() => saveChapterContent()} className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-700 transition">💾 Save HTML Modules</button>
+                          </div>
+                      )}
 
 
                       {/* MCQ / TEST EDITOR */}
@@ -5809,9 +5781,7 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                           />
                                           <span className="text-xs font-bold text-slate-500">Hide</span>
                                       </label>
-                                      <button onClick={() => generateDirectCode('MCQ', editingChapterId!)} className="px-3 bg-yellow-400 text-black font-bold py-1.5 rounded-lg shadow hover:bg-yellow-500 flex items-center justify-center gap-2 text-xs">
-                                          <Key size={14} /> Code
-                                      </button>
+                                      <button onClick={() => saveChapterContent()} className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow hover:bg-blue-700">Save All</button>
                                   </div>
                               </div>
                               

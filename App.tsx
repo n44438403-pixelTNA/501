@@ -742,13 +742,13 @@ const App: React.FC = () => {
       const loggedInUserStr = localStorage.getItem('nst_current_user');
       const today = new Date().toDateString();
 
-      if (loggedInUserStr) {
-          // 3. Daily Challenge (Once per day)
-          const lastChallenge = localStorage.getItem('nst_last_daily_challenge_date');
-          if (lastChallenge !== today) {
-              queue.push('CHALLENGE');
-          }
-      }
+      // DAILY CHALLENGE POPUP REMOVED AS PER REQUEST
+      // if (loggedInUserStr) {
+      //     const lastChallenge = localStorage.getItem('nst_last_daily_challenge_date');
+      //     if (lastChallenge !== today) {
+      //         queue.push('CHALLENGE');
+      //     }
+      // }
 
       // 4. Welcome (Once per install) - DISABLED
       const hasSeenWelcome = localStorage.getItem('nst_has_seen_welcome');

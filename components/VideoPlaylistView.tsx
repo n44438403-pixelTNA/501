@@ -345,8 +345,8 @@ export const VideoPlaylistView: React.FC<Props> = ({
                        // NEW: Granular Access Logic
                        let isFree = user.role === 'ADMIN';
 
-                       // 1. Automatic "First 2 Videos Free" Rule
-                       if (idx < 2) isFree = true;
+                       // 1. Automatic "First 2 Videos Free" Rule - ONLY if not Ultra
+                       if (idx < 2 && vid.access !== 'ULTRA') isFree = true;
 
                        // 2. Check Explicit Access Level
                        if (!isFree) {
@@ -358,9 +358,13 @@ export const VideoPlaylistView: React.FC<Props> = ({
                                    isFree = true;
                                }
                            } else {
-                               // ULTRA (Default)
+                               // ULTRA (Default if undefined or explicit)
                                // NEW RULE: Ultra content requires Ultra Level OR Year/Lifetime Tier
-                               if (user.isPremium && (user.subscriptionLevel === 'ULTRA' || user.subscriptionTier === 'YEARLY' || user.subscriptionTier === 'LIFETIME')) {
+                               // OR if Chapter is UNIVERSAL (Special Exception)
+                               if (
+                                   (user.isPremium && (user.subscriptionLevel === 'ULTRA' || user.subscriptionTier === 'YEARLY' || user.subscriptionTier === 'LIFETIME')) ||
+                                   chapter.id === 'UNIVERSAL'
+                               ) {
                                    isFree = true;
                                }
                            }

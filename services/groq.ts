@@ -30,25 +30,30 @@ export const callGroqApi = async (messages: any[], model: string = "llama-3.1-8b
     }
 
     // Proxy call to server
-    const response = await fetch("/api/groq", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: modelToUse,
-            messages: messages
-        })
-    });
+    try {
+        const response = await fetch("/api/groq", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: modelToUse,
+                messages: messages
+            })
+        });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Groq API Error: ${response.status} - ${errorText}`);
-        return "⚠️ AI Service is currently unavailable. Please check your connection or try again later.";
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Groq API Error: ${response.status} - ${errorText}`);
+            return "⚠️ AI Service is currently unavailable. Please check your connection or try again later.";
+        }
+
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || "No response generated.";
+    } catch (error) {
+        console.error("Groq API Call Failed:", error);
+        return "⚠️ AI Service Error: Unable to connect.";
     }
-
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || "No response generated.";
 };
 
 // NEW: Tool Support

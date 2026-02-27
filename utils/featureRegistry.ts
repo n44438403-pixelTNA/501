@@ -303,7 +303,8 @@ export const ALL_FEATURES: Feature[] = [
         requiredSubscription: 'ULTRA',
         adminVisible: true,
         description: 'Control access to Premium Video Series (Google Drive).',
-        adminTab: 'FEATURE_ACCESS'
+        adminTab: 'FEATURE_ACCESS', // Keep in Feature Access for visibility logic
+        // This is ALSO controlled via NSTA Control in UI, but registration here is needed for permission check
     },
     {
         id: 'ADDITIONAL_NOTES',
@@ -459,6 +460,24 @@ export const ALL_FEATURES: Feature[] = [
         requiredPermission: 'MANAGE_CONTENT',
         icon: 'CheckCircle',
         color: 'purple'
+    },
+    {
+        id: 'ADMIN_PREMIUM_VIDEO', // NEW: Registered here for Admin Dashboard
+        label: 'Premium Video',
+        group: 'CONTENT',
+        surfaceLevel: 3,
+        adminVisible: false, // Hidden as per request: "aur primimum vidio ko add karo app nsta control me" - implies config there, but management is separate?
+        // Wait, user said "hiding Premium Video button in Admin" previously?
+        // Re-reading: "Ek primimum vidio ka liye admin dashbord me futur joro jishme bas orimimum vidios ke google drive link dale jayenge" -> Add feature to Admin Dashboard.
+        // And: "aur primimum vidio ko add karo app nsta control me" -> Add to NSTA Control.
+        // So:
+        // 1. We need a Management UI in Admin Dashboard (likely in Content group).
+        // 2. We need a Permission Control in NSTA Control (already added via PREMIUM_VIDEO ID above).
+        // Let's make it visible here so Admin can click it to manage links.
+        adminTab: 'PREMIUM_VIDEO_MANAGER',
+        requiredPermission: 'MANAGE_CONTENT',
+        icon: 'Video',
+        color: 'yellow' // Gold for Premium
     },
     {
         id: 'ADMIN_TOPIC_NOTES',

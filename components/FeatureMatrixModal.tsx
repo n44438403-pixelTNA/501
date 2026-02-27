@@ -111,7 +111,9 @@ export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings,
                                     {feature.label}
                                 </div>
                                 <div className="p-4 flex items-center justify-center text-xs font-medium text-slate-600 border-r border-slate-50 text-center">
-                                    {getLimitDisplay(feature, 'free')}
+                                    {/* HIDDEN IN MATRIX - REMOVE THIS */}
+                                    {/* {getLimitDisplay(feature, 'free')} */}
+                                    <span className="text-[10px] text-slate-400 font-bold">Standard</span>
                                 </div>
                                 <div className="p-4 flex items-center justify-center text-xs font-bold bg-blue-50/10 border-r border-slate-50 text-center">
                                     {getLimitDisplay(feature, 'basic')}

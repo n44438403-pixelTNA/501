@@ -44,7 +44,13 @@ export const NstaFeatureManager: React.FC<Props> = ({ settings, onUpdateSettings
             ...settings,
             featureConfig: featureConfigMap
         };
+
+        // Ensure parent component receives update immediately
         onUpdateSettings(updatedSettings);
+
+        // Also persist locally as fallback
+        localStorage.setItem('nst_system_settings', JSON.stringify(updatedSettings));
+
         alert("NSTA Configuration Saved Successfully!");
     };
 

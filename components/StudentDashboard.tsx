@@ -1243,7 +1243,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                             </button>
                         </div>
 
-                        <Button onClick={() => setEditMode(true)} variant="outline" fullWidth>✏️ Edit Profile</Button>
+                        <Button onClick={() => { setShowSidebar(false); setEditMode(true); }} variant="outline" fullWidth>✏️ Edit Profile</Button>
                         <Button
                             onClick={() => {
                                 handleUserUpdate(user); // Force sync before logout

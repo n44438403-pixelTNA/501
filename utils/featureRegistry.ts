@@ -291,7 +291,7 @@ export const ALL_FEATURES: Feature[] = [
         group: 'CONTENT',
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',
-        adminVisible: true,
+        adminVisible: false,
         description: 'Control access to Premium (PDF+TTS) notes.',
         adminTab: 'FEATURE_ACCESS'
     },
@@ -311,7 +311,7 @@ export const ALL_FEATURES: Feature[] = [
         group: 'CONTENT',
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',
-        adminVisible: true,
+        adminVisible: false,
         description: 'Control access to Additional Resources tab.',
         adminTab: 'FEATURE_ACCESS'
     },

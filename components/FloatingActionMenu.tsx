@@ -45,17 +45,23 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
 
     // Dynamic Menu Items from NSTA Control
     const dynamicMenuItems = useMemo(() => {
+        // STRICT NSTA CONTROL: Only show items that are explicitly configured in NSTA Control
+        if (!settings.featureConfig) return [];
+
         return ALL_FEATURES.filter(f => {
-            // 1. Filter by Surface Level (2 = Tools/Extras) or specifically SOUL features
-            const isRelevant = f.surfaceLevel === 2 || f.group === 'SOUL' || f.group === 'GAME' || f.group === 'AI';
-            if (!isRelevant) return false;
-
-            // 2. Check Visibility via NSTA Control (settings.featureConfig)
-            // If strictly hidden in config, don't show.
             const config = settings.featureConfig?.[f.id];
-            if (config && config.visible === false) return false;
 
-            return true;
+            // 1. Must exist in NSTA Config AND be visible
+            if (!config || config.visible === false) return false;
+
+            // 2. Filter by relevant groups (Tools, Soul, Game, AI, Content)
+            const isRelevant = f.surfaceLevel === 2 || f.group === 'SOUL' || f.group === 'GAME' || f.group === 'AI' || f.group === 'CONTENT' || f.group === 'REVISION';
+
+            return isRelevant;
+        }).map(f => {
+            // Merge config into feature object for easy access
+            const config = settings.featureConfig?.[f.id];
+            return { ...f, ...config };
         });
     }, [settings.featureConfig]);
 
@@ -250,6 +256,14 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
                                 const access = checkFeatureAccess(item.id, user, settings);
                                 const isLocked = !access.hasAccess;
 
+                                // Helper to format tiers
+                                const getTierBadge = () => {
+                                    if (item.allowedTiers?.includes('FREE')) return <span className="text-[8px] bg-green-100 text-green-700 px-1 rounded">FREE</span>;
+                                    if (item.allowedTiers?.includes('BASIC')) return <span className="text-[8px] bg-blue-100 text-blue-700 px-1 rounded">BASIC</span>;
+                                    if (item.allowedTiers?.includes('ULTRA')) return <span className="text-[8px] bg-purple-100 text-purple-700 px-1 rounded">ULTRA</span>;
+                                    return null;
+                                };
+
                                 return (
                                     <button
                                         key={item.id}
@@ -262,17 +276,30 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
                                             if (onNavigate && item.path) onNavigate(item.path);
                                             else console.log("Navigate to", item.id);
                                         }}
-                                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all group ${isLocked ? 'bg-slate-50 border-slate-100 opacity-60 grayscale' : 'bg-white border-slate-200 hover:border-indigo-200 hover:shadow-md'}`}
+                                        className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition-all group relative overflow-hidden ${isLocked ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 hover:border-indigo-200 hover:shadow-md'}`}
                                     >
                                         <div className="relative w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center shadow-sm text-slate-600 group-hover:scale-110 transition-transform group-hover:bg-indigo-50 group-hover:text-indigo-600">
-                                            <Icon size={20} />
+                                            <Icon size={18} />
                                             {isLocked && (
                                                 <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 border border-white">
                                                     <Lock size={8} className="text-white" />
                                                 </div>
                                             )}
                                         </div>
-                                        <span className="text-[10px] font-bold text-slate-700 text-center leading-tight line-clamp-2">{item.label}</span>
+
+                                        <div className="flex flex-col items-center w-full">
+                                            <span className="text-[10px] font-bold text-slate-700 text-center leading-tight line-clamp-1 mb-1">{item.label}</span>
+
+                                            {/* INFO ROW: TIERS & COST */}
+                                            <div className="flex flex-wrap justify-center gap-1 w-full px-1">
+                                                {getTierBadge()}
+                                                {item.creditCost > 0 && (
+                                                    <span className="text-[8px] bg-yellow-100 text-yellow-800 px-1 rounded flex items-center gap-0.5">
+                                                        <Zap size={6} fill="currentColor" /> {item.creditCost}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </button>
                                 );
                             })}

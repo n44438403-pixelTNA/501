@@ -326,6 +326,17 @@ export const ALL_FEATURES: Feature[] = [
 
 
     // --- ADMIN DASHBOARD FEATURES (Mapped to Admin Tabs) ---
+    {
+        id: 'ADMIN_APP_SOUL',
+        label: 'App Soul',
+        group: 'SOUL',
+        surfaceLevel: 3,
+        adminVisible: false, // HIDDEN FROM FEATURE ACCESS PAGE (As requested)
+        adminTab: 'APP_SOUL',
+        requiredPermission: 'MANAGE_SETTINGS',
+        icon: 'Hexagon',
+        color: 'violet'
+    },
     // GROUP: CORE ADMIN
     {
         id: 'ADMIN_USERS',
@@ -742,17 +753,6 @@ export const ALL_FEATURES: Feature[] = [
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'BookOpen',
         color: 'teal'
-    },
-    {
-        id: 'ADMIN_APP_SOUL',
-        label: 'App Soul',
-        group: 'SOUL',
-        surfaceLevel: 3,
-        adminVisible: false,
-        adminTab: 'APP_SOUL',
-        requiredPermission: 'MANAGE_SETTINGS',
-        icon: 'Hexagon',
-        color: 'violet'
     },
 
     // --- ANALYSIS DUMMIES (Not switchable individually) ---

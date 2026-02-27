@@ -193,28 +193,7 @@ export const FeatureAccessPage: React.FC<Props> = ({ settings, onUpdateSettings,
     // Extract Categories
     const categories = ['ALL', ...Array.from(new Set(mergedFeatures.map(f => f.category))).sort()];
 
-    // Mapping of Feature IDs to the "App Soul" list - THESE ARE HIDDEN FROM HERE
-    const SOUL_FEATURES = [
-        'QUICK_REVISION',
-        'DEEP_DIVE',
-        'PREMIUM_NOTES',
-        'ADDITIONAL_NOTES',
-        'VIDEO_ACCESS',
-        'MCQ_FREE',
-        'MCQ_PREMIUM',
-        'AUDIO_LIBRARY',
-        'REVISION_HUB_FREE',
-        'REVISION_HUB_PREMIUM',
-        'AI_STUDIO',
-        'MY_ANALYSIS',
-        'TOPIC_CONTENT',
-        'REQUEST_CONTENT'
-    ];
-
     const filteredFeatures = mergedFeatures.filter(f => {
-        // 0. EXCLUDE SOUL FEATURES (Managed in App Soul Tab)
-        if (SOUL_FEATURES.includes(f.id)) return false;
-
         // 1. FILTER BY MODE (STRICT SEPARATION)
         if (configMode === 'STUDENT' && f.adminVisible) return false;
         if (configMode === 'SUB_ADMIN' && !f.adminVisible) return false;

@@ -565,7 +565,9 @@ export const DEFAULT_PLAN_COMPARISON = [
         features: [
             { id: 'MS_ANALYSIS_DET', name: "Detailed Analysis", free: "❌ Paid (20 Cr)", basic: "✅ Free", ultra: "✅ Free" },
             { id: 'MS_OFFICIAL', name: "Official Marksheet", free: "✅ Yes", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'MS_MISTAKES_REV', name: "Mistakes Review", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+            { id: 'MS_MISTAKES', name: "Mistakes Review", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
+            { id: 'MS_OMR', name: "OMR Sheet", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
+            { id: 'MS_RECOMMEND', name: "Recommended Notes", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
             { id: 'GUEST', name: "Guest Mode", free: "✅ Yes", basic: "❌ No", ultra: "❌ No" },
             { id: 'DEVICE_LIMIT', name: "Device Login Limit", free: "1 Device", basic: "1 Device", ultra: "Multi-Device" },
             { id: 'GHOST', name: "Ghost Login (Admin)", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },

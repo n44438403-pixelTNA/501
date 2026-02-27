@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SystemSettings, User } from '../types';
-// import { FeatureMatrixModal } from './FeatureMatrixModal';
-import { Crown, User as UserIcon, ShoppingBag, X, Zap, Menu, ChevronUp } from 'lucide-react';
+import { ALL_FEATURES, Feature } from '../utils/featureRegistry';
+import { checkFeatureAccess } from '../utils/permissionUtils';
+import { Crown, User as UserIcon, ShoppingBag, X, Zap, Menu, ChevronUp, Book, CheckSquare, BrainCircuit, BarChart3, AlertCircle, PlayCircle, Sparkles, Wrench, Gamepad2, Trophy, Shield, Gift, Terminal, MessageSquare, FileText, Video, Headphones, Lock } from 'lucide-react';
 
 interface Props {
     settings: SystemSettings;
@@ -9,12 +10,54 @@ interface Props {
     isFlashSaleActive?: boolean;
     onOpenProfile: () => void;
     onOpenStore: () => void;
+    onNavigate?: (path: string) => void;
 }
 
-export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSaleActive, onOpenProfile, onOpenStore }) => {
+// Icon Mapper
+const getIconComponent = (iconName?: string) => {
+    switch(iconName) {
+        case 'Book': return Book;
+        case 'CheckSquare': return CheckSquare;
+        case 'BrainCircuit': return BrainCircuit;
+        case 'BarChart3': return BarChart3;
+        case 'AlertCircle': return AlertCircle;
+        case 'PlayCircle': return PlayCircle;
+        case 'Sparkles': return Sparkles;
+        case 'Wrench': return Wrench;
+        case 'Gamepad2': return Gamepad2;
+        case 'Trophy': return Trophy;
+        case 'Crown': return Crown;
+        case 'Shield': return Shield;
+        case 'Gift': return Gift;
+        case 'Terminal': return Terminal;
+        case 'MessageSquare': return MessageSquare;
+        case 'FileText': return FileText;
+        case 'Video': return Video;
+        case 'Headphones': return Headphones;
+        default: return Zap;
+    }
+};
+
+export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSaleActive, onOpenProfile, onOpenStore, onNavigate }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [showPlanModal, setShowPlanModal] = useState(false);
+    // const [showPlanModal, setShowPlanModal] = useState(false); // Unused
     const [position, setPosition] = useState({ x: window.innerWidth - 80, y: window.innerHeight - 200 });
+
+    // Dynamic Menu Items from NSTA Control
+    const dynamicMenuItems = useMemo(() => {
+        return ALL_FEATURES.filter(f => {
+            // 1. Filter by Surface Level (2 = Tools/Extras) or specifically SOUL features
+            const isRelevant = f.surfaceLevel === 2 || f.group === 'SOUL' || f.group === 'GAME' || f.group === 'AI';
+            if (!isRelevant) return false;
+
+            // 2. Check Visibility via NSTA Control (settings.featureConfig)
+            // If strictly hidden in config, don't show.
+            const config = settings.featureConfig?.[f.id];
+            if (config && config.visible === false) return false;
+
+            return true;
+        });
+    }, [settings.featureConfig]);
 
     // Drag Refs
     const isDraggingRef = useRef(false);
@@ -178,28 +221,61 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
                         </div>
 
                         {/* Menu Grid */}
-                        <div className="grid grid-cols-2 gap-4">
-                            {/* STORE */}
+                        <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto p-1">
+                            {/* FIXED: STORE */}
                             <button
                                 onClick={() => { setIsOpen(false); onOpenStore(); }}
-                                className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors group"
+                                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors group"
                             >
-                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-600 group-hover:scale-110 transition-transform">
-                                    <ShoppingBag size={24} />
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-600 group-hover:scale-110 transition-transform">
+                                    <ShoppingBag size={20} />
                                 </div>
-                                <span className="text-xs font-bold text-blue-900">Credit Store</span>
+                                <span className="text-[10px] font-bold text-blue-900 text-center leading-tight">Store</span>
                             </button>
 
-                            {/* PROFILE */}
+                            {/* FIXED: PROFILE */}
                             <button
                                 onClick={() => { setIsOpen(false); onOpenProfile(); }}
-                                className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors group"
+                                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors group"
                             >
-                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-600 group-hover:scale-110 transition-transform">
-                                    <UserIcon size={24} />
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-600 group-hover:scale-110 transition-transform">
+                                    <UserIcon size={20} />
                                 </div>
-                                <span className="text-xs font-bold text-slate-900">Profile</span>
+                                <span className="text-[10px] font-bold text-slate-900 text-center leading-tight">Profile</span>
                             </button>
+
+                            {/* DYNAMIC ITEMS */}
+                            {dynamicMenuItems.map(item => {
+                                const Icon = getIconComponent(item.icon);
+                                const access = checkFeatureAccess(item.id, user, settings);
+                                const isLocked = !access.hasAccess;
+
+                                return (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => {
+                                            if (isLocked) {
+                                                alert(`Locked: ${access.reason}`);
+                                                return;
+                                            }
+                                            setIsOpen(false);
+                                            if (onNavigate && item.path) onNavigate(item.path);
+                                            else console.log("Navigate to", item.id);
+                                        }}
+                                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all group ${isLocked ? 'bg-slate-50 border-slate-100 opacity-60 grayscale' : 'bg-white border-slate-200 hover:border-indigo-200 hover:shadow-md'}`}
+                                    >
+                                        <div className="relative w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center shadow-sm text-slate-600 group-hover:scale-110 transition-transform group-hover:bg-indigo-50 group-hover:text-indigo-600">
+                                            <Icon size={20} />
+                                            {isLocked && (
+                                                <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 border border-white">
+                                                    <Lock size={8} className="text-white" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-700 text-center leading-tight line-clamp-2">{item.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         {/* Footer / Tip */}

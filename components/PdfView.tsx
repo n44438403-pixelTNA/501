@@ -115,6 +115,7 @@ export const PdfView: React.FC<Props> = ({
   
   // NEW: TAB STATE
   const [activeTab, setActiveTab] = useState<'QUICK' | 'DEEP_DIVE' | 'PREMIUM' | 'RESOURCES'>('QUICK');
+  const [sessionUnlockedTabs, setSessionUnlockedTabs] = useState<string[]>([]);
   const [quickRevisionPoints, setQuickRevisionPoints] = useState<string[]>([]);
   const [currentPremiumEntryIdx, setCurrentPremiumEntryIdx] = useState(0);
 
@@ -139,6 +140,29 @@ export const PdfView: React.FC<Props> = ({
 
   // TTS STATE (Global)
   const [speechRate, setSpeechRate] = useState(1.0);
+
+  const getFeatureIdForTab = (tab: string) => {
+      switch(tab) {
+          case 'QUICK': return 'QUICK_REVISION';
+          case 'DEEP_DIVE': return 'DEEP_DIVE';
+          case 'PREMIUM': return 'PREMIUM_NOTES';
+          case 'RESOURCES': return 'ADDITIONAL_NOTES';
+          default: return 'QUICK_REVISION';
+      }
+  };
+
+  const getTabAccess = (tabId: string) => {
+      // 1. Admin / Bypass
+      if (user.role === 'ADMIN') return { hasAccess: true, cost: 0, reason: 'ADMIN' };
+      if (user.unlockedContent && user.unlockedContent.includes(chapter.id)) return { hasAccess: true, cost: 0, reason: 'CHAPTER_UNLOCKED' };
+
+      // 2. Session Unlock
+      if (sessionUnlockedTabs.includes(tabId)) return { hasAccess: true, cost: 0, reason: 'SESSION_UNLOCKED' };
+
+      // 3. Feature Config Check
+      const featureId = getFeatureIdForTab(tabId);
+      return checkFeatureAccess(featureId, user, settings || {});
+  };
   
   const stopAllSpeech = () => {
       stopSpeech();
@@ -461,6 +485,22 @@ export const PdfView: React.FC<Props> = ({
           setAlertConfig({isOpen: true, message: `Insufficient Credits! You need ${price} coins.`});
           return;
       }
+
+      // Handle Tab Unlock
+      if (targetContent.startsWith('UNLOCK_TAB_')) {
+          const tabId = targetContent.replace('UNLOCK_TAB_', '');
+          setSessionUnlockedTabs(prev => [...prev, tabId]);
+
+          let updatedUser = { ...user, credits: user.credits - price };
+          if (enableAuto) updatedUser.isAutoDeductEnabled = true;
+          localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
+          saveUserToLive(updatedUser);
+          onUpdateUser(updatedUser);
+
+          setPendingPdf(null);
+          return;
+      }
+
       let updatedUser = { ...user, credits: user.credits - price };
       if (enableAuto) updatedUser.isAutoDeductEnabled = true;
       
@@ -637,31 +677,17 @@ export const PdfView: React.FC<Props> = ({
                    { id: 'PREMIUM', label: 'Retention', icon: Crown },
                    { id: 'RESOURCES', label: 'Extended', icon: Layers }
                        ].map(tab => {
-                           // Feature Access Check for Tabs
-                           let isLocked = false;
-                           if (tab.id === 'DEEP_DIVE') {
-                               const access = checkFeatureAccess('DEEP_DIVE', user, settings || {});
-                               isLocked = !access.hasAccess && access.cost === 0; // Only visually lock if completely blocked (not pay-per-view)
-                           } else if (tab.id === 'PREMIUM') {
-                               const access = checkFeatureAccess('PREMIUM_NOTES', user, settings || {});
-                               isLocked = !access.hasAccess && access.cost === 0;
-                           } else if (tab.id === 'RESOURCES') {
-                               const access = checkFeatureAccess('ADDITIONAL_NOTES', user, settings || {});
-                               isLocked = !access.hasAccess && access.cost === 0;
-                           }
+                           const { hasAccess, cost } = getTabAccess(tab.id);
+                           const isLocked = !hasAccess;
 
                            return (
                                <button
                                    key={tab.id}
                                    onClick={() => {
-                                       if (isLocked) {
-                                           setAlertConfig({isOpen: true, message: "🔒 This section is locked for your current plan."});
-                                           return;
-                                       }
                                        setActiveTab(tab.id as any);
                                        stopAllSpeech();
                                    }}
-                                   className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex flex-col items-center gap-1 border-b-2 transition-all ${activeTab === tab.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-slate-500 hover:bg-slate-50'} ${isLocked ? 'opacity-50 grayscale' : ''}`}
+                                   className={`flex-1 min-w-[100px] py-3 text-xs font-bold flex flex-col items-center gap-1 border-b-2 transition-all ${activeTab === tab.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-slate-500 hover:bg-slate-50'} ${isLocked && cost === 0 ? 'grayscale' : ''}`}
                                >
                                    <div className="relative">
                                        <tab.icon size={16} />
@@ -732,356 +758,407 @@ export const PdfView: React.FC<Props> = ({
            {/* 2. DEEP DIVE (HTML + SCROLL) */}
            {activeTab === 'DEEP_DIVE' && (
                <div className="p-4 space-y-6 max-w-2xl mx-auto">
-                   <div className="flex justify-between items-center mb-4">
-                       <p className="text-xs font-bold text-slate-500 uppercase">{deepDiveTopics.length} Sections</p>
-                       <button
-                          onClick={() => {
-                              if (isAutoPlaying) {
-                                  setIsAutoPlaying(false);
-                                  stopSpeech();
-                              } else {
-                                  setIsAutoPlaying(true);
-                                  setActiveTopicIndex(0);
-                              }
-                          }}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-bold text-xs transition-all ${isAutoPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-teal-600 text-white shadow'}`}
-                      >
-                          {isAutoPlaying ? <Pause size={12} /> : <Play size={12} />}
-                          {isAutoPlaying ? 'Stop' : 'Auto Play'}
-                      </button>
-                   </div>
-
-                   {/* FEATURE CHECK: TOPIC CONTENT VISIBILITY */}
                    {(() => {
-                       const access = checkFeatureAccess('TOPIC_CONTENT', user, settings || {});
-                       if (!access.hasAccess) {
-                           return (
-                               <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
-                                   <Lock size={48} className="mx-auto mb-4 text-slate-300" />
-                                   <h4 className="font-bold text-slate-700">Topic Breakdown Locked</h4>
-                                   <p className="text-xs text-slate-500 max-w-xs mx-auto mt-2">
-                                       {access.reason === 'FEED_LOCKED' ? 'Content hidden by Admin.' : 'Upgrade your plan to see detailed topic breakdown.'}
-                                   </p>
-                               </div>
-                           );
-                       }
-                       return null;
-                   })()}
+                        const access = getTabAccess('DEEP_DIVE');
 
-                   {deepDiveTopics.length === 0 && (
-                       <div className="text-center py-12 text-slate-400">
-                           <BookOpen size={48} className="mx-auto mb-4 opacity-20" />
-                           <p className="text-sm font-bold">No Deep Dive content available.</p>
-                       </div>
-                   )}
+                        if (!access.hasAccess) {
+                            return (
+                                <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in-95">
+                                    <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-teal-100">
+                                        <Lock size={32} className="text-teal-600" />
+                                    </div>
+                                    <h2 className="text-xl font-black text-slate-800 mb-2">Deep Dive Mode Locked</h2>
+                                    <p className="text-sm text-slate-500 max-w-xs mb-8 leading-relaxed">
+                                        {access.reason === 'FEED_LOCKED' ? 'This content is currently locked by admin.' : 'Unlock in-depth conceptual notes to master this chapter.'}
+                                    </p>
 
-                   {checkFeatureAccess('TOPIC_CONTENT', user, settings || {}).hasAccess && deepDiveTopics.map((topic, idx) => {
-                      const isActive = topicSpeakingState === idx;
-                      // Detect if it's a "Topic Breakdown" based on title pattern or just index (First is usually Chapter Deep Dive if populated)
-                      // Ideally we'd have a flag, but for now we render them all uniformly.
-                      // If the title was set explicitly in AdminDashboard, it will be used.
+                                    {access.cost > 0 ? (
+                                        <button
+                                            onClick={() => setPendingPdf({ type: 'DEEP_DIVE', price: access.cost, link: 'UNLOCK_TAB_DEEP_DIVE' })}
+                                            className="px-8 py-3 bg-teal-600 text-white font-bold rounded-xl shadow-lg hover:bg-teal-700 hover:scale-105 transition-all flex items-center gap-2"
+                                        >
+                                            <Zap size={18} /> Unlock for {access.cost} Credits
+                                        </button>
+                                    ) : (
+                                        <div className="px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-lg text-xs uppercase tracking-wider">
+                                            Upgrade Plan to Access
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
 
-                      return (
-                          <div
-                              id={`topic-card-${idx}`}
-                              key={idx}
-                              className={`bg-white rounded-2xl p-6 shadow-sm border-2 transition-all ${isActive ? 'border-teal-400 ring-2 ring-teal-100 scale-[1.01]' : 'border-transparent'}`}
-                          >
-                              <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-2">
-                                  <div>
-                                      {/* Visual Label for Separation */}
-                                      {idx === 0 && topic.title !== "Introduction" && (
-                                          <span className="text-[10px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded mb-1 inline-block">
-                                              CHAPTER DEEP DIVE
-                                          </span>
-                                      )}
-                                      {idx > 0 && (
-                                          <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded mb-1 inline-block">
-                                              TOPIC {idx}
-                                          </span>
-                                      )}
-                                      <h4 className="text-lg font-black text-slate-800">{topic.title}</h4>
-                                  </div>
-                                  <button
-                                      onClick={() => handleTopicPlay(idx)}
-                                      className={`p-2 rounded-full transition-colors ${isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600 hover:bg-teal-50 hover:text-teal-600'}`}
+                        return (
+                           <>
+                               <div className="flex justify-between items-center mb-4">
+                                   <p className="text-xs font-bold text-slate-500 uppercase">{deepDiveTopics.length} Sections</p>
+                                   <button
+                                      onClick={() => {
+                                          if (isAutoPlaying) {
+                                              setIsAutoPlaying(false);
+                                              stopSpeech();
+                                          } else {
+                                              setIsAutoPlaying(true);
+                                              setActiveTopicIndex(0);
+                                          }
+                                      }}
+                                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-bold text-xs transition-all ${isAutoPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-teal-600 text-white shadow'}`}
                                   >
-                                      {isActive ? <Pause size={20} /> : <Volume2 size={20} />}
+                                      {isAutoPlaying ? <Pause size={12} /> : <Play size={12} />}
+                                      {isAutoPlaying ? 'Stop' : 'Auto Play'}
                                   </button>
-                              </div>
-                              <div
-                                  className="prose prose-sm text-slate-600 leading-relaxed"
-                                  dangerouslySetInnerHTML={{ __html: topic.content }}
-                              />
-                          </div>
-                      );
-                  })}
+                               </div>
+
+                               {deepDiveTopics.length === 0 && (
+                                   <div className="text-center py-12 text-slate-400">
+                                       <BookOpen size={48} className="mx-auto mb-4 opacity-20" />
+                                       <p className="text-sm font-bold">No Deep Dive content available.</p>
+                                   </div>
+                               )}
+
+                               {deepDiveTopics.map((topic, idx) => {
+                                  const isActive = topicSpeakingState === idx;
+                                  return (
+                                      <div
+                                          id={`topic-card-${idx}`}
+                                          key={idx}
+                                          className={`bg-white rounded-2xl p-6 shadow-sm border-2 transition-all ${isActive ? 'border-teal-400 ring-2 ring-teal-100 scale-[1.01]' : 'border-transparent'}`}
+                                      >
+                                          <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-2">
+                                              <div>
+                                                  {idx === 0 && topic.title !== "Introduction" && (
+                                                      <span className="text-[10px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded mb-1 inline-block">
+                                                          CHAPTER DEEP DIVE
+                                                      </span>
+                                                  )}
+                                                  {idx > 0 && (
+                                                      <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded mb-1 inline-block">
+                                                          TOPIC {idx}
+                                                      </span>
+                                                  )}
+                                                  <h4 className="text-lg font-black text-slate-800">{topic.title}</h4>
+                                              </div>
+                                              <button
+                                                  onClick={() => handleTopicPlay(idx)}
+                                                  className={`p-2 rounded-full transition-colors ${isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600 hover:bg-teal-50 hover:text-teal-600'}`}
+                                              >
+                                                  {isActive ? <Pause size={20} /> : <Volume2 size={20} />}
+                                              </button>
+                                          </div>
+                                          <div
+                                              className="prose prose-sm text-slate-600 leading-relaxed"
+                                              dangerouslySetInnerHTML={{ __html: topic.content }}
+                                          />
+                                      </div>
+                                  );
+                              })}
+                           </>
+                        );
+                   })()}
                </div>
            )}
 
            {/* 3. PREMIUM NOTES (PDF + TTS) */}
            {activeTab === 'PREMIUM' && (
                <div className="h-[calc(100vh-140px)] flex flex-col">
-                   {/* ENTRY SELECTOR IF MULTIPLE */}
                    {(() => {
-                       let entries: DeepDiveEntry[] = [];
-                       if (syllabusMode === 'SCHOOL') entries = contentData?.schoolDeepDiveEntries || contentData?.deepDiveEntries || [];
-                       else entries = contentData?.competitionDeepDiveEntries || [];
+                        const access = getTabAccess('PREMIUM');
 
-                       if (entries.length <= 1) return null;
+                        if (!access.hasAccess) {
+                            return (
+                                <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in-95 bg-slate-50 h-full">
+                                    <div className="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-purple-100">
+                                        <Lock size={32} className="text-purple-600" />
+                                    </div>
+                                    <h2 className="text-xl font-black text-slate-800 mb-2">Premium Audio Slides Locked</h2>
+                                    <p className="text-sm text-slate-500 max-w-xs mb-8 leading-relaxed">
+                                        {access.reason === 'FEED_LOCKED' ? 'Content locked by admin.' : 'Visual slides with synchronized audio narration.'}
+                                    </p>
 
-                       return (
-                           <div className="bg-slate-100 p-2 flex gap-2 overflow-x-auto border-b border-slate-200">
-                               {entries.map((_: any, i: number) => (
-                                   <button
-                                       key={i}
-                                       onClick={() => {
-                                           setCurrentPremiumEntryIdx(i);
-                                           stopAllSpeech();
-                                       }}
-                                       className={`px-3 py-1 text-xs font-bold rounded-full whitespace-nowrap ${currentPremiumEntryIdx === i ? 'bg-purple-600 text-white shadow' : 'bg-white text-slate-500'}`}
-                                   >
-                                       Part {i + 1}
-                                   </button>
-                               ))}
-                           </div>
-                       );
-                   })()}
+                                    {access.cost > 0 ? (
+                                        <button
+                                            onClick={() => setPendingPdf({ type: 'PREMIUM', price: access.cost, link: 'UNLOCK_TAB_PREMIUM' })}
+                                            className="px-8 py-3 bg-purple-600 text-white font-bold rounded-xl shadow-lg hover:bg-purple-700 hover:scale-105 transition-all flex items-center gap-2"
+                                        >
+                                            <Zap size={18} /> Unlock for {access.cost} Credits
+                                        </button>
+                                    ) : (
+                                        <div className="px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-lg text-xs uppercase tracking-wider">
+                                            Upgrade Plan to Access
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
 
-                   <div className="flex-1 relative bg-slate-200">
-                       {(() => {
-                           // Determine Content
-                           let pdfLink = '';
-                           let ttsHtml = '';
-                           let entryTitle = '';
+                        return (
+                           <>
+                               {/* ENTRY SELECTOR IF MULTIPLE */}
+                               {(() => {
+                                   let entries: DeepDiveEntry[] = [];
+                                   if (syllabusMode === 'SCHOOL') entries = contentData?.schoolDeepDiveEntries || contentData?.deepDiveEntries || [];
+                                   else entries = contentData?.competitionDeepDiveEntries || [];
 
-                           let entries: DeepDiveEntry[] = [];
-                           if (syllabusMode === 'SCHOOL') entries = contentData?.schoolDeepDiveEntries || contentData?.deepDiveEntries || [];
-                           else entries = contentData?.competitionDeepDiveEntries || [];
+                                   if (entries.length <= 1) return null;
 
-                           // Check if showing "Chapter Premium" (Legacy) or "Topic Premium" (Entry)
-                           const legacyLink = syllabusMode === 'SCHOOL' ? contentData?.premiumLink : contentData?.competitionPdfPremiumLink;
-                           const legacyHtml = syllabusMode === 'SCHOOL' ? contentData?.deepDiveNotesHtml : contentData?.competitionDeepDiveNotesHtml;
-                           const hasLegacy = legacyLink || (legacyHtml && legacyHtml.length > 10);
-
-                           // If index is 0 and we have legacy content, show legacy. Otherwise shift index.
-                           // Actually, let's make a combined list for the UI selector to keep indices aligned.
-                           // But here we need to resolve content based on `currentPremiumEntryIdx`.
-
-                           // Construct a virtual list for selection logic: [Legacy (if exists), ...Entries]
-                           let virtualList: {title: string, pdf: string, html: string}[] = [];
-
-                           if (hasLegacy) {
-                               virtualList.push({
-                                   title: 'Chapter Premium Note',
-                                   pdf: legacyLink,
-                                   html: legacyHtml
-                               });
-                           }
-
-                           entries.forEach((e, i) => {
-                               virtualList.push({
-                                   title: e.title || `Topic Note ${i + 1}`,
-                                   pdf: e.pdfLink,
-                                   html: e.htmlContent
-                               });
-                           });
-
-                           // Safety check
-                           if (currentPremiumEntryIdx >= virtualList.length && virtualList.length > 0) {
-                               // Reset to 0 if out of bounds (can happen when switching chapters)
-                               // setCurrentPremiumEntryIdx(0); // Cannot set state in render
-                               // Just use 0 for now
-                               const item = virtualList[0];
-                               pdfLink = item.pdf;
-                               ttsHtml = item.html;
-                               entryTitle = item.title;
-                           } else if (virtualList.length > 0) {
-                               const item = virtualList[currentPremiumEntryIdx];
-                               pdfLink = item.pdf;
-                               ttsHtml = item.html;
-                               entryTitle = item.title;
-                           }
-
-                           const formattedLink = formatDriveLink(pdfLink);
-
-                           return (
-                               <>
-                                   {/* Selection Header (Only if multiple items) */}
-                                   {virtualList.length > 1 && (
-                                       <div className="absolute top-0 left-0 w-full z-20 bg-white/90 backdrop-blur-sm border-b border-slate-200 p-2 overflow-x-auto flex gap-2">
-                                           {virtualList.map((item, i) => (
+                                   return (
+                                       <div className="bg-slate-100 p-2 flex gap-2 overflow-x-auto border-b border-slate-200">
+                                           {entries.map((_: any, i: number) => (
                                                <button
                                                    key={i}
                                                    onClick={() => {
                                                        setCurrentPremiumEntryIdx(i);
                                                        stopAllSpeech();
                                                    }}
-                                                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all flex flex-col items-center border ${currentPremiumEntryIdx === i ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                                   className={`px-3 py-1 text-xs font-bold rounded-full whitespace-nowrap ${currentPremiumEntryIdx === i ? 'bg-purple-600 text-white shadow' : 'bg-white text-slate-500'}`}
                                                >
-                                                   <span>{i === 0 && hasLegacy ? 'MAIN' : `TOPIC ${hasLegacy ? i : i + 1}`}</span>
-                                                   <span className="opacity-80 text-[9px] truncate max-w-[80px]">{item.title}</span>
+                                                   Part {i + 1}
                                                </button>
                                            ))}
                                        </div>
-                                   )}
+                                   );
+                               })()}
 
-                                   {/* Content Container (Adjust top padding if header exists) */}
-                                   <div className={`relative w-full h-full ${virtualList.length > 1 ? 'pt-14' : ''}`}>
-                                       {pdfLink ? (
-                                           <div className="relative w-full h-full">
-                                                <iframe
-                                                    src={formattedLink}
-                                                    className="w-full h-full border-none"
-                                                    title="PDF Viewer"
-                                                    allow="autoplay"
-                                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox"
-                                                />
-                                                {/* Invisible Header Blocker */}
-                                                <div className="absolute top-0 left-0 w-full h-12 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-                                           </div>
-                                       ) : (
-                                           <div className="flex items-center justify-center h-full text-slate-400 font-bold bg-slate-50">
-                                               <div className="text-center">
-                                                   <FileText size={48} className="mx-auto mb-2 opacity-20" />
-                                                   <p>No PDF attached for this section.</p>
-                                                   <p className="text-xs font-normal mt-1 text-slate-400">{entryTitle}</p>
+                               <div className="flex-1 relative bg-slate-200">
+                                   {(() => {
+                                       // Determine Content
+                                       let pdfLink = '';
+                                       let ttsHtml = '';
+                                       let entryTitle = '';
+
+                                       let entries: DeepDiveEntry[] = [];
+                                       if (syllabusMode === 'SCHOOL') entries = contentData?.schoolDeepDiveEntries || contentData?.deepDiveEntries || [];
+                                       else entries = contentData?.competitionDeepDiveEntries || [];
+
+                                       // Check if showing "Chapter Premium" (Legacy) or "Topic Premium" (Entry)
+                                       const legacyLink = syllabusMode === 'SCHOOL' ? contentData?.premiumLink : contentData?.competitionPdfPremiumLink;
+                                       const legacyHtml = syllabusMode === 'SCHOOL' ? contentData?.deepDiveNotesHtml : contentData?.competitionDeepDiveNotesHtml;
+                                       const hasLegacy = legacyLink || (legacyHtml && legacyHtml.length > 10);
+
+                                       // Construct a virtual list for selection logic: [Legacy (if exists), ...Entries]
+                                       let virtualList: {title: string, pdf: string, html: string}[] = [];
+
+                                       if (hasLegacy) {
+                                           virtualList.push({
+                                               title: 'Chapter Premium Note',
+                                               pdf: legacyLink,
+                                               html: legacyHtml
+                                           });
+                                       }
+
+                                       entries.forEach((e, i) => {
+                                           virtualList.push({
+                                               title: e.title || `Topic Note ${i + 1}`,
+                                               pdf: e.pdfLink,
+                                               html: e.htmlContent
+                                           });
+                                       });
+
+                                       // Safety check
+                                       if (currentPremiumEntryIdx >= virtualList.length && virtualList.length > 0) {
+                                           const item = virtualList[0];
+                                           pdfLink = item.pdf;
+                                           ttsHtml = item.html;
+                                           entryTitle = item.title;
+                                       } else if (virtualList.length > 0) {
+                                           const item = virtualList[currentPremiumEntryIdx];
+                                           pdfLink = item.pdf;
+                                           ttsHtml = item.html;
+                                           entryTitle = item.title;
+                                       }
+
+                                       const formattedLink = formatDriveLink(pdfLink);
+
+                                       return (
+                                           <>
+                                               {/* Selection Header (Only if multiple items) */}
+                                               {virtualList.length > 1 && (
+                                                   <div className="absolute top-0 left-0 w-full z-20 bg-white/90 backdrop-blur-sm border-b border-slate-200 p-2 overflow-x-auto flex gap-2">
+                                                       {virtualList.map((item, i) => (
+                                                           <button
+                                                               key={i}
+                                                               onClick={() => {
+                                                                   setCurrentPremiumEntryIdx(i);
+                                                                   stopAllSpeech();
+                                                               }}
+                                                               className={`px-3 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all flex flex-col items-center border ${currentPremiumEntryIdx === i ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                                           >
+                                                               <span>{i === 0 && hasLegacy ? 'MAIN' : `TOPIC ${hasLegacy ? i : i + 1}`}</span>
+                                                               <span className="opacity-80 text-[9px] truncate max-w-[80px]">{item.title}</span>
+                                                           </button>
+                                                       ))}
+                                                   </div>
+                                               )}
+
+                                               {/* Content Container (Adjust top padding if header exists) */}
+                                               <div className={`relative w-full h-full ${virtualList.length > 1 ? 'pt-14' : ''}`}>
+                                                   {pdfLink ? (
+                                                       <div className="relative w-full h-full">
+                                                            <iframe
+                                                                src={formattedLink}
+                                                                className="w-full h-full border-none"
+                                                                title="PDF Viewer"
+                                                                allow="autoplay"
+                                                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox"
+                                                            />
+                                                            {/* Invisible Header Blocker */}
+                                                            <div className="absolute top-0 left-0 w-full h-12 bg-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+                                                       </div>
+                                                   ) : (
+                                                       <div className="flex items-center justify-center h-full text-slate-400 font-bold bg-slate-50">
+                                                           <div className="text-center">
+                                                               <FileText size={48} className="mx-auto mb-2 opacity-20" />
+                                                               <p>No PDF attached for this section.</p>
+                                                               <p className="text-xs font-normal mt-1 text-slate-400">{entryTitle}</p>
+                                                           </div>
+                                                       </div>
+                                                   )}
+
+                                                   {/* FLOATING AUDIO PLAYER */}
+                                                   {(ttsHtml && ttsHtml.length > 10) && (
+                                                       <div className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-xl border border-slate-200 flex items-center gap-2 z-10 animate-in fade-in slide-in-from-bottom-4">
+                                                           <button
+                                                              onClick={() => {
+                                                                  if (isAutoPlaying) {
+                                                                      stopAllSpeech();
+                                                                  } else {
+                                                                      // START PLAYBACK
+                                                                      const topics = extractTopicsFromHtml(ttsHtml);
+                                                                      let chunks: string[] = [];
+
+                                                                      if (topics.length > 0 && topics[0].title !== "Notes") {
+                                                                          chunks = topics.map(t => `${t.title}. ${t.content}`);
+                                                                      } else {
+                                                                          const rawText = topics[0].content;
+                                                                          if (rawText.length > 4000) {
+                                                                              chunks = rawText.match(/[^.!?]+[.!?]+/g) || [rawText];
+                                                                          } else {
+                                                                              chunks = [rawText];
+                                                                          }
+                                                                      }
+
+                                                                      setPremiumChunks(chunks);
+                                                                      setPremiumChunkIndex(0);
+                                                                      setIsAutoPlaying(true);
+                                                                  }
+                                                              }}
+                                                              className={`flex items-center gap-2 px-4 py-3 rounded-full text-white shadow-lg transition-all ${isAutoPlaying ? 'bg-red-500 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                                                          >
+                                                              {isAutoPlaying ? <Pause size={20} /> : <Headphones size={20} />}
+                                                              {isAutoPlaying && <span className="text-xs font-bold">Playing...</span>}
+                                                          </button>
+                                                       </div>
+                                                   )}
                                                </div>
-                                           </div>
-                                       )}
-
-                                       {/* FLOATING AUDIO PLAYER */}
-                                       {(ttsHtml && ttsHtml.length > 10) && (
-                                           <div className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-xl border border-slate-200 flex items-center gap-2 z-10 animate-in fade-in slide-in-from-bottom-4">
-                                               <button
-                                                  onClick={() => {
-                                                      if (isAutoPlaying) {
-                                                          stopAllSpeech();
-                                                      } else {
-                                                          // START PLAYBACK
-                                                          // 1. Chunking Logic
-                                                          const topics = extractTopicsFromHtml(ttsHtml);
-                                                          let chunks: string[] = [];
-
-                                                          if (topics.length > 0 && topics[0].title !== "Notes") {
-                                                              // Good structure found
-                                                              chunks = topics.map(t => `${t.title}. ${t.content}`);
-                                                          } else {
-                                                              // No structure, fallback
-                                                              const rawText = topics[0].content;
-                                                              if (rawText.length > 4000) {
-                                                                  chunks = rawText.match(/[^.!?]+[.!?]+/g) || [rawText];
-                                                              } else {
-                                                                  chunks = [rawText];
-                                                              }
-                                                          }
-
-                                                          setPremiumChunks(chunks);
-                                                          setPremiumChunkIndex(0);
-                                                          setIsAutoPlaying(true);
-                                                      }
-                                                  }}
-                                                  className={`flex items-center gap-2 px-4 py-3 rounded-full text-white shadow-lg transition-all ${isAutoPlaying ? 'bg-red-500 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-                                              >
-                                                  {isAutoPlaying ? <Pause size={20} /> : <Headphones size={20} />}
-                                                  {isAutoPlaying && <span className="text-xs font-bold">Playing...</span>}
-                                              </button>
-                                           </div>
-                                       )}
-                                   </div>
-                               </>
-                           );
-                       })()}
-                   </div>
+                                           </>
+                                       );
+                                   })()}
+                               </div>
+                           </>
+                        );
+                   })()}
                </div>
            )}
 
            {/* 4. RESOURCES (ADDITIONAL NOTES) */}
            {activeTab === 'RESOURCES' && (
                <div className="p-4 space-y-4">
-                   <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2 mb-2">
-                       <Layers size={16} className="text-cyan-600" /> Additional Resources
-                   </h4>
-
-                   {/* FREE NOTES (LEGACY SUPPORT) - Conditional Render */}
                    {(() => {
-                       const freeLink = syllabusMode === 'SCHOOL' ? (contentData?.schoolPdfLink || contentData?.freeLink) : contentData?.competitionPdfLink;
-                       const freeHtml = syllabusMode === 'SCHOOL' ? (contentData?.schoolFreeNotesHtml || contentData?.freeNotesHtml) : contentData?.competitionFreeNotesHtml;
+                        const access = getTabAccess('RESOURCES');
 
-                       if (!freeLink && (!freeHtml || freeHtml.length < 10)) return null;
+                        if (!access.hasAccess) {
+                            return (
+                                <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in-95">
+                                    <div className="w-20 h-20 bg-cyan-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-cyan-100">
+                                        <Lock size={32} className="text-cyan-600" />
+                                    </div>
+                                    <h2 className="text-xl font-black text-slate-800 mb-2">Additional Resources Locked</h2>
+                                    <p className="text-sm text-slate-500 max-w-xs mb-8 leading-relaxed">
+                                        {access.reason === 'FEED_LOCKED' ? 'This section is disabled by admin.' : 'Extra reading material and reference documents.'}
+                                    </p>
 
-                       return (
-                           <button onClick={() => handlePdfClick('FREE')} className="w-full p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-3 transition-all">
-                               <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center"><FileText size={20} /></div>
-                               <div className="flex-1 text-left"><h4 className="font-bold text-slate-700 text-sm">Standard Notes</h4><p className="text-[10px] text-slate-400">Basic Reading Material</p></div>
-                           </button>
-                       );
-                   })()}
+                                    {access.cost > 0 ? (
+                                        <button
+                                            onClick={() => setPendingPdf({ type: 'RESOURCES', price: access.cost, link: 'UNLOCK_TAB_RESOURCES' })}
+                                            className="px-8 py-3 bg-cyan-600 text-white font-bold rounded-xl shadow-lg hover:bg-cyan-700 hover:scale-105 transition-all flex items-center gap-2"
+                                        >
+                                            <Zap size={18} /> Unlock for {access.cost} Credits
+                                        </button>
+                                    ) : (
+                                        <div className="px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-lg text-xs uppercase tracking-wider">
+                                            Upgrade Plan to Access
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
 
-                   {(() => {
-                       let addNotes: AdditionalNoteEntry[] = [];
-                       // STRICT MODE: Only use new fields to avoid ghost data
-                       if (syllabusMode === 'SCHOOL') addNotes = contentData?.schoolAdditionalNotes || [];
-                       else addNotes = contentData?.competitionAdditionalNotes || [];
+                        return (
+                           <>
+                               <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2 mb-2">
+                                   <Layers size={16} className="text-cyan-600" /> Additional Resources
+                               </h4>
 
-                       if (addNotes.length === 0) return <p className="text-center text-xs text-slate-400 py-4">No additional resources added.</p>;
+                               {/* FREE NOTES (LEGACY SUPPORT) - Conditional Render */}
+                               {(() => {
+                                   const freeLink = syllabusMode === 'SCHOOL' ? (contentData?.schoolPdfLink || contentData?.freeLink) : contentData?.competitionPdfLink;
+                                   const freeHtml = syllabusMode === 'SCHOOL' ? (contentData?.schoolFreeNotesHtml || contentData?.freeNotesHtml) : contentData?.competitionFreeNotesHtml;
 
-                       return addNotes.map((note: AdditionalNoteEntry, idx: number) => (
-                           <button
-                               key={idx}
-                               onClick={() => {
-                                   // Feature Check for Additional Notes (Pay-per-view or Lock)
-                                   const access = checkFeatureAccess('ADDITIONAL_NOTES', user, settings || {});
-                                   if (!access.hasAccess) {
-                                       if (access.cost > 0) {
-                                           // Trigger Payment for generic "Additional Notes Access" (not per item currently, as items don't have individual prices yet)
-                                           // For now, we assume global access cost.
-                                           // Ideally we'd pass a callback, but let's use the standard flow if possible.
-                                           // Since we can't easily wrap individual item clicks in the generic handler without refactoring,
-                                           // we'll do a direct check here.
-                                           if (user.credits < access.cost) {
-                                               setAlertConfig({isOpen: true, message: `Insufficient Credits! You need ${access.cost} coins.`});
-                                               return;
-                                           }
-                                           // Deduct and Open (If Auto) or Prompt
-                                           // For simplicity in this complex view, let's just prompt if not premium
-                                            setAlertConfig({isOpen: true, message: `🔒 Locked! Upgrade to access resources.`});
-                                            return;
-                                       }
-                                       setAlertConfig({isOpen: true, message: `🔒 Locked! Upgrade to access.`});
-                                       return;
-                                   }
+                                   if (!freeLink && (!freeHtml || freeHtml.length < 10)) return null;
 
-                                   // Smart Open Logic
-                                   if (note.pdfLink && note.noteContent) {
-                                       // Hybrid Mode: Show PDF with Persistent Audio Overlay
-                                       setActiveNoteContent({
-                                           title: note.title || `Resource ${idx + 1}`,
-                                           content: note.noteContent,
-                                           pdfUrl: note.pdfLink
-                                       });
-                                   } else if (note.pdfLink) {
-                                       // PDF Only
-                                       setActivePdf(note.pdfLink);
-                                   } else if (note.noteContent) {
-                                       // Text Only
-                                       setActiveNoteContent({
-                                           title: note.title || `Note ${idx + 1}`,
-                                           content: note.noteContent
-                                       });
-                                   }
-                               }}
-                               className="w-full p-4 rounded-xl border border-cyan-100 bg-white hover:bg-cyan-50 flex items-center gap-3 transition-all"
-                           >
-                               <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center"><Book size={20} /></div>
-                               <div className="flex-1 text-left">
-                                   <h4 className="font-bold text-slate-700 text-sm">{note.title || `Resource ${idx + 1}`}</h4>
-                                   <p className="text-[10px] text-slate-400">
-                                       {note.pdfLink && note.noteContent ? 'PDF + Audio' : note.pdfLink ? 'PDF Document' : 'Reading Material'}
-                                   </p>
-                               </div>
-                           </button>
-                       ));
+                                   return (
+                                       <button onClick={() => handlePdfClick('FREE')} className="w-full p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-3 transition-all">
+                                           <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center"><FileText size={20} /></div>
+                                           <div className="flex-1 text-left"><h4 className="font-bold text-slate-700 text-sm">Standard Notes</h4><p className="text-[10px] text-slate-400">Basic Reading Material</p></div>
+                                       </button>
+                                   );
+                               })()}
+
+                               {(() => {
+                                   let addNotes: AdditionalNoteEntry[] = [];
+                                   // STRICT MODE: Only use new fields to avoid ghost data
+                                   if (syllabusMode === 'SCHOOL') addNotes = contentData?.schoolAdditionalNotes || [];
+                                   else addNotes = contentData?.competitionAdditionalNotes || [];
+
+                                   if (addNotes.length === 0) return <p className="text-center text-xs text-slate-400 py-4">No additional resources added.</p>;
+
+                                   return addNotes.map((note: AdditionalNoteEntry, idx: number) => (
+                                       <button
+                                           key={idx}
+                                           onClick={() => {
+                                               // Smart Open Logic
+                                               if (note.pdfLink && note.noteContent) {
+                                                   // Hybrid Mode: Show PDF with Persistent Audio Overlay
+                                                   setActiveNoteContent({
+                                                       title: note.title || `Resource ${idx + 1}`,
+                                                       content: note.noteContent,
+                                                       pdfUrl: note.pdfLink
+                                                   });
+                                               } else if (note.pdfLink) {
+                                                   // PDF Only
+                                                   setActivePdf(note.pdfLink);
+                                               } else if (note.noteContent) {
+                                                   // Text Only
+                                                   setActiveNoteContent({
+                                                       title: note.title || `Note ${idx + 1}`,
+                                                       content: note.noteContent
+                                                   });
+                                               }
+                                           }}
+                                           className="w-full p-4 rounded-xl border border-cyan-100 bg-white hover:bg-cyan-50 flex items-center gap-3 transition-all"
+                                       >
+                                           <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center"><Book size={20} /></div>
+                                           <div className="flex-1 text-left">
+                                               <h4 className="font-bold text-slate-700 text-sm">{note.title || `Resource ${idx + 1}`}</h4>
+                                               <p className="text-[10px] text-slate-400">
+                                                   {note.pdfLink && note.noteContent ? 'PDF + Audio' : note.pdfLink ? 'PDF Document' : 'Reading Material'}
+                                               </p>
+                                           </div>
+                                       </button>
+                                   ));
+                               })()}
+                           </>
+                        );
                    })()}
                </div>
            )}

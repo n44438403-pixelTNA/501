@@ -137,8 +137,8 @@ export const AppSoul: React.FC<Props> = ({ settings, onUpdateSettings, onBack })
                 </button>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+            {/* Grid - Mobile Optimized */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 pb-24">
                 {soulFeatures.map(feature => {
                     const conf = localConfig[feature.id] || {};
                     const isVisible = conf.visible !== false;
@@ -146,86 +146,75 @@ export const AppSoul: React.FC<Props> = ({ settings, onUpdateSettings, onBack })
                     const cost = conf.creditCost !== undefined ? conf.creditCost : 0;
 
                     return (
-                        <div key={feature.id} className={`bg-white rounded-2xl border-2 transition-all ${isVisible ? 'border-slate-200 shadow-lg' : 'border-red-200 bg-red-50/50'}`}>
+                        <div key={feature.id} className={`bg-white rounded-xl border transition-all ${isVisible ? 'border-slate-200 shadow-sm' : 'border-red-200 bg-red-50/30'}`}>
                             {/* Card Header */}
-                            <div className="p-5 border-b border-slate-100 flex justify-between items-start">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="p-3 border-b border-slate-100 flex justify-between items-start">
+                                <div className="flex items-center gap-2 overflow-hidden pr-2">
+                                    <div className="p-1.5 bg-slate-50 rounded-lg border border-slate-100 shrink-0">
                                         {getIcon(feature.id)}
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-lg text-slate-800">{feature.label}</h3>
-                                        <p className="text-xs text-slate-400 font-mono">{feature.id}</p>
+                                    <div className="min-w-0">
+                                        <h3 className="font-bold text-sm text-slate-800 truncate">{feature.label}</h3>
+                                        <p className="text-[9px] text-slate-400 font-mono truncate">{feature.id}</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => handleLockToggle(feature.id)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors ${isVisible ? 'bg-green-100 text-green-700' : 'bg-red-600 text-white shadow-md animate-pulse'}`}
+                                    className={`px-2 py-1 rounded-md text-[9px] font-bold flex items-center gap-1 shrink-0 transition-colors ${isVisible ? 'bg-green-100 text-green-700' : 'bg-red-600 text-white shadow-md'}`}
                                 >
-                                    {isVisible ? <Lock size={12} className="opacity-50"/> : <Lock size={12} />}
-                                    {isVisible ? 'UNLOCKED' : 'LOCKED'}
+                                    {isVisible ? <Lock size={10} className="opacity-50"/> : <Lock size={10} />}
+                                    {isVisible ? 'ON' : 'OFF'}
                                 </button>
                             </div>
 
-                            {/* Controls */}
-                            <div className={`p-5 space-y-6 ${!isVisible ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                            {/* Controls - Compact */}
+                            <div className={`p-2 space-y-2 ${!isVisible ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
 
-                                {/* Access Tiers */}
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Allowed Plans</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {['FREE', 'BASIC', 'ULTRA'].map(tier => {
-                                            const isActive = allowedTiers.includes(tier);
-                                            return (
-                                                <button
-                                                    key={tier}
-                                                    onClick={() => handleTierToggle(feature.id, tier as any)}
-                                                    className={`py-2 rounded-xl text-xs font-bold border-2 transition-all ${
-                                                        isActive
-                                                        ? (tier === 'FREE' ? 'bg-green-50 border-green-200 text-green-700' : tier === 'BASIC' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-purple-50 border-purple-200 text-purple-700')
-                                                        : 'bg-white border-slate-100 text-slate-300'
-                                                    }`}
-                                                >
-                                                    {tier}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                                {/* Access Tiers - Compact Grid */}
+                                <div className="grid grid-cols-3 gap-1">
+                                    {['FREE', 'BASIC', 'ULTRA'].map(tier => {
+                                        const isActive = allowedTiers.includes(tier);
+                                        return (
+                                            <button
+                                                key={tier}
+                                                onClick={() => handleTierToggle(feature.id, tier as any)}
+                                                className={`py-1 rounded text-[8px] font-bold border transition-all ${
+                                                    isActive
+                                                    ? (tier === 'FREE' ? 'bg-green-50 border-green-200 text-green-700' : tier === 'BASIC' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-purple-50 border-purple-200 text-purple-700')
+                                                    : 'bg-white border-slate-100 text-slate-300'
+                                                }`}
+                                            >
+                                                {tier}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
-                                {/* Limits Configuration */}
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Daily Usage Limits (Leave blank for ∞)</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {['free', 'basic', 'ultra'].map(tier => (
-                                            <div key={tier} className="relative">
-                                                <input
-                                                    type="number"
-                                                    placeholder="∞"
-                                                    value={conf.limits?.[tier] ?? ''}
-                                                    onChange={(e) => handleLimitChange(feature.id, tier as any, e.target.value)}
-                                                    className="w-full pl-2 pr-2 py-2 text-xs font-bold border border-slate-200 rounded-lg text-center focus:ring-2 focus:ring-violet-500 outline-none"
-                                                />
-                                                <span className="absolute -top-2 left-2 text-[8px] bg-white px-1 text-slate-400 font-bold uppercase">{tier}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Credit Cost */}
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Cost Per Use (Credits)</label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <span className="text-orange-500 font-bold">⚡</span>
+                                {/* Limits & Cost Row */}
+                                <div className="grid grid-cols-4 gap-2">
+                                    {['free', 'basic', 'ultra'].map(tier => (
+                                        <div key={tier} className="relative">
+                                            <input
+                                                type="number"
+                                                placeholder="∞"
+                                                value={conf.limits?.[tier] ?? ''}
+                                                onChange={(e) => handleLimitChange(feature.id, tier as any, e.target.value)}
+                                                className="w-full py-1.5 px-1 text-[9px] font-bold border border-slate-200 rounded text-center focus:ring-1 focus:ring-violet-500 outline-none"
+                                            />
+                                            <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[6px] bg-white px-1 text-slate-400 font-bold uppercase">{tier.charAt(0)}</span>
                                         </div>
+                                    ))}
+
+                                    {/* Cost */}
+                                    <div className="relative">
                                         <input
                                             type="number"
                                             value={cost}
                                             onChange={(e) => handleCostChange(feature.id, Number(e.target.value))}
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-700 focus:bg-white focus:ring-2 focus:ring-orange-200 outline-none transition-all"
+                                            className="w-full py-1.5 px-1 bg-orange-50/50 border border-orange-200 rounded text-[9px] font-black text-orange-700 text-center focus:bg-white focus:ring-1 focus:ring-orange-200 outline-none"
                                             min="0"
                                         />
+                                        <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[6px] bg-white px-1 text-orange-500 font-bold uppercase">COST</span>
                                     </div>
                                 </div>
 

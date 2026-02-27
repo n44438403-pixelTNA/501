@@ -245,12 +245,13 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
                                 </button>
                             </div>
 
-                            {/* MATRIX HEADER */}
-                            <div className="grid grid-cols-12 gap-2 bg-slate-100 p-2 rounded-t-xl border-b border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
-                                <div className="col-span-5 pl-2">Feature</div>
-                                <div className="col-span-2 text-center text-green-600">Free</div>
-                                <div className="col-span-2 text-center text-blue-600">Basic</div>
-                                <div className="col-span-3 text-center text-purple-600">Ultra</div>
+                            {/* MATRIX HEADER - 5 COLUMNS */}
+                            <div className="grid grid-cols-12 gap-1 bg-slate-100 p-2 rounded-t-xl border-b border-slate-200 text-[8px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10 text-center">
+                                <div className="col-span-4 text-left pl-2">Feature</div>
+                                <div className="col-span-2 text-green-600">Free</div>
+                                <div className="col-span-2 text-blue-600">Basic</div>
+                                <div className="col-span-2 text-purple-600">Ultra</div>
+                                <div className="col-span-2 text-orange-600">Cost</div>
                             </div>
 
                             {/* DYNAMIC MATRIX ROWS */}
@@ -260,9 +261,9 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
 
                                     // Helpers for Limits
                                     const getLimit = (tier: string) => {
-                                        if (!item.allowedTiers?.includes(tier)) return <Lock size={10} className="mx-auto text-slate-300" />;
+                                        if (!item.allowedTiers?.includes(tier)) return <Lock size={8} className="mx-auto text-slate-300" />;
                                         const limit = item.limits?.[tier.toLowerCase()];
-                                        return limit !== undefined ? `${limit}` : <Zap size={10} className="mx-auto text-yellow-500 fill-yellow-500" />;
+                                        return limit !== undefined ? `${limit}` : <Zap size={8} className="mx-auto text-green-500 fill-green-500" />;
                                     };
 
                                     return (
@@ -272,30 +273,40 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
                                                 setIsOpen(false);
                                                 if (onNavigate && item.path) onNavigate(item.path);
                                             }}
-                                            className={`grid grid-cols-12 gap-2 p-3 border-b border-slate-50 items-center hover:bg-slate-50 transition-colors cursor-pointer ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
+                                            className={`grid grid-cols-12 gap-1 p-2 border-b border-slate-50 items-center hover:bg-slate-50 transition-colors cursor-pointer ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
                                         >
                                             {/* Feature Name */}
-                                            <div className="col-span-5 flex items-center gap-2">
-                                                <div className={`p-1.5 rounded-lg ${item.color ? `bg-${item.color}-100 text-${item.color}-600` : 'bg-slate-100 text-slate-500'}`}>
-                                                    <Icon size={14} />
+                                            <div className="col-span-4 flex items-center gap-1.5 overflow-hidden">
+                                                <div className={`p-1 rounded-md shrink-0 ${item.color ? `bg-${item.color}-50 text-${item.color}-600` : 'bg-slate-100 text-slate-500'}`}>
+                                                    <Icon size={12} />
                                                 </div>
-                                                <span className="text-xs font-bold text-slate-700 leading-tight line-clamp-2">{item.label}</span>
+                                                <span className="text-[10px] font-bold text-slate-700 leading-tight truncate">{item.label}</span>
                                             </div>
 
                                             {/* Free Tier */}
-                                            <div className="col-span-2 text-center text-[10px] font-bold text-slate-600">
+                                            <div className="col-span-2 text-center text-[9px] font-bold text-slate-500">
                                                 {getLimit('FREE')}
                                             </div>
 
                                             {/* Basic Tier */}
-                                            <div className="col-span-2 text-center text-[10px] font-bold text-slate-600 bg-blue-50/30 py-1 rounded">
+                                            <div className="col-span-2 text-center text-[9px] font-bold text-slate-600 bg-blue-50/30 py-0.5 rounded">
                                                 {getLimit('BASIC')}
                                             </div>
 
                                             {/* Ultra Tier */}
-                                            <div className="col-span-3 text-center text-[10px] font-bold text-slate-600 bg-purple-50/30 py-1 rounded flex items-center justify-center gap-1">
+                                            <div className="col-span-2 text-center text-[9px] font-bold text-slate-600 bg-purple-50/30 py-0.5 rounded">
                                                 {getLimit('ULTRA')}
-                                                {item.creditCost > 0 && <span className="text-[8px] bg-yellow-100 text-yellow-800 px-1 rounded border border-yellow-200">{item.creditCost}cr</span>}
+                                            </div>
+
+                                            {/* COST Column (5th) */}
+                                            <div className="col-span-2 text-center flex items-center justify-center">
+                                                {item.creditCost > 0 ? (
+                                                    <span className="text-[9px] font-black text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full border border-orange-100">
+                                                        {item.creditCost}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[8px] text-slate-300">-</span>
+                                                )}
                                             </div>
                                         </div>
                                     );

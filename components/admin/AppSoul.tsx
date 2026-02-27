@@ -24,7 +24,13 @@ const SOUL_FEATURES = [
     'AI_STUDIO',
     'MY_ANALYSIS',
     'TOPIC_CONTENT',
-    'REQUEST_CONTENT'
+    'REQUEST_CONTENT',
+    'MS_RECOMMEND',
+    'MS_OMR',
+    'MS_AI_INSIGHTS',
+    'MS_MISTAKES',
+    'MS_ANALYSIS',
+    'MS_OFFICIAL'
 ];
 
 export const AppSoul: React.FC<Props> = ({ settings, onUpdateSettings, onBack }) => {

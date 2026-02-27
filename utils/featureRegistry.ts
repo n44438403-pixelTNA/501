@@ -316,6 +316,14 @@ export const ALL_FEATURES: Feature[] = [
     { id: 'REQUEST_CONTENT', label: 'Request Content', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Enable/Disable content requests.' },
     { id: 'AI_STUDIO', label: 'AI Studio', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control AI Studio features.' },
 
+    // --- MARKSHEET FEATURES (App Soul Controlled) ---
+    { id: 'MS_RECOMMEND', label: 'Recommend Notes', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Recommend Notes tab in Marksheet.' },
+    { id: 'MS_OMR', label: 'OMR', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control OMR tab in Marksheet.' },
+    { id: 'MS_AI_INSIGHTS', label: 'AI Insights', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control AI Insights tab in Marksheet.' },
+    { id: 'MS_MISTAKES', label: 'Mistakes', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Mistakes tab in Marksheet.' },
+    { id: 'MS_ANALYSIS', label: 'Analysis', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Analysis tab in Marksheet.' },
+    { id: 'MS_OFFICIAL', label: 'Official Marksheet', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Official Marksheet tab.' },
+
 
     // --- ADMIN DASHBOARD FEATURES (Mapped to Admin Tabs) ---
     // GROUP: CORE ADMIN

@@ -371,6 +371,23 @@ export const McqView: React.FC<Props> = ({
       // 3. Prepare Result Object
       const analysisJson = generateAnalysisJson(submittedQuestions, remappedAnswers);
 
+      // Generate Granular Topic Analysis for History Comparison
+      const topicAnalysis: Record<string, { correct: number, total: number, percentage: number }> = {};
+      submittedQuestions.forEach((q, idx) => {
+          const t = (q.topic || 'General').trim();
+          if (!topicAnalysis[t]) topicAnalysis[t] = { correct: 0, total: 0, percentage: 0 };
+
+          topicAnalysis[t].total += 1;
+          if (remappedAnswers[idx] === q.correctAnswer) {
+              topicAnalysis[t].correct += 1;
+          }
+      });
+      // Calculate Percentages
+      Object.keys(topicAnalysis).forEach(t => {
+          const s = topicAnalysis[t];
+          s.percentage = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+      });
+
       const result: MCQResult = {
           id: `res-${Date.now()}`,
           userId: user.id,
@@ -391,7 +408,8 @@ export const McqView: React.FC<Props> = ({
           wrongQuestions: wrongQuestions,
           questionTimes: Object.values(remappedTime),
           topic: topicFilter, // Save topic if filtered
-          ultraAnalysisReport: analysisJson
+          ultraAnalysisReport: analysisJson,
+          topicAnalysis: topicAnalysis // NEW: Enable Per-Topic Comparison
       };
 
       // 4. Update User Data

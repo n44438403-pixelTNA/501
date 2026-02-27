@@ -445,8 +445,9 @@ export const NSTA_DEFAULT_FEATURES = [
     { category: '🎧 AUDIO', id: 'AUDIO_LIBRARY', label: 'Audio Library', visible: true, allowedTiers: ['ULTRA'], limits: {}, creditCost: 0 },
     { category: '📝 MCQ', id: 'MCQ_FREE', label: 'Free Practice', visible: true, limits: { free: 50, basic: undefined, ultra: undefined }, creditCost: 0 },
     { category: '📝 MCQ', id: 'MCQ_PREMIUM', label: 'Premium Tests', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: {}, creditCost: 0 },
-    { category: '🔄 REVISION', id: 'REVISION_HUB', label: 'Revision Hub', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: 1, ultra: undefined }, creditCost: 0 },
-    { category: '🤖 AI HUB', id: 'AI_HUB_CONTROL', label: 'AI Hub Access', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: 5, ultra: undefined }, creditCost: 2 },
+    { category: '🔄 REVISION', id: 'REVISION_HUB_FREE', label: 'Free Revision', visible: true, allowedTiers: ['FREE', 'BASIC', 'ULTRA'], limits: { free: 1 }, creditCost: 0 },
+    { category: '🔄 REVISION', id: 'REVISION_HUB_PREMIUM', label: 'Premium Revision', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: {}, creditCost: 0 },
+    { category: '🤖 AI HUB', id: 'AI_CHAT', label: 'AI Hub Access', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: 5, ultra: undefined }, creditCost: 2 },
 ];
 
 export const DEFAULT_PLAN_COMPARISON = [

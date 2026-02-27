@@ -25,14 +25,7 @@ const SOUL_FEATURES = [
     'MY_ANALYSIS',
     'TOPIC_CONTENT',
     'REQUEST_CONTENT',
-    // RESTORED Marksheet & AI features as requested
-    'MS_RECOMMEND',
-    'MS_OMR',
-    'MS_AI_INSIGHTS',
-    'MS_MISTAKES',
-    'MS_ANALYSIS',
-    'MS_OFFICIAL',
-    'AI_CHAT'
+    // Removed Marksheet features as requested
 ];
 
 export const AppSoul: React.FC<Props> = ({ settings, onUpdateSettings, onBack }) => {

@@ -308,8 +308,8 @@ export const ALL_FEATURES: Feature[] = [
 
     // --- APP SOUL (RARE FEATURES) ---
     { id: 'QUICK_REVISION', label: 'Quick Revision', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Rapid revision mode control.' },
-    { id: 'MCQ_FREE', label: 'MCQ (Free)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control free MCQ access.' },
-    { id: 'MCQ_PREMIUM', label: 'MCQ (Premium)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control premium MCQ access.' },
+    { id: 'MCQ_FREE', label: 'Free Practice', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control free MCQ access.' },
+    { id: 'MCQ_PREMIUM', label: 'Premium Test', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control premium MCQ access.' },
     { id: 'REVISION_HUB_FREE', label: 'Revision Hub (Free)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Basic revision features.' },
     { id: 'REVISION_HUB_PREMIUM', label: 'Revision Hub (Premium)', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Advanced revision features.' },
     { id: 'TOPIC_CONTENT', label: 'Topic Content', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control topic-specific content visibility.' },
@@ -317,12 +317,12 @@ export const ALL_FEATURES: Feature[] = [
     { id: 'AI_STUDIO', label: 'AI Studio', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control AI Studio features.' },
 
     // --- MARKSHEET FEATURES (App Soul Controlled) ---
-    { id: 'MS_RECOMMEND', label: 'Recommend Notes', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Recommend Notes tab in Marksheet.' },
-    { id: 'MS_OMR', label: 'OMR', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control OMR tab in Marksheet.' },
-    { id: 'MS_AI_INSIGHTS', label: 'AI Insights', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control AI Insights tab in Marksheet.' },
-    { id: 'MS_MISTAKES', label: 'Mistakes', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Mistakes tab in Marksheet.' },
-    { id: 'MS_ANALYSIS', label: 'Analysis', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Analysis tab in Marksheet.' },
-    { id: 'MS_OFFICIAL', label: 'Official Marksheet', group: 'SOUL', surfaceLevel: 2, adminVisible: true, description: 'Control Official Marksheet tab.' },
+    { id: 'MS_RECOMMEND', label: 'Recommend Notes', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control Recommend Notes tab in Marksheet.' },
+    { id: 'MS_OMR', label: 'OMR', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control OMR tab in Marksheet.' },
+    { id: 'MS_AI_INSIGHTS', label: 'AI Insights', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control AI Insights tab in Marksheet.' },
+    { id: 'MS_MISTAKES', label: 'Mistakes', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control Mistakes tab in Marksheet.' },
+    { id: 'MS_ANALYSIS', label: 'Analysis', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control Analysis tab in Marksheet.' },
+    { id: 'MS_OFFICIAL', label: 'Official Marksheet', group: 'ANALYSIS', surfaceLevel: 2, adminVisible: true, description: 'Control Official Marksheet tab.' },
 
 
     // --- ADMIN DASHBOARD FEATURES (Mapped to Admin Tabs) ---
@@ -681,7 +681,7 @@ export const ALL_FEATURES: Feature[] = [
         label: 'Feature Access',
         group: 'ADVANCED',
         surfaceLevel: 3,
-        adminVisible: false,
+        adminVisible: true,
         adminTab: 'FEATURE_ACCESS',
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'LayoutGrid',
@@ -748,7 +748,7 @@ export const ALL_FEATURES: Feature[] = [
         label: 'App Soul',
         group: 'SOUL',
         surfaceLevel: 3,
-        adminVisible: true,
+        adminVisible: false,
         adminTab: 'APP_SOUL',
         requiredPermission: 'MANAGE_SETTINGS',
         icon: 'Hexagon',

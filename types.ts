@@ -607,6 +607,7 @@ export interface SystemSettings {
   isAutoTtsEnabled?: boolean; // NEW: Global Auto TTS Toggle
   cacheClearDays?: number; // NEW: Admin controlled cache cleanup interval
   planComparison?: FeatureCategory[]; // NEW: Admin Configurable Feature Matrix
+  customFeatureList?: any[]; // NEW: Unified Feature Control List
   revisionConfig?: RevisionConfig; // NEW: Dynamic Revision Logic
   isWatermarkEnabled?: boolean; // NEW: Global Watermark Toggle
 }

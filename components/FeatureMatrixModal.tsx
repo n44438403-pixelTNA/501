@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Check, Lock, AlertTriangle, Crown, List, Shield, Zap, Sparkles, BookOpen, Star, Layout, MessageSquare, Gamepad2, Trophy, Video, FileText, Headphones } from 'lucide-react';
 import { SystemSettings } from '../types';
-import { ALL_FEATURES, FeatureGroup } from '../utils/featureRegistry';
+import { DEFAULT_PLAN_COMPARISON } from '../constants';
 
 interface Props {
   isOpen: boolean;
@@ -13,68 +13,13 @@ interface Props {
 export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings, discountActive }) => {
   if (!isOpen) return null;
 
-  // Logic to merge and filter features
-  const localConfig = settings?.featureConfig || {};
-
-  const coreFeatureIds = new Set(ALL_FEATURES.map(f => f.id));
-  const customFeatureIds = Object.keys(localConfig).filter(id => !coreFeatureIds.has(id));
-
-  const combinedFeatures = [
-      ...ALL_FEATURES.map(f => ({
-          id: f.id,
-          title: f.label,
-          category: f.group,
-          adminVisible: f.adminVisible,
-          description: f.description,
-          // icon: f.icon // We map locally
-      })),
-      ...customFeatureIds.map(id => ({
-          id,
-          title: localConfig[id].label || id,
-          category: localConfig[id].customCategory || 'CUSTOM',
-          adminVisible: false, // Custom defaults to student visible
-          description: 'Custom Feature',
-      }))
-  ];
-
-  const mergedFeatures = combinedFeatures.map(f => {
-      const conf = localConfig[f.id] || {};
-      return {
-          ...f,
-          visible: conf.visible !== false,
-          allowedTiers: conf.allowedTiers || ['FREE', 'BASIC', 'ULTRA'],
-          creditCost: conf.creditCost !== undefined ? conf.creditCost : 0,
-      };
-  }).filter(f => !f.adminVisible && f.visible); // Show only student visible & enabled features
-
-  // Group by Category
-  const groupedFeatures: Record<string, typeof mergedFeatures> = {};
-  mergedFeatures.forEach(f => {
-      const cat = f.category || 'OTHER';
-      if (!groupedFeatures[cat]) groupedFeatures[cat] = [];
-      groupedFeatures[cat].push(f);
-  });
-
-  const getCategoryIcon = (group: string) => {
-      switch(group) {
-          case 'AI': return <Sparkles size={18} className="text-purple-500"/>;
-          case 'CONTENT': return <BookOpen size={18} className="text-blue-500"/>;
-          case 'GAME': return <Gamepad2 size={18} className="text-orange-500"/>;
-          case 'CORE': return <Layout size={18} className="text-indigo-500"/>;
-          case 'TOOLS': return <Zap size={18} className="text-yellow-500"/>;
-          default: return <Star size={18} className="text-slate-500"/>;
-      }
-  };
-
-  const getTierBadge = (tiers: string[]) => {
-      if (tiers.includes('FREE')) return <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded">FREE</span>;
-      if (tiers.includes('BASIC')) return <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded">BASIC</span>;
-      return <span className="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-0.5 rounded">ULTRA</span>;
-  };
+  // Use default static comparison if dynamic one not available in settings
+  // The plan matrix is "driven" by this constant, but "locked" by settings.featureConfig
+  const planData = settings?.planComparison || DEFAULT_PLAN_COMPARISON;
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+      <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* HEADER */}
         <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 flex justify-between items-center shrink-0 relative overflow-hidden">
             {discountActive && (
@@ -86,51 +31,92 @@ export const FeatureMatrixModal: React.FC<Props> = ({ isOpen, onClose, settings,
                 <h2 className="text-2xl font-black text-white flex items-center gap-2">
                     <Crown className="text-yellow-400 fill-yellow-400" /> App Future Access
                 </h2>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Available Features List</p>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Plan Comparison Matrix</p>
             </div>
             <button onClick={onClose} className="p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors">
                 <X size={24} />
             </button>
         </div>
 
-        {/* CONTENT */}
-        <div className="overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50">
-            {Object.keys(groupedFeatures).length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
-                    <p>No features configured.</p>
-                </div>
-            ) : (
-                Object.entries(groupedFeatures).map(([category, features]) => (
-                    <div key={category} className="space-y-3">
-                        <h3 className="flex items-center gap-2 font-black text-slate-700 text-sm uppercase tracking-wide">
-                            {getCategoryIcon(category)} {category} Features
-                        </h3>
-                        <div className="grid gap-3">
-                            {features.map(feature => (
-                                <div key={feature.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between gap-4">
-                                    <div>
-                                        <h4 className="font-bold text-slate-800 text-sm">{feature.title}</h4>
-                                        <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">{feature.description || 'Unlock powerful tools to boost your learning.'}</p>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1 shrink-0">
-                                        {getTierBadge(feature.allowedTiers)}
-                                        {feature.creditCost > 0 && (
-                                            <span className="text-[9px] font-bold text-slate-400">
-                                                {feature.creditCost} Coins
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+        {/* STICKY COLUMN HEADERS */}
+        <div className="grid grid-cols-4 bg-slate-100 border-b border-slate-200 shrink-0 text-center">
+            <div className="p-4 flex items-center justify-start pl-6 font-black text-slate-400 text-xs uppercase tracking-wider">
+                Feature
+            </div>
+            <div className="p-4 bg-green-50/50 border-l border-white">
+                <h3 className="font-black text-green-700 text-sm">FREE</h3>
+                <p className="text-[10px] text-green-600 font-bold">Starter</p>
+            </div>
+            <div className="p-4 bg-blue-50/50 border-l border-white relative overflow-hidden">
+                <h3 className="font-black text-blue-700 text-sm">BASIC</h3>
+                <p className="text-[10px] text-blue-600 font-bold">Standard</p>
+            </div>
+            <div className="p-4 bg-purple-50/50 border-l border-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-bl from-yellow-400 to-transparent"></div>
+                <h3 className="font-black text-purple-700 text-sm flex items-center justify-center gap-1">ULTRA <Crown size={12} className="fill-purple-700"/></h3>
+                <p className="text-[10px] text-purple-600 font-bold">Best Value</p>
+            </div>
+        </div>
+
+        {/* CONTENT (SCROLLABLE) */}
+        <div className="overflow-y-auto custom-scrollbar bg-white">
+            {planData.map((category: any, catIndex: number) => (
+                <div key={catIndex}>
+                    {/* CATEGORY HEADER */}
+                    <div className="bg-slate-50 p-3 px-6 border-y border-slate-100 flex items-center gap-2 sticky top-0 z-10 shadow-sm">
+                        <span className="font-black text-slate-800 text-xs uppercase tracking-widest">{category.name}</span>
                     </div>
-                ))
-            )}
+
+                    {/* FEATURE ROWS */}
+                    {category.features.map((feature: any, featIndex: number) => {
+                        // CHECK FOR LOCK VIA APP SOUL
+                        // If id exists and is set to visible: false in settings, lock the row
+                        const featureConfig = settings?.featureConfig?.[feature.id];
+                        const isLocked = featureConfig?.visible === false;
+
+                        return (
+                            <div key={featIndex} className={`grid grid-cols-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors relative group ${isLocked ? 'grayscale opacity-70 bg-slate-50' : ''}`}>
+
+                                {/* LOCKED OVERLAY */}
+                                {isLocked && (
+                                    <div className="absolute inset-0 flex items-center justify-center z-20 bg-white/50 backdrop-blur-[1px]">
+                                        <div className="bg-red-100 text-red-700 border border-red-200 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm">
+                                            <Lock size={12} /> FEATURE CURRENTLY LOCKED
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="p-4 pl-6 flex items-center gap-3 text-sm font-bold text-slate-700 border-r border-slate-50">
+                                    {/* Optional: Add icon mapping based on feature name or id if needed */}
+                                    {feature.name}
+                                </div>
+                                <div className="p-4 flex items-center justify-center text-xs font-medium text-slate-600 border-r border-slate-50 text-center">
+                                    {feature.free}
+                                </div>
+                                <div className="p-4 flex items-center justify-center text-xs font-bold text-blue-700 bg-blue-50/10 border-r border-slate-50 text-center">
+                                    {feature.basic}
+                                </div>
+                                <div className="p-4 flex items-center justify-center text-xs font-black text-purple-700 bg-purple-50/10 text-center">
+                                    {feature.ultra}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ))}
         </div>
 
         {/* FOOTER */}
-        <div className="p-4 bg-white border-t border-slate-200 text-center text-[10px] text-slate-400 shrink-0 font-medium">
-            * Availability depends on your current subscription plan.
+        <div className="p-4 bg-slate-50 border-t border-slate-200 text-center flex justify-between items-center shrink-0">
+            <p className="text-[10px] text-slate-400 font-medium">
+                * Prices and features subject to change. Admin controls all access rights.
+            </p>
+            <button
+                onClick={onClose}
+                className="px-6 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition-colors"
+            >
+                Close Matrix
+            </button>
         </div>
       </div>
     </div>

@@ -117,23 +117,28 @@ export const AppSoul: React.FC<Props> = ({ settings, onUpdateSettings, onBack })
     return (
         <div className="bg-slate-50 min-h-screen p-6 animate-in fade-in">
             {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-4">
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
                     <button onClick={onBack} className="p-2 bg-white rounded-full shadow-sm hover:bg-slate-100 text-slate-600">
                         &larr;
                     </button>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-800 flex items-center gap-2">
+                        <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
                             <Crown className="text-violet-600 fill-violet-200" /> App Soul
                         </h1>
-                        <p className="text-slate-500 font-medium">Central Control for Rare & Core Features (90% Control)</p>
+                        <p className="text-slate-500 text-xs font-medium">Core Feature Control</p>
                     </div>
                 </div>
+            </div>
+
+            {/* Sticky Save Button - Mobile Optimized */}
+            <div className="fixed bottom-8 right-6 z-[9999] flex justify-end safe-area-bottom">
                 <button
                     onClick={saveChanges}
-                    className="px-8 py-4 bg-violet-600 text-white font-bold rounded-2xl shadow-xl hover:bg-violet-700 flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
+                    className="w-12 h-12 bg-violet-600 text-white rounded-full shadow-2xl hover:bg-violet-700 active:scale-95 transition-all flex items-center justify-center border-2 border-white"
+                    title="Save Soul Config"
                 >
-                    <Save size={24} /> SAVE SOUL CONFIG
+                    <Save size={20} />
                 </button>
             </div>
 

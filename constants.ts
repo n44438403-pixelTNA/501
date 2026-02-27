@@ -497,12 +497,10 @@ export const DEFAULT_PLAN_COMPARISON = [
         name: "2. REVISION HUB (USP)",
         features: [
             { id: 'REVISION_HUB', name: "Revision Hub Access", free: "❌ Locked", basic: "⚠️ 1 Day/Week", ultra: "✅ Daily" },
-            { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
-            { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
             { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'EXCELLENT_TAB', name: "Excellent (80%+) Tab", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'AI_PLAN', name: "Auto AI Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'MS_MISTAKES', name: "Mistake Pattern Analysis", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
+            { id: 'MISTAKE_PATTERN', name: "Mistake Pattern Analysis", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'MASTERY', name: "30-Day Mastery Logic", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'ONE_CLICK', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
         ]
@@ -523,8 +521,6 @@ export const DEFAULT_PLAN_COMPARISON = [
         name: "4. AI & SMART FEATURES",
         features: [
             { id: 'AI_CHAT', name: "AI Tutor Chat", free: "❌ No", basic: "🔒 5 Chats/day", ultra: "✅ Unlimited" },
-            { id: 'AI_STUDIO', name: "AI Studio", free: "❌ No", basic: "❌ No", ultra: "✅ Full Access" },
-            { id: 'MS_AI_INSIGHTS', name: "AI Insights", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Detailed" },
             { id: 'SMART_SORT', name: "Smart Topic Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'WEAK_DETECT', name: "Weakness Detection", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'DYNAMIC_PLAN', name: "Dynamic Study Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" }
@@ -534,8 +530,6 @@ export const DEFAULT_PLAN_COMPARISON = [
         name: "5. TTS / STUDY TOOLS",
         features: [
             { id: 'TTS_FEATURE', name: "Text-to-Speech (TTS)", free: "⚠️ 1 min demo", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
-            { id: 'PREMIUM_NOTES', name: "Premium Notes (Audio)", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'ADDITIONAL_NOTES', name: "Additional Resources", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
             { id: 'SPEED_CONTROL', name: "Speed Control", free: "❌ No", basic: "❌ No", ultra: "✅ 0.5x – 2x" },
             { id: 'AUTO_SCROLL', name: "Auto Scroll", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'FOCUS_MODE', name: "Focus Mode", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
@@ -555,7 +549,7 @@ export const DEFAULT_PLAN_COMPARISON = [
     {
         name: "7. CONTENT REQUEST SYSTEM",
         features: [
-            { id: 'REQUEST_CONTENT', name: "Request Content", free: "❌ No", basic: "✅ Yes", ultra: "✅ VIP Access" },
+            { id: 'REQUEST_CONTENT', name: "Request New Content", free: "❌ No", basic: "✅ Yes", ultra: "✅ VIP Access" },
             { id: 'PRIORITY', name: "Priority Level", free: "Low", basic: "Normal", ultra: "Top Priority" },
             { id: 'PROMISE', name: "Admin Promise", free: "❌ No", basic: "❌ No", ultra: "24h Delivery" }
         ]
@@ -563,11 +557,6 @@ export const DEFAULT_PLAN_COMPARISON = [
     {
         name: "8. ACCOUNT & SECURITY",
         features: [
-            { id: 'MS_ANALYSIS_DET', name: "Detailed Analysis", free: "❌ Paid (20 Cr)", basic: "✅ Free", ultra: "✅ Free" },
-            { id: 'MS_OFFICIAL', name: "Official Marksheet", free: "✅ Yes", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'MS_MISTAKES', name: "Mistakes Review", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'MS_OMR', name: "OMR Sheet", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'MS_RECOMMEND', name: "Recommended Notes", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
             { id: 'GUEST', name: "Guest Mode", free: "✅ Yes", basic: "❌ No", ultra: "❌ No" },
             { id: 'DEVICE_LIMIT', name: "Device Login Limit", free: "1 Device", basic: "1 Device", ultra: "Multi-Device" },
             { id: 'GHOST', name: "Ghost Login (Admin)", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },

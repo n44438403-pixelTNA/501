@@ -6,3 +6,7 @@ Port 5001 is in use, trying another one...
   ➜  Local:   http://localhost:5002/
   ➜  Network: http://192.168.0.2:5002/
 [BABEL] Note: The code generator has deoptimised the styling of /app/components/AdminDashboard.tsx as it exceeds the max of 500KB.
+2:45:36 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx, /components/admin/AppSoul.tsx
+2:45:36 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/admin/FeatureGroupList.tsx, /components/admin/FeatureAccessPage.tsx, /components/admin/AppSoul.tsx
+2:47:33 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/RevisionHub.tsx, /components/FeatureMatrixModal.tsx
+2:48:21 AM [vite] (client) hmr update /components/admin/AppSoul.tsx

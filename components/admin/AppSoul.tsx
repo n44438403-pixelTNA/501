@@ -30,7 +30,9 @@ const SOUL_FEATURES = [
     'MS_AI_INSIGHTS',
     'MS_MISTAKES',
     'MS_ANALYSIS',
-    'MS_OFFICIAL'
+    'MS_OFFICIAL',
+    'AI_CENTER',
+    'AI_HUB_BANNER'
 ];
 
 export const AppSoul: React.FC<Props> = ({ settings, onUpdateSettings, onBack }) => {

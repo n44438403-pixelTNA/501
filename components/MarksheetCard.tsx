@@ -8,6 +8,7 @@ import { generateUltraAnalysis } from '../services/groq';
 import { saveUniversalAnalysis, saveUserToLive, saveAiInteraction, getChapterData } from '../firebase';
 import ReactMarkdown from 'react-markdown';
 import { speakText, stopSpeech, getCategorizedVoices, stripHtml } from '../utils/textToSpeech';
+import { checkFeatureAccess } from '../utils/permissionUtils';
 import { CustomConfirm } from './CustomDialogs'; // Import CustomConfirm
 import { SpeakButton } from './SpeakButton';
 import { renderMathInHtml } from '../utils/mathUtils';
@@ -1158,32 +1159,81 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
             {/* Tab Header */}
             <div className="px-4 pt-2 pb-0 bg-white border-b border-slate-100 flex gap-2 overflow-x-auto shrink-0 scrollbar-hide items-center">
-                {mcqMode === 'FREE' && (
-                    <button onClick={() => setActiveTab('OFFICIAL_MARKSHEET')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'OFFICIAL_MARKSHEET' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
-                        <FileText size={14} className="inline mr-1 mb-0.5" /> Official Marksheet
-                    </button>
-                )}
+                {/* Official Marksheet Tab */}
+                {(() => {
+                    const access = checkFeatureAccess('MS_OFFICIAL', user, settings || {});
+                    if (!access.hasAccess && access.cost === 0) return null; // Hidden if locked/denied
+
+                    return (
+                        <button
+                            onClick={() => setActiveTab('OFFICIAL_MARKSHEET')}
+                            className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'OFFICIAL_MARKSHEET' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            <FileText size={14} className="inline mr-1 mb-0.5" /> Official Marksheet
+                        </button>
+                    );
+                })()}
+
                 {!isAnalysisUnlocked ? (
                     <button onClick={unlockFreeAnalysis} className="px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-600 flex items-center gap-1 bg-slate-50/50">
                         <Lock size={12} /> Analysis (Locked)
                     </button>
                 ) : (
                     <>
-                        <button onClick={() => setActiveTab('SOLUTION')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'SOLUTION' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
-                            <FileSearch size={14} className="inline mr-1 mb-0.5" /> Analysis
-                        </button>
-                        <button onClick={() => setActiveTab('MISTAKES')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'MISTAKES' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
-                            <XCircle size={14} className="inline mr-1 mb-0.5" /> Mistakes
-                        </button>
-                        <button onClick={() => setActiveTab('AI_ANALYSIS')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'AI_ANALYSIS' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
-                            <BrainCircuit size={14} className="inline mr-1 mb-0.5" /> AI Insights
-                        </button>
-                        <button onClick={() => setActiveTab('OMR')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'OMR' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
-                            <Grid size={14} className="inline mr-1 mb-0.5" /> OMR
-                        </button>
-                        <button onClick={() => setActiveTab('RECOMMEND')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'RECOMMEND' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
-                            <Lightbulb size={14} className="inline mr-1 mb-0.5" /> Recommend Notes
-                        </button>
+                        {/* Analysis (Solution) Tab */}
+                        {(() => {
+                            const access = checkFeatureAccess('MS_ANALYSIS', user, settings || {});
+                            if (!access.hasAccess) return null;
+                            return (
+                                <button onClick={() => setActiveTab('SOLUTION')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'SOLUTION' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
+                                    <FileSearch size={14} className="inline mr-1 mb-0.5" /> Analysis
+                                </button>
+                            );
+                        })()}
+
+                        {/* Mistakes Tab */}
+                        {(() => {
+                            const access = checkFeatureAccess('MS_MISTAKES', user, settings || {});
+                            if (!access.hasAccess) return null;
+                            return (
+                                <button onClick={() => setActiveTab('MISTAKES')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'MISTAKES' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
+                                    <XCircle size={14} className="inline mr-1 mb-0.5" /> Mistakes
+                                </button>
+                            );
+                        })()}
+
+                        {/* AI Insights Tab */}
+                        {(() => {
+                            const access = checkFeatureAccess('MS_AI_INSIGHTS', user, settings || {});
+                            if (!access.hasAccess) return null;
+                            return (
+                                <button onClick={() => setActiveTab('AI_ANALYSIS')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'AI_ANALYSIS' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
+                                    <BrainCircuit size={14} className="inline mr-1 mb-0.5" /> AI Insights
+                                </button>
+                            );
+                        })()}
+
+                        {/* OMR Tab */}
+                        {(() => {
+                            const access = checkFeatureAccess('MS_OMR', user, settings || {});
+                            if (!access.hasAccess) return null;
+                            return (
+                                <button onClick={() => setActiveTab('OMR')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'OMR' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
+                                    <Grid size={14} className="inline mr-1 mb-0.5" /> OMR
+                                </button>
+                            );
+                        })()}
+
+                        {/* Recommendations Tab */}
+                        {(() => {
+                            const access = checkFeatureAccess('MS_RECOMMEND', user, settings || {});
+                            if (!access.hasAccess) return null;
+                            return (
+                                <button onClick={() => setActiveTab('RECOMMEND')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'RECOMMEND' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
+                                    <Lightbulb size={14} className="inline mr-1 mb-0.5" /> Recommend Notes
+                                </button>
+                            );
+                        })()}
                     </>
                 )}
             </div>

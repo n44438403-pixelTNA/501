@@ -21,30 +21,30 @@ export const FeatureCard: React.FC<Props> = ({ feature, onClick, isActive, disab
                 onClick={onClick}
                 disabled={disabled}
                 className={`
-                    relative p-4 rounded-3xl transition-all duration-300 flex flex-col items-center justify-center gap-3 group active:scale-95 overflow-hidden h-32 w-full
+                    relative p-3 rounded-2xl transition-all duration-300 flex flex-col items-center justify-center gap-2 group active:scale-95 overflow-hidden h-24 w-full
                     ${isActive
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 ring-2 ring-blue-400'
-                        : 'bg-white border-2 border-slate-100 text-slate-600 hover:border-blue-200 hover:shadow-md'
+                        : 'bg-white border border-slate-100 text-slate-600 hover:border-blue-200 hover:shadow-sm'
                     }
                     ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : ''}
                 `}
             >
                 {/* Background Decoration */}
-                <div className={`absolute -top-10 -right-10 w-24 h-24 rounded-full opacity-10 transition-transform group-hover:scale-150 ${isActive ? 'bg-white' : 'bg-blue-500'}`}></div>
+                <div className={`absolute -top-8 -right-8 w-16 h-16 rounded-full opacity-10 transition-transform group-hover:scale-150 ${isActive ? 'bg-white' : 'bg-blue-500'}`}></div>
 
                 <div className={`
-                    p-3 rounded-2xl transition-colors
+                    p-2 rounded-xl transition-colors
                     ${isActive ? 'bg-white/20 text-white' : 'bg-slate-50 text-blue-600 group-hover:bg-blue-50'}
                 `}>
-                    {Icon && <Icon size={28} />}
+                    {Icon && <Icon size={20} />}
                 </div>
 
-                <span className={`font-black text-sm uppercase tracking-wide text-center leading-tight ${isActive ? 'text-white' : 'text-slate-700'}`}>
+                <span className={`font-black text-[10px] uppercase tracking-wide text-center leading-tight ${isActive ? 'text-white' : 'text-slate-700'}`}>
                     {feature.label}
                 </span>
 
                 {badge && (
-                    <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse border border-white">
+                    <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-sm animate-pulse border border-white">
                         {badge}
                     </div>
                 )}

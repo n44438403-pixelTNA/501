@@ -4,7 +4,7 @@ import { FULL_SYLLABUS } from './utils/full_syllabus_data';
 // @ts-ignore
 // import { COMPETITION_DATA } from './competition_syllabus';
 
-export const APP_VERSION = "1.0.1"; // NEW: Current App Version
+export const APP_VERSION = "1.0.1";
 export const ADMIN_EMAIL = "nadiman0636indo@gmail.com";
 export const SUPPORT_EMAIL = "nadiman0636indo@gmail.com";
 
@@ -88,38 +88,27 @@ export const DEFAULT_APP_FEATURES = [
     { id: 'f50', title: 'Visual Analytics', enabled: true, order: 50 }
 ];
 
-// Default Subjects (Restricted List)
 export const DEFAULT_SUBJECTS = {
-  // CORE SCIENCES
   physics: { id: 'physics', name: 'Physics', icon: 'physics', color: 'bg-blue-50 text-blue-600' },
   chemistry: { id: 'chemistry', name: 'Chemistry', icon: 'flask', color: 'bg-purple-50 text-purple-600' },
   biology: { id: 'biology', name: 'Biology', icon: 'bio', color: 'bg-green-50 text-green-600' },
   math: { id: 'math', name: 'Mathematics', icon: 'math', color: 'bg-emerald-50 text-emerald-600' },
-
-  // ARTS / COMMERCE
   history: { id: 'history', name: 'History', icon: 'history', color: 'bg-rose-50 text-rose-600' },
   geography: { id: 'geography', name: 'Geography', icon: 'geo', color: 'bg-indigo-50 text-indigo-600' },
   polity: { id: 'polity', name: 'Political Science', icon: 'gov', color: 'bg-amber-50 text-amber-600' },
   economics: { id: 'economics', name: 'Economics', icon: 'social', color: 'bg-cyan-50 text-cyan-600' },
   business: { id: 'business', name: 'Business Studies', icon: 'business', color: 'bg-blue-50 text-blue-600' },
   accounts: { id: 'accounts', name: 'Accountancy', icon: 'accounts', color: 'bg-emerald-50 text-emerald-600' },
-
-  // JUNIOR CORE
   science: { id: 'science', name: 'Science', icon: 'science', color: 'bg-blue-50 text-blue-600' },
   sst: { id: 'sst', name: 'Social Science', icon: 'geo', color: 'bg-orange-50 text-orange-600' },
-
-  // LANGUAGES & EXTRAS
   english: { id: 'english', name: 'English', icon: 'english', color: 'bg-sky-50 text-sky-600' },
   hindi: { id: 'hindi', name: 'Hindi', icon: 'hindi', color: 'bg-orange-50 text-orange-600' },
   sanskrit: { id: 'sanskrit', name: 'Sanskrit', icon: 'book', color: 'bg-yellow-50 text-yellow-600' },
   computer: { id: 'computer', name: 'Computer Science', icon: 'computer', color: 'bg-slate-50 text-slate-600' }
 };
 
-// Helper to get subjects - NOW DYNAMIC
 export const getSubjectsList = (classLevel: string, stream: string | null, board?: string): Subject[] => {
   const isSenior = ['11', '12'].includes(classLevel);
-
-  // 1. Try to load Custom Subjects from LocalStorage
   let pool = { ...DEFAULT_SUBJECTS };
   try {
       const stored = localStorage.getItem('nst_custom_subjects_pool');
@@ -137,7 +126,6 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
   let selectedSubjects: Subject[] = [];
   const commonSubjects = [pool.english, pool.hindi, pool.computer];
 
-  // --- COMPETITION ---
   if (classLevel === 'COMPETITION') {
       selectedSubjects = [
           pool.history,
@@ -150,7 +138,6 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
           pool.math
       ].filter(Boolean);
   }
-  // --- JUNIOR CLASSES (6-10) ---
   else if (!isSenior) {
       selectedSubjects = [
           pool.math,
@@ -162,7 +149,6 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
           pool.computer
       ].filter(Boolean);
   }
-  // --- SENIOR CLASSES (11/12) ---
   else {
       if (stream === 'Science') {
           selectedSubjects = [pool.physics, pool.chemistry, pool.math, pool.biology, ...commonSubjects];
@@ -174,12 +160,10 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
       selectedSubjects = selectedSubjects.filter(Boolean);
   }
 
-  // 3. APPEND CUSTOM SUBJECTS
   customKeys.forEach(key => {
       if (pool[key]) selectedSubjects.push(pool[key]);
   });
 
-  // TRANSLATE FOR BSEB (If Board is BSEB)
   if (board === 'BSEB') {
       const hindiMap: Record<string, string> = {
           'Physics': 'भौतिकी',
@@ -209,11 +193,8 @@ export const getSubjectsList = (classLevel: string, stream: string | null, board
   return selectedSubjects;
 };
 
-// --- STATIC SYLLABUS DATA (COMPLETE LIST) ---
-
 export const STATIC_SYLLABUS: Record<string, string[]> = FULL_SYLLABUS;
 
-// --- ADMIN PERMISSIONS LIST (30+ Controls) ---
 export const ADMIN_PERMISSIONS = [
     'VIEW_DASHBOARD', 'VIEW_USERS', 'MANAGE_USERS', 'DELETE_USERS',
     'MANAGE_SUBS', 'GRANT_FREE_SUB', 'VIEW_REVENUE',
@@ -226,9 +207,7 @@ export const ADMIN_PERMISSIONS = [
     'VIEW_DEMANDS', 'APPROVE_LOGIN_REQS', 'DEPLOY_APP', 'RESET_SYSTEM'
 ];
 
-// --- ALL APP FEATURES (200+) - Comprehensive List ---
 export const ALL_APP_FEATURES = [
-    // --- DASHBOARD & MENU ---
     { id: 'MY_COURSE', title: 'My Course', enabled: true },
     { id: 'MY_ANALYSIS', title: 'My Analysis', enabled: true },
     { id: 'STUDY_GOAL_PERF', title: 'Study Goal Performance', enabled: true },
@@ -241,8 +220,6 @@ export const ALL_APP_FEATURES = [
     { id: 'FLOATING_BTN', title: 'Floating Button', enabled: true },
     { id: 'STORE_PAGE', title: 'Store Page', enabled: true },
     { id: 'UNIVERSAL_INFO', title: 'Universal Information', enabled: true },
-
-    // --- REVISION HUB ---
     { id: 'REVISION_HUB', title: 'Revision Hub (Base)', enabled: true },
     { id: 'REVISION_HUB_FREE', title: 'Free Revision Hub', enabled: true },
     { id: 'REVISION_HUB_PREMIUM', title: 'Premium Revision Hub', enabled: true },
@@ -256,44 +233,30 @@ export const ALL_APP_FEATURES = [
     { id: 'YESTERDAY_REPORT', title: 'Yesterday Report', enabled: true },
     { id: 'START_REVISION', title: 'Start Revision Button', enabled: true },
     { id: 'MASTERY_30_DAY', title: '30 Day Mastery', enabled: true },
-
-    // --- CONTENT: VIDEO ---
     { id: 'WHATS_NEW_VIDEO', title: 'Whats New Video Lectures', enabled: true },
     { id: 'FREE_VIDEOS', title: 'Free Videos', enabled: true },
     { id: 'PREMIUM_VIDEOS', title: 'Premium Videos', enabled: true },
     { id: 'VIDEO_LIB', title: 'Video Library', enabled: true },
-
-    // --- CONTENT: NOTES ---
     { id: 'NOTES_LIB', title: 'Notes Library', enabled: true },
     { id: 'FREE_NOTES', title: 'Free Notes', enabled: true },
     { id: 'PREMIUM_NOTES', title: 'Premium Notes', enabled: true },
     { id: 'TOPIC_NOTES', title: 'Topic Notes', enabled: true },
     { id: 'RECOMMEND_NOTES', title: 'Recommended Notes', enabled: true },
-
-    // --- CONTENT: MCQ ---
     { id: 'MCQ_LIB', title: 'MCQ Library', enabled: true },
     { id: 'FREE_MCQ', title: 'Free MCQ', enabled: true },
     { id: 'PREMIUM_MCQ', title: 'Premium MCQ', enabled: true },
     { id: 'MISTAKES_PAGE', title: 'Mistakes Page', enabled: true },
     { id: 'RECENT_TESTS', title: 'Recent Tests', enabled: true },
-
-    // --- AUDIO & TTS ---
     { id: 'AUDIO_LIB', title: 'Audio Library', enabled: true },
     { id: 'TTS_FEATURE', title: 'Text-to-Speech (TTS)', enabled: true },
-
-    // --- AI FEATURES ---
     { id: 'AI_HUB_BANNER', title: 'AI Hub Banner', enabled: true },
     { id: 'DEEP_ANALYSIS', title: 'Deep Analysis', enabled: true },
     { id: 'AI_CHAT_TURBO', title: 'AI Chat Turbo', enabled: true },
     { id: 'AI_INSIGHT_MAP', title: 'AI Insight Roadmap', enabled: true },
     { id: 'PREMIUM_ANALYSIS', title: 'Premium Analysis', enabled: true },
-
-    // --- GAMIFICATION ---
     { id: 'PLAY_GAME', title: 'Play Game', enabled: true },
     { id: 'REDEEM_PRIZES', title: 'Redeem Prizes', enabled: true },
     { id: 'DISCOUNT_EVENT', title: 'Discount Event', enabled: true },
-
-    // --- ANALYTICS & STATS ---
     { id: 'ACCURACY_STAT', title: 'Accuracy Stat', enabled: true },
     { id: 'SPEED_STAT', title: 'Speed Stat', enabled: true },
     { id: 'PERF_TREND', title: 'Performance Trend', enabled: true },
@@ -307,11 +270,7 @@ export const ALL_APP_FEATURES = [
     { id: 'TOPIC_BREAKDOWN', title: 'Topic Breakdown', enabled: true },
     { id: 'TOPIC_DIST', title: 'Topic Strength Distribution', enabled: true },
     { id: 'DOWNLOAD_ANALYSIS', title: 'Download Full Analysis', enabled: true },
-
-    // --- MISC ---
     { id: 'REQUEST_CONTENT', title: 'Requested Content', enabled: true },
-
-    // --- LEGACY (Keep compatible) ---
     { id: 'f4', title: 'Weekly Tests', enabled: true },
     { id: 'f5', title: 'Live Leaderboard', enabled: true },
     { id: 'f6', title: 'Engagement Rewards', enabled: true },
@@ -413,7 +372,6 @@ export const ALL_APP_FEATURES = [
     { id: 'f103', title: 'Gesture Control', enabled: true }
 ];
 
-// --- LEVEL SYSTEM FEATURES (Unlocks) ---
 export const LEVEL_UNLOCKABLE_FEATURES = [
     { id: 'MCQ_PRACTICE', label: 'MCQ Practice Zone' },
     { id: 'AUDIO_LIBRARY', label: 'Audio Library & Podcasts' },
@@ -425,7 +383,6 @@ export const LEVEL_UNLOCKABLE_FEATURES = [
     { id: 'WEEKLY_TESTS', label: 'Weekly Tests' }
 ];
 
-// --- LEVEL UP CONFIGURATION (1-50) ---
 export const LEVEL_UP_CONFIG = [
     { level: 1, featureId: 'BASIC_ACCESS', label: 'Basic App Access', description: 'Video Lectures & Notes' },
     { level: 2, featureId: 'PDF_DOWNLOAD', label: 'PDF Download', description: 'Download Notes Offline' },
@@ -479,14 +436,23 @@ export const LEVEL_UP_CONFIG = [
     { level: 50, featureId: 'ULTIMATE_ACCESS', label: 'Ultimate Badge', description: 'Legend Status Unlocked' }
 ];
 
-// --- PLAN COMPARISON MATRIX (UPDATED) ---
-// Now acts as the Single Source of Truth for App Control via App Soul.
-// Each feature has an ID mapped to the codebase logic.
+export const NSTA_DEFAULT_FEATURES = [
+    { category: '📑 NOTES', id: 'QUICK_REVISION', label: 'Quick Revision', visible: true, limits: { free: 2, basic: undefined, ultra: undefined }, creditCost: 0 },
+    { category: '📑 NOTES', id: 'DEEP_DIVE', label: 'Deep Dive Notes', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: {}, creditCost: 0 },
+    { category: '📑 NOTES', id: 'PREMIUM_NOTES', label: 'Premium Notes', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: undefined, ultra: undefined }, creditCost: 5 },
+    { category: '📑 NOTES', id: 'ADDITIONAL_NOTES', label: 'Additional Resources', visible: true, limits: { free: 1, basic: undefined, ultra: undefined }, creditCost: 0 },
+    { category: '🎬 VIDEO', id: 'VIDEO_ACCESS', label: 'Video Lectures', visible: true, limits: { free: 2, basic: undefined, ultra: undefined }, creditCost: 0 },
+    { category: '🎧 AUDIO', id: 'AUDIO_LIBRARY', label: 'Audio Library', visible: true, allowedTiers: ['ULTRA'], limits: {}, creditCost: 0 },
+    { category: '📝 MCQ', id: 'MCQ_FREE', label: 'Free Practice', visible: true, limits: { free: 50, basic: undefined, ultra: undefined }, creditCost: 0 },
+    { category: '📝 MCQ', id: 'MCQ_PREMIUM', label: 'Premium Tests', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: {}, creditCost: 0 },
+    { category: '🔄 REVISION', id: 'REVISION_HUB', label: 'Revision Hub', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: 1, ultra: undefined }, creditCost: 0 },
+    { category: '🤖 AI HUB', id: 'AI_HUB_CONTROL', label: 'AI Hub Access', visible: true, allowedTiers: ['BASIC', 'ULTRA'], limits: { basic: 5, ultra: undefined }, creditCost: 2 },
+];
+
 export const DEFAULT_PLAN_COMPARISON = [
     {
         name: "1. CORE LEARNING FEATURES",
         features: [
-
             { id: 'NOTES_LIB', name: "PDF Notes Library", free: "🔒 First 2 Chapters", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
             { id: 'VIDEO_ACCESS', name: "Video Lectures", free: "🔒 First 2 Videos", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
             { id: 'TOPIC_CONTENT', name: "Topic-wise Notes", free: "❌ Locked", basic: "✅ Full Access", ultra: "✅ Full Access" },
@@ -497,14 +463,6 @@ export const DEFAULT_PLAN_COMPARISON = [
             { id: 'ADDITIONAL_NOTES', name: "Additional Resources", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
             { id: 'SEARCH', name: "Search Capability", free: "✅ Basic", basic: "✅ Advanced", ultra: "✅ Advanced" },
             { id: 'OFFLINE_SYNC', name: "Save / Offline Mode", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
-
-            { id: 'NOTES_ACCESS', name: "PDF Notes Library", free: "🔒 First 2 Chapters", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
-            { id: 'VIDEO_ACCESS', name: "Video Lectures", free: "🔒 First 2 Videos", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
-            { id: 'TOPIC_CONTENT', name: "Topic-wise Notes", free: "❌ Locked", basic: "✅ Full Access", ultra: "✅ Full Access" },
-            { id: 'AUDIO_LIBRARY', name: "Audio / Podcast", free: "❌ Locked", basic: "❌ Locked", ultra: "✅ Premium Only" },
-            { id: 'SEARCH', name: "Search Capability", free: "✅ Basic", basic: "✅ Advanced", ultra: "✅ Advanced" },
-            { id: 'DOWNLOAD_PDF', name: "Save / Offline Mode", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
-
             { id: 'WATERMARK', name: "PDF Watermark", free: "⚠️ Free User", basic: "❌ No", ultra: "❌ No" }
         ]
     },
@@ -512,42 +470,23 @@ export const DEFAULT_PLAN_COMPARISON = [
         name: "2. REVISION HUB (USP)",
         features: [
             { id: 'REVISION_HUB', name: "Revision Hub Access", free: "❌ Locked", basic: "⚠️ 1 Day/Week", ultra: "✅ Daily" },
-
             { id: 'WEAK_SORT', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'EXCELLENT_TAB', name: "Excellent (80%+) Tab", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'AI_PLAN', name: "Auto AI Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'MISTAKE_PATTERN', name: "Mistake Pattern Analysis", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'MASTERY_30', name: "30-Day Mastery Logic", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'START_TODAY', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
-
-            { id: 'QUICK_REVISION', name: "Quick Revision", free: "✅ Basic", basic: "✅ Full", ultra: "✅ Full" },
-            { id: 'DEEP_DIVE', name: "Deep Dive Notes", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'SORTING', name: "Weak/Avg/Strong Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'EXCELLENT_TAB', name: "Excellent (80%+) Tab", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'AI_PLAN', name: "Auto AI Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'MS_MISTAKES', name: "Mistake Pattern Analysis", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'MASTERY', name: "30-Day Mastery Logic", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'ONE_CLICK', name: "One-Click \"Start Today\"", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Yes" }
-
         ]
     },
     {
         name: "3. MCQ SYSTEM",
         features: [
             { id: 'MCQ_FREE', name: "Daily MCQ Limit", free: "30 Questions", basic: "50 Questions", ultra: "100 Questions" },
-
             { id: 'EXAM_MODE', name: "Exam Mode Timer", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
             { id: 'SOLUTIONS', name: "Detailed Solutions", free: "❌ Only Right/Wrong", basic: "✅ Text Solution", ultra: "✅ AI Explanation" },
             { id: 'RE_ATTEMPT', name: "Re-attempt Wrong", free: "❌ No", basic: "✅ Yes", ultra: "✅ Instant" },
             { id: 'TOPIC_MCQ', name: "Topic-wise Bulk MCQ", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Full Access" },
             { id: 'MCQ_HISTORY', name: "History & Logs", free: "⚠️ 3 Days", basic: "✅ Full History", ultra: "✅ Full History" },
-
-            { id: 'EXAM_TIMER', name: "Exam Mode Timer", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'MS_ANALYSIS', name: "Detailed Solutions", free: "❌ Only Right/Wrong", basic: "✅ Text Solution", ultra: "✅ AI Explanation" },
-            { id: 'RE_ATTEMPT', name: "Re-attempt Wrong", free: "❌ No", basic: "✅ Yes", ultra: "✅ Instant" },
-            { id: 'BULK_MCQ', name: "Topic-wise Bulk MCQ", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Full Access" },
-            { id: 'HISTORY', name: "History & Logs", free: "⚠️ 3 Days", basic: "✅ Full History", ultra: "✅ Full History" },
-
             { id: 'PALETTE', name: "Question Palette", free: "✅ Yes", basic: "✅ Yes", ultra: "✅ Yes" }
         ]
     },
@@ -555,49 +494,27 @@ export const DEFAULT_PLAN_COMPARISON = [
         name: "4. AI & SMART FEATURES",
         features: [
             { id: 'AI_CHAT', name: "AI Tutor Chat", free: "❌ No", basic: "🔒 5 Chats/day", ultra: "✅ Unlimited" },
-
             { id: 'SMART_SORT', name: "Smart Topic Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'WEAK_DETECT', name: "Weakness Detection", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'DYN_PLAN', name: "Dynamic Study Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'AI_STUDIO', name: "AI Studio", free: "❌ No", basic: "❌ No", ultra: "✅ Full Access" }
-
-            { id: 'AI_STUDIO', name: "AI Studio", free: "❌ No", basic: "❌ No", ultra: "✅ Full Access" },
-            { id: 'MS_AI_INSIGHTS', name: "AI Insights", free: "❌ No", basic: "⚠️ Limited", ultra: "✅ Detailed" },
-            { id: 'SMART_SORT', name: "Smart Topic Sorting", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'WEAK_DETECT', name: "Weakness Detection", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'DYNAMIC_PLAN', name: "Dynamic Study Plan", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" }
-
         ]
     },
     {
         name: "5. TTS / STUDY TOOLS",
         features: [
             { id: 'TTS_FEATURE', name: "Text-to-Speech (TTS)", free: "⚠️ 1 min demo", basic: "✅ Unlimited", ultra: "✅ Unlimited" },
-          
             { id: 'SPEED_CTRL', name: "Speed Control", free: "❌ No", basic: "❌ No", ultra: "✅ 0.5x – 2x" },
             { id: 'AUTO_SCROLL', name: "Auto Scroll", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'FOCUS_MODE', name: "Focus Mode", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
             { id: 'STUDY_TIMER', name: "Study Timer", free: "✅ Basic", basic: "✅ Analytics", ultra: "✅ Analytics" }
-
-            { id: 'PREMIUM_NOTES', name: "Premium Notes (Audio)", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'ADDITIONAL_NOTES', name: "Additional Resources", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'SPEED_CONTROL', name: "Speed Control", free: "❌ No", basic: "❌ No", ultra: "✅ 0.5x – 2x" },
-            { id: 'AUTO_SCROLL', name: "Auto Scroll", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'FOCUS_MODE', name: "Focus Mode", free: "❌ No", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'TIMER', name: "Study Timer", free: "✅ Basic", basic: "✅ Analytics", ultra: "✅ Analytics" }
-
         ]
     },
     {
         name: "6. GAMIFICATION & ECONOMY",
         features: [
-
             { id: 'COINS', name: "Coins / Credits Earning", free: "✅ Normal", basic: "✅ 1.5x Multiplier", ultra: "✅ 3x Multiplier" },
             { id: 'SPIN_WIN', name: "Spin & Win", free: "1 per day", basic: "5 per day", ultra: "10 per day" },
-
-            { id: 'EARN_CREDITS', name: "Coins / Credits Earning", free: "✅ Normal", basic: "✅ 1.5x Multiplier", ultra: "✅ 3x Multiplier" },
-            { id: 'SPIN', name: "Spin & Win", free: "1 per day", basic: "5 per day", ultra: "10 per day" },
-
             { id: 'STREAK', name: "Daily Streak Protection", free: "✅ Yes", basic: "✅ Yes", ultra: "✅ Freeze (No loss)" },
             { id: 'LEADERBOARD', name: "Leaderboard Access", free: "View Only", basic: "Participate", ultra: "Top Badge" },
             { id: 'DOUBLE_CREDIT', name: "Double Credit Events", free: "❌ No", basic: "⚠️ Sometimes", ultra: "✅ Always Active" }
@@ -606,58 +523,33 @@ export const DEFAULT_PLAN_COMPARISON = [
     {
         name: "7. CONTENT REQUEST SYSTEM",
         features: [
-
             { id: 'REQUEST_CONTENT', name: "Request New Content", free: "❌ No", basic: "✅ Yes", ultra: "✅ VIP Access" },
             { id: 'PRIORITY_REQ', name: "Priority Level", free: "Low", basic: "Normal", ultra: "Top Priority" },
             { id: 'ADMIN_PROMISE', name: "Admin Promise", free: "❌ No", basic: "❌ No", ultra: "24h Delivery" }
-            { id: 'REQUEST_CONTENT', name: "Request Content", free: "❌ No", basic: "✅ Yes", ultra: "✅ VIP Access" },
-            { id: 'PRIORITY', name: "Priority Level", free: "Low", basic: "Normal", ultra: "Top Priority" },
-            { id: 'PROMISE', name: "Admin Promise", free: "❌ No", basic: "❌ No", ultra: "24h Delivery" }
-
         ]
     },
     {
         name: "8. ACCOUNT & SECURITY",
         features: [
-
             { id: 'GUEST_MODE', name: "Guest Mode", free: "✅ Yes", basic: "❌ No", ultra: "❌ No" },
             { id: 'DEVICE_LIMIT', name: "Device Login Limit", free: "1 Device", basic: "1 Device", ultra: "Multi-Device" },
             { id: 'GHOST_LOGIN', name: "Ghost Login (Admin)", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
             { id: 'PROFILE_EDIT', name: "Profile Edit", free: "Basic Info", basic: "Full Profile", ultra: "Full Profile" }
-
-            { id: 'MS_ANALYSIS_DET', name: "Detailed Analysis", free: "❌ Paid (20 Cr)", basic: "✅ Free", ultra: "✅ Free" },
-            { id: 'MS_OFFICIAL', name: "Official Marksheet", free: "✅ Yes", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'MS_MISTAKES_REV', name: "Mistakes Review", free: "❌ Locked", basic: "✅ Yes", ultra: "✅ Yes" },
-            { id: 'GUEST', name: "Guest Mode", free: "✅ Yes", basic: "❌ No", ultra: "❌ No" },
-            { id: 'DEVICE_LIMIT', name: "Device Login Limit", free: "1 Device", basic: "1 Device", ultra: "Multi-Device" },
-            { id: 'GHOST', name: "Ghost Login (Admin)", free: "❌ No", basic: "❌ No", ultra: "✅ Yes" },
-            { id: 'PROFILE', name: "Profile Edit", free: "Basic Info", basic: "Full Profile", ultra: "Full Profile" }
-
         ]
     },
     {
         name: "9. ADMIN POWER (ULTRA EXCLUSIVE)",
         features: [
-
             { id: 'LIVE_SPY', name: "Live User Spy", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
             { id: 'LOGIN_AS', name: "Login As User", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
             { id: 'NOTIFICATIONS', name: "Targeted Notifications", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
             { id: 'FLASH_SALE', name: "Flash Sale Auto Trigger", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
             { id: 'ABANDON_DISC', name: "Payment Abandon Discount", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
             { id: 'CREDIT_PANEL', name: "Credit Control Panel", free: "❌ No", basic: "❌ No", ultra: "✅ Active" }
-
-            { id: 'SPY', name: "Live User Spy", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'LOGIN_AS', name: "Login As User", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'TARGETED', name: "Targeted Notifications", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'FLASH', name: "Flash Sale Auto Trigger", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'ABANDON', name: "Payment Abandon Discount", free: "❌ No", basic: "❌ No", ultra: "✅ Active" },
-            { id: 'CREDIT_CTRL', name: "Credit Control Panel", free: "❌ No", basic: "❌ No", ultra: "✅ Active" }
-
-        
+        ]
     }
 ];
 
-// --- STUDENT FACING FEATURES (Filtered) ---
 export const STUDENT_APP_FEATURES = ALL_APP_FEATURES.filter(f =>
     !['f17', 'f18', 'f19', 'f20', 'f34', 'f37', 'f43', 'f44', 'f45', 'f46', 'f47', 'f48', 'f89', 'f90', 'f91', 'f92', 'f88', 'f87'].includes(f.id)
 );

@@ -21,7 +21,7 @@ import { SyllabusManager } from './SyllabusManager';
 import { FeatureGroupList } from './admin/FeatureGroupList';
 import { ALL_FEATURES } from '../utils/featureRegistry';
 import { DocumentationTab } from './admin/DocumentationTab';
-import { AppSoul } from './admin/AppSoul';
+import { NstaFeatureManager } from './admin/NstaFeatureManager';
 // @ts-ignore
 import JSZip from 'jszip';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -124,7 +124,7 @@ type AdminTab =
   | 'PLAN_MATRIX'
   | 'FEATURE_ACCESS' // NEW
   | 'EVENT_MANAGER' // NEW
-  | 'APP_SOUL' // NEW
+  | 'NSTA_CONTROL' // NEW - Replaces APP_SOUL
   | 'DOCUMENTATION'; // NEW
 
 interface ContentConfig {
@@ -9748,9 +9748,9 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
           />
       )}
 
-      {/* --- APP SOUL (SPECIAL FEATURES) --- */}
-      {activeTab === 'APP_SOUL' && (
-          <AppSoul
+      {/* --- NSTA FEATURE MANAGER (Formerly APP SOUL) --- */}
+      {activeTab === 'NSTA_CONTROL' && (
+          <NstaFeatureManager
               settings={localSettings}
               onUpdateSettings={(s) => {
                   setLocalSettings(s);

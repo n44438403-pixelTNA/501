@@ -1,5 +1,5 @@
 
-export type FeatureGroup = 'CORE' | 'ANALYSIS' | 'AI' | 'GAME' | 'ADMIN' | 'ADVANCED' | 'CONTENT' | 'TOOLS' | 'REVISION' | 'SOUL';
+export type FeatureGroup = 'CORE' | 'ANALYSIS' | 'AI' | 'GAME' | 'ADMIN' | 'ADVANCED' | 'CONTENT' | 'TOOLS' | 'REVISION' | 'SOUL' | 'NSTA_CONTROL';
 
 export interface Feature {
     id: string;
@@ -744,14 +744,14 @@ export const ALL_FEATURES: Feature[] = [
         color: 'teal'
     },
     {
-        id: 'ADMIN_APP_SOUL',
-        label: 'App Soul',
-        group: 'SOUL',
+        id: 'ADMIN_NSTA_CONTROL',
+        label: 'NSTA Control',
+        group: 'NSTA_CONTROL',
         surfaceLevel: 3,
-        adminVisible: false,
-        adminTab: 'APP_SOUL',
+        adminVisible: true,
+        adminTab: 'NSTA_CONTROL',
         requiredPermission: 'MANAGE_SETTINGS',
-        icon: 'Hexagon',
+        icon: 'Sliders',
         color: 'violet'
     },
 

@@ -26,7 +26,6 @@ export const VideoPlaylistView: React.FC<Props> = ({
   chapter, subject, user, board, classLevel, stream, onBack, onUpdateUser, settings, customPlaylist, initialSyllabusMode 
 }) => {
   const [playlist, setPlaylist] = useState<{title: string, url: string, price?: number, access?: string}[]>([]);
-  const [premiumPlaylist, setPremiumPlaylist] = useState<{title: string, url: string, price?: number, access?: string}[]>([]);
   const [activeVideo, setActiveVideo] = useState<{url: string, title: string} | null>(null);
   const [syllabusMode, setSyllabusMode] = useState<'SCHOOL' | 'COMPETITION'>(initialSyllabusMode || 'SCHOOL');
   const [loading, setLoading] = useState(true);
@@ -104,8 +103,6 @@ export const VideoPlaylistView: React.FC<Props> = ({
       // STRICT MODE SEPARATION
       // Prioritize modern structured playlist over legacy links
       let modePlaylist = null;
-      let modePremiumPlaylist = null;
-
       if (syllabusMode === 'SCHOOL') {
           // Check School Playlist -> Legacy Playlist -> Legacy Links
           if (data && data.schoolVideoPlaylist && data.schoolVideoPlaylist.length > 0) {
@@ -119,13 +116,11 @@ export const VideoPlaylistView: React.FC<Props> = ({
                   price: data.price || settings?.defaultVideoCost || 5 
               }];
           }
-          if (data && data.schoolPremiumVideoPlaylist) modePremiumPlaylist = data.schoolPremiumVideoPlaylist;
       } else {
           // Competition Mode: STRICT - No Fallbacks to School Content
           if (data && data.competitionVideoPlaylist && data.competitionVideoPlaylist.length > 0) {
               modePlaylist = data.competitionVideoPlaylist;
           }
-          if (data && data.competitionPremiumVideoPlaylist) modePremiumPlaylist = data.competitionPremiumVideoPlaylist;
       }
       
       if (modePlaylist) {
@@ -141,8 +136,6 @@ export const VideoPlaylistView: React.FC<Props> = ({
       } else {
           setPlaylist([]);
       }
-
-      setPremiumPlaylist(modePremiumPlaylist || []);
       setLoading(false);
     };
 
@@ -455,104 +448,6 @@ export const VideoPlaylistView: React.FC<Props> = ({
                </div>
            )}
        </div>
-
-       {/* PREMIUM PLAYLIST */}
-       {premiumPlaylist.length > 0 && (
-           <div className="p-4 border-t border-slate-200 bg-yellow-50/30">
-               <h4 className="font-black text-yellow-900 mb-4 flex items-center gap-2">
-                   <Crown size={20} className="text-yellow-600" />
-                   Premium Series
-               </h4>
-
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                   {premiumPlaylist.map((vid, idx) => {
-                       // Check Feature Lock
-                       const featureConfig = settings?.featureConfig?.['PREMIUM_VIDEO'];
-                       const isFeatureVisible = featureConfig ? featureConfig.visible : true;
-
-                       let isUnlocked = user.role === 'ADMIN';
-
-                       if (!isUnlocked) {
-                           // 1. Check Feature Visibility
-                           if (isFeatureVisible === false) {
-                               isUnlocked = false; // Hard Lock
-                           } else {
-                               // 2. Check Subscription (Ultra Only)
-                               if (user.isPremium && (user.subscriptionLevel === 'ULTRA' || user.subscriptionTier === 'YEARLY' || user.subscriptionTier === 'LIFETIME')) {
-                                   isUnlocked = true;
-                               }
-                           }
-                       }
-
-                       const isActive = activeVideo?.url === vid.url;
-
-                       return (
-                           <div
-                               key={idx}
-                               className={`group relative overflow-hidden rounded-2xl border transition-all ${
-                                   isActive
-                                   ? 'bg-gradient-to-br from-yellow-50 to-white border-yellow-400 shadow-md ring-2 ring-yellow-200'
-                                   : 'bg-white border-yellow-100 hover:shadow-xl hover:-translate-y-1'
-                               }`}
-                           >
-                               {/* THUMBNAIL AREA */}
-                               <div className={`aspect-video relative ${isActive ? 'bg-slate-900' : 'bg-gradient-to-br from-yellow-900 via-yellow-800 to-black'}`}>
-                                   <div className="absolute top-2 left-2 z-20">
-                                       <span className="bg-black/60 backdrop-blur text-yellow-400 text-[9px] font-black px-2 py-0.5 rounded shadow-sm flex items-center gap-1 border border-yellow-500/30">
-                                           <Crown size={8} fill="currentColor" /> PREMIUM
-                                       </span>
-                                   </div>
-
-                                   {!isUnlocked && !isActive && (
-                                       <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 backdrop-blur-[2px]">
-                                           <div className="w-10 h-10 rounded-full bg-yellow-500/20 backdrop-blur flex items-center justify-center mb-1 border border-yellow-500/50">
-                                               <Lock size={20} className="text-yellow-400" />
-                                           </div>
-                                           <span className="text-[10px] font-black text-yellow-100 uppercase tracking-widest text-shadow">Ultra Exclusive</span>
-                                       </div>
-                                   )}
-
-                                   <div className="absolute inset-0 flex items-center justify-center transition-transform group-hover:scale-110">
-                                       <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl ${isActive ? 'bg-yellow-500 text-white animate-pulse' : 'bg-white/10 backdrop-blur-sm text-yellow-400 group-hover:bg-yellow-500 group-hover:text-white transition-colors'}`}>
-                                           <PlayCircle size={isActive ? 24 : 32} fill="currentColor" />
-                                       </div>
-                                   </div>
-                               </div>
-
-                               {/* CONTENT AREA */}
-                               <div className="p-4">
-                                   <div className="flex justify-between items-start gap-2 mb-3">
-                                       <h5 className={`font-bold text-sm line-clamp-2 leading-snug ${isActive ? 'text-yellow-900' : 'text-slate-800'}`}>
-                                           {vid.title || `Premium Episode ${idx + 1}`}
-                                       </h5>
-                                   </div>
-
-                                   {isUnlocked || isActive ? (
-                                       <button
-                                           onClick={() => {
-                                                triggerVideoPlay(vid);
-                                           }}
-                                           className="w-full py-2.5 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-yellow-200 transition-all active:scale-95"
-                                       >
-                                           <PlayCircle size={16} />
-                                           {isActive ? 'Playing Now' : 'Watch Premium'}
-                                       </button>
-                                   ) : (
-                                       <button
-                                           onClick={() => setAlertConfig({isOpen: true, message: "🔒 This video requires an ULTRA Subscription. Upgrade now to access Premium Series!"})}
-                                           className="w-full py-2.5 bg-slate-900 text-white font-bold rounded-xl text-[10px] flex items-center justify-center gap-2 shadow-lg hover:bg-black transition-all"
-                                       >
-                                           <Crown size={14} className="text-yellow-400" />
-                                           <span>Upgrade to Ultra</span>
-                                       </button>
-                                   )}
-                               </div>
-                           </div>
-                       );
-                   })}
-               </div>
-           </div>
-       )}
 
        {/* NEW CONFIRMATION MODAL */}
        {pendingVideo && (

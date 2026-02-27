@@ -291,18 +291,8 @@ export const ALL_FEATURES: Feature[] = [
         group: 'CONTENT',
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',
-        adminVisible: false,
-        description: 'Control access to Premium (PDF+TTS) notes.',
-        adminTab: 'FEATURE_ACCESS'
-    },
-    {
-        id: 'PREMIUM_VIDEO',
-        label: 'Premium Video',
-        group: 'CONTENT',
-        surfaceLevel: 1,
-        requiredSubscription: 'ULTRA',
         adminVisible: true,
-        description: 'Control access to Premium Video Series (Google Drive).',
+        description: 'Control access to Premium (PDF+TTS) notes.',
         adminTab: 'FEATURE_ACCESS'
     },
     {
@@ -311,7 +301,7 @@ export const ALL_FEATURES: Feature[] = [
         group: 'CONTENT',
         surfaceLevel: 1,
         requiredSubscription: 'BASIC',
-        adminVisible: false,
+        adminVisible: true,
         description: 'Control access to Additional Resources tab.',
         adminTab: 'FEATURE_ACCESS'
     },

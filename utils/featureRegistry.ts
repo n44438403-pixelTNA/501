@@ -1,5 +1,5 @@
 
-export type FeatureGroup = 'CORE' | 'ANALYSIS' | 'AI' | 'GAME' | 'ADMIN' | 'ADVANCED' | 'CONTENT' | 'TOOLS' | 'REVISION' | 'SOUL' | 'NSTA_CONTROL';
+export type FeatureGroup = 'CORE' | 'ANALYSIS' | 'AI' | 'GAME' | 'ADMIN' | 'ADVANCED' | 'CONTENT' | 'TOOLS' | 'REVISION' | 'SOUL' | 'NSTA_CONTROL' | 'REQUESTS';
 
 export interface Feature {
     id: string;
@@ -382,10 +382,12 @@ export const ALL_FEATURES: Feature[] = [
         icon: 'Book',
         color: 'emerald'
     },
+
+    // --- NOTIFICATION & REQUESTS GROUP ---
     {
         id: 'ADMIN_NOTIFY',
         label: 'Notify Users',
-        group: 'CORE',
+        group: 'REQUESTS',
         surfaceLevel: 3,
         adminVisible: true,
         adminTab: 'NOTIFY_USERS',
@@ -396,7 +398,7 @@ export const ALL_FEATURES: Feature[] = [
     {
         id: 'ADMIN_DEMANDS',
         label: 'Demands',
-        group: 'CORE',
+        group: 'REQUESTS',
         surfaceLevel: 3,
         adminVisible: true,
         adminTab: 'DEMAND',
@@ -407,7 +409,7 @@ export const ALL_FEATURES: Feature[] = [
     {
         id: 'ADMIN_ACCESS',
         label: 'Login Requests',
-        group: 'CORE',
+        group: 'REQUESTS',
         surfaceLevel: 3,
         adminVisible: true,
         adminTab: 'ACCESS',
@@ -461,24 +463,7 @@ export const ALL_FEATURES: Feature[] = [
         icon: 'CheckCircle',
         color: 'purple'
     },
-    {
-        id: 'ADMIN_PREMIUM_VIDEO', // NEW: Registered here for Admin Dashboard
-        label: 'Premium Video',
-        group: 'CONTENT',
-        surfaceLevel: 3,
-        adminVisible: false, // Hidden as per request: "aur primimum vidio ko add karo app nsta control me" - implies config there, but management is separate?
-        // Wait, user said "hiding Premium Video button in Admin" previously?
-        // Re-reading: "Ek primimum vidio ka liye admin dashbord me futur joro jishme bas orimimum vidios ke google drive link dale jayenge" -> Add feature to Admin Dashboard.
-        // And: "aur primimum vidio ko add karo app nsta control me" -> Add to NSTA Control.
-        // So:
-        // 1. We need a Management UI in Admin Dashboard (likely in Content group).
-        // 2. We need a Permission Control in NSTA Control (already added via PREMIUM_VIDEO ID above).
-        // Let's make it visible here so Admin can click it to manage links.
-        adminTab: 'PREMIUM_VIDEO_MANAGER',
-        requiredPermission: 'MANAGE_CONTENT',
-        icon: 'Video',
-        color: 'yellow' // Gold for Premium
-    },
+    // ADMIN_PREMIUM_VIDEO REMOVED from visible list as requested ("Content & Analysis me admin dashbord me ek button hai Premium Video ye hatao")
     {
         id: 'ADMIN_TOPIC_NOTES',
         label: 'Topic Notes',

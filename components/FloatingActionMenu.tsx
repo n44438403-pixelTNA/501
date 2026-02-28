@@ -39,7 +39,18 @@ const getIconComponent = (iconName?: string) => {
 };
 
 export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSaleActive, onOpenProfile, onOpenStore, onNavigate }) => {
+
     const [isOpen, setIsOpen] = useState(false);
+    const [isVisible, setIsVisible] = useState(true);
+
+    useEffect(() => {
+        setIsVisible(true);
+        const timer = setTimeout(() => {
+            if (!isOpen) setIsVisible(false);
+        }, 5000);
+        return () => clearTimeout(timer);
+    }, [isOpen]); // Reset timer if menu is opened/closed
+
     // const [showPlanModal, setShowPlanModal] = useState(false); // Unused
     const [position, setPosition] = useState({ x: window.innerWidth - 80, y: window.innerHeight - 200 });
 
@@ -100,7 +111,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             const dx = touchEndX - touchStartX;
 
             // 1. Swipe Up from Bottom Edge (Bottom 100px)
-            if (touchStartY > window.innerHeight - 100 && dy < -50 && Math.abs(dx) < 50) {
+            if (touchStartY > window.innerHeight - 250 && dy < -30 && Math.abs(dx) < 80) {
                 setIsOpen(true);
             }
         };
@@ -156,7 +167,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             {/* MAIN FAB BUTTON (Draggable - Mobile Optimized) */}
             <div
                 ref={buttonRef}
-                className="fixed z-[9990] flex flex-col items-center gap-3 touch-none select-none"
+                className={`fixed z-[9990] flex flex-col items-center gap-3 touch-none select-none transition-opacity duration-1000 ${isVisible || isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                 style={{ left: position.x, top: position.y, transform: 'translate(0, 0)' }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}

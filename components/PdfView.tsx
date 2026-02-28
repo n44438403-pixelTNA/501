@@ -311,14 +311,33 @@ export const PdfView: React.FC<Props> = ({
             try {
                 entries.forEach(entry => {
                     if (entry.htmlContent) {
+                        // Sometimes the quick revision point might just be a bare text node mixed with tags,
+                        // or it might be directly inside the root without a wrapping <p> tag.
+                        // Create a temporary div to parse HTML
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = entry.htmlContent;
-                        const paragraphs = Array.from(tempDiv.querySelectorAll('p, li, div')); // Check broad block tags
+
+                        // 1. Fallback regex approach to grab the specific blocks provided by user
+                        // Look for patterns like "<b>Quick Revision:</b> text..." or similar
+                        const regex = /(?:<b>|<strong>)?\s*Quick Revision:?\s*(?:<\/b>|<\/strong>)?\s*(.*?)(?:<hr\/?>|<\/p>|<br\/?>|$)/gi;
+                        let match;
+                        while ((match = regex.exec(entry.htmlContent)) !== null) {
+                            if (match[1] && match[1].trim().length > 0) {
+                                // We found a match using regex, strip any leftover tags for clean text, or keep basic formatting
+                                quickPoints.push(`<b>Quick Revision:</b> ${match[1].trim()}`);
+                            }
+                        }
+
+                        // 2. DOM based extraction (for standard block tags) - avoid duplicates
+                        const paragraphs = Array.from(tempDiv.querySelectorAll('p, li, div'));
                         paragraphs.forEach(p => {
                             const text = p.textContent || '';
                             if (text.toLowerCase().includes('quick revision')) {
-                                // Clean up the text
-                                quickPoints.push(p.innerHTML); // Keep HTML formatting
+                                const cleanHtml = p.innerHTML.trim();
+                                // Basic duplicate check
+                                if (!quickPoints.some(qp => qp.includes(cleanHtml) || cleanHtml.includes(qp.replace('<b>Quick Revision:</b> ', '')))) {
+                                     quickPoints.push(cleanHtml);
+                                }
                             }
                         });
                     }

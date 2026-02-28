@@ -171,7 +171,7 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
             if (answers[idx] !== undefined) userAnswersMap[idx] = answers[idx];
         });
 
-        const analysisJson = generateAnalysisJson(currentMcqData, userAnswersMap);
+        const analysisJson = generateAnalysisJson(currentMcqData, userAnswersMap, user.mcqHistory, topic.chapterId);
 
         const result: MCQResult = {
             id: `mcq-rev-${Date.now()}`,

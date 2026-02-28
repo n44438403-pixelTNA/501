@@ -95,13 +95,41 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
           if (s.percent >= 80) status = 'STRONG';
           else if (s.percent < 50) status = 'WEAK';
 
+          let actionPlan = status === 'WEAK' ? 'Focus on basic concepts and practice more questions from this topic.' : 'Good job! Keep revising to maintain speed.';
+
+          // Historical Topic Comparison
+          if (user.mcqHistory && user.mcqHistory.length > 0) {
+              const sortedHistory = [...user.mcqHistory]
+                  .filter(h => h.id !== result.id) // Exclude current result
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+              let previousTopicPercent: number | null = null;
+              for (const pastResult of sortedHistory) {
+                  if (pastResult.topicAnalysis && pastResult.topicAnalysis[t]) {
+                      previousTopicPercent = pastResult.topicAnalysis[t].percentage;
+                      break;
+                  }
+              }
+
+              if (previousTopicPercent !== null) {
+                  const diff = s.percent - previousTopicPercent;
+                  if (diff > 0) {
+                      actionPlan += ` Pichhli test me aapka score ${previousTopicPercent}% tha, abhi ${s.percent}% aaya hai. Achhi improvement hai, keep it up!`;
+                  } else if (diff < 0) {
+                      actionPlan += ` Dhyan dein: Pichhli test me aapka score ${previousTopicPercent}% tha, abhi gir kar ${s.percent}% ho gaya hai. Aapko aur revision ki zaroorat hai.`;
+                  } else {
+                      actionPlan += ` Pichhli test me bhi aapka score ${previousTopicPercent}% tha. Score consistent hai, par aage badhne ki koshish karein.`;
+                  }
+              }
+          }
+
           return {
               name: t,
               status,
               total: s.total,
               correct: s.correct,
               percent: s.percent,
-              actionPlan: status === 'WEAK' ? 'Focus on basic concepts and practice more questions from this topic.' : 'Good job! Keep revising to maintain speed.',
+              actionPlan: actionPlan,
               studyMode: status === 'WEAK' ? 'DEEP_STUDY' : 'QUICK_REVISION'
           };
       });

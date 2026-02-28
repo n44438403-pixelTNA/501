@@ -6293,20 +6293,7 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                       className="w-full p-2 border rounded-lg" 
                                   />
                               </div>
-                              <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Dummy Basic (₹)</label>
-                            <input
-                                type="number"
-                                value={plan.basicOriginalPrice || ''}
-                                onChange={e => {
-                                    const newPlans = [...localSettings.subscriptionPlans];
-                                    newPlans[idx] = { ...newPlans[idx], basicOriginalPrice: Number(e.target.value) };
-                                    const updated = { ...localSettings, subscriptionPlans: newPlans };
-                                    setLocalSettings(updated);
-                                }}
-                                className="w-full p-2 border border-slate-200 rounded text-xs font-bold text-slate-500 bg-slate-50"
-                            />
-                        </div>
+
                           <div>
                                   <label className="text-[10px] font-bold text-slate-500 uppercase">Ultra Limit (Daily)</label>
                                   <input 
@@ -6872,20 +6859,7 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                                   className="w-full p-2 border rounded-lg text-sm font-bold"
                                               />
                                           </div>
-                          <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Dummy Ultra (₹)</label>
-                            <input
-                                type="number"
-                                value={plan.ultraOriginalPrice || ''}
-                                onChange={e => {
-                                    const newPlans = [...localSettings.subscriptionPlans];
-                                    newPlans[idx] = { ...newPlans[idx], ultraOriginalPrice: Number(e.target.value) };
-                                    const updated = { ...localSettings, subscriptionPlans: newPlans };
-                                    setLocalSettings(updated);
-                                }}
-                                className="w-full p-2 border border-slate-200 rounded text-xs font-bold text-slate-500 bg-slate-50"
-                            />
-                        </div>
+
                                           <div>
                                               <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Renewal Extra % (Existing Users)</label>
                                               <input 

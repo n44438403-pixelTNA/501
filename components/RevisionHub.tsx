@@ -891,6 +891,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
 
                             // Update global topicStrength to correctly categorize topics in Revision Hub buckets
                             if (!updatedUser.topicStrength) updatedUser.topicStrength = {};
+                            if (!updatedUser.progress) updatedUser.progress = {};
 
                             results.forEach(result => {
                                 if (result.topicAnalysis) {
@@ -901,6 +902,32 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                                             correct: currentStats.correct + analysis.correct,
                                             total: currentStats.total + analysis.total
                                         };
+
+                                        // Update MCQ Due Date based on performance
+                                        const subjectId = result.subjectId;
+                                        const chapterId = result.chapterId;
+                                        if (subjectId && chapterId && topicName) {
+                                            if (!updatedUser.progress[subjectId]) updatedUser.progress[subjectId] = { chapters: {} };
+                                            if (!updatedUser.progress[subjectId].chapters[chapterId]) updatedUser.progress[subjectId].chapters[chapterId] = { status: 'NOT_STARTED', topics: {} };
+
+                                            const chapterProgress = updatedUser.progress[subjectId].chapters[chapterId];
+                                            if (!chapterProgress.topics[topicName]) {
+                                                chapterProgress.topics[topicName] = { status: 'COMPLETED' };
+                                            }
+
+                                            const topicProg = chapterProgress.topics[topicName];
+
+                                            // Calculate next dates based on percentage
+                                            const percent = analysis.percentage;
+                                            let statusType: 'weak' | 'average' | 'strong' | 'mastered' = 'average';
+                                            if (percent >= 80) statusType = 'strong';
+                                            else if (percent < 50) statusType = 'weak';
+
+                                            const currentIntervals = settings?.revisionConfig?.intervals || intervals;
+                                            const now = Date.now();
+                                            topicProg.mcqDueDate = new Date(now + currentIntervals[statusType].mcq * 1000).toISOString();
+                                            topicProg.nextRevision = new Date(now + currentIntervals[statusType].revision * 1000).toISOString();
+                                        }
                                     });
                                 }
                             });

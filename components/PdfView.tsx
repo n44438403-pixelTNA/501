@@ -329,13 +329,14 @@ export const PdfView: React.FC<Props> = ({
                         }
 
                         // 2. DOM based extraction (for standard block tags) - avoid duplicates
-                        const paragraphs = Array.from(tempDiv.querySelectorAll('p, li, div'));
+                        const paragraphs = Array.from(tempDiv.querySelectorAll('p, li, blockquote')); // Exclude div to prevent capturing entire pages
                         paragraphs.forEach(p => {
                             const text = p.textContent || '';
-                            if (text.toLowerCase().includes('quick revision')) {
+                            const lowerText = text.toLowerCase();
+                            if (lowerText.includes('quick revision') || lowerText.includes('mini revision') || lowerText.includes('recap:')) {
                                 const cleanHtml = p.innerHTML.trim();
                                 // Basic duplicate check
-                                if (!quickPoints.some(qp => qp.includes(cleanHtml) || cleanHtml.includes(qp.replace('<b>Quick Revision:</b> ', '')))) {
+                                if (!quickPoints.some(qp => qp.includes(cleanHtml) || cleanHtml.includes(qp.replace(/<(?:b|strong)>.*?(?:<\/b>|<\/strong>)/gi, '').trim()))) {
                                      quickPoints.push(cleanHtml);
                                 }
                             }

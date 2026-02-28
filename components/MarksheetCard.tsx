@@ -576,7 +576,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                 ? `📈 Aapka performance lagataar improve ho raha hai. ${prev2 !== null ? `${prev2}% -> ` : ''}${prev1}% -> ${current}% strong growth dikhata hai.<br/><br/>📌 Concepts ab clear ho rahe hain.<br/>🎯 Ab target rakhein: 75%+ stable score.`
                 : `📈 Your performance is steadily improving. ${prev2 !== null ? `${prev2}% -> ` : ''}${prev1}% -> ${current}% shows strong growth.<br/><br/>📌 Concepts are getting clearer.<br/>🎯 Target: 75%+ stable score.`;
 
-              return `${msg}<br/><br/><b>🔥 Engine Tag:</b><br/>• Trend: <span class="text-green-600 font-bold">Strong Growth</span><br/>• Confidence Level: <span class="text-green-600 font-bold">Increasing</span><br/>• Risk: <span class="text-yellow-600 font-bold">Overconfidence</span>`;
+              return `${msg}<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-green-600 font-bold">📈 Strong Growth</span><br/>Confidence Level: <span class="text-green-600 font-bold">Increasing</span><br/>Risk: <span class="text-yellow-600 font-bold">Overconfidence</span>`;
           }
 
           // CASE 2: Sharp Drop (e.g. 60 -> 40)
@@ -585,7 +585,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                 ? `⚠ Aapka score ${prev1}% se ${current}% hua hai. Ye sudden drop hai.<br/><br/>📌 Possible reasons: Revision gap, Time pressure, Naye type ke questions.<br/>🎯 Next step: Last test ke galat questions analyse karein.`
                 : `⚠ Your score dropped from ${prev1}% to ${current}%. This is a sudden drop.<br/><br/>📌 Possible reasons: Revision gap, Time pressure, New question types.<br/>🎯 Next step: Analyze incorrect questions from the last test.`;
 
-               return `${msg}<br/><br/><b>🔥 Engine Tag:</b><br/>• Trend: <span class="text-red-600 font-bold">Alert</span><br/>• Stability: <span class="text-red-600 font-bold">Low</span><br/>• Immediate Action Needed`;
+               return `${msg}<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-red-600 font-bold">🔴 Alert</span><br/>Stability: <span class="text-red-600 font-bold">Low</span><br/>Immediate Action Needed`;
           }
 
           // CASE 3: Improved, then Slight Drop (e.g. 40 -> 60 -> 50)
@@ -594,36 +594,36 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                 ? `📈 Aapne ${prev2}% se ${prev1}% tak strong improvement kiya.<br/>📉 Latest test me ${current}% hai — thoda drop hai.<br/><br/>📌 Overall progress positive hai, lekin consistency improve karni hogi.<br/>🎯 Target: 65% stable score before moving ahead.`
                 : `📈 You showed strong improvement from ${prev2}% to ${prev1}%.<br/>📉 Latest test is ${current}% — a slight drop.<br/><br/>📌 Overall progress is positive, but consistency needs improvement.<br/>🎯 Target: 65% stable score before moving ahead.`;
 
-              return `${msg}<br/><br/><b>🔥 Engine Tag:</b><br/>• Trend: <span class="text-yellow-600 font-bold">Growing but Unstable</span><br/>• Stability: <span class="text-yellow-600 font-bold">Medium</span><br/>• Revision Cycle Required`;
+              return `${msg}<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-yellow-600 font-bold">🟡 Growing but Unstable</span><br/>Stability: <span class="text-yellow-600 font-bold">Medium</span><br/>Revision Cycle Required`;
           }
 
           // General Drop (Not Sharp)
           if (current < prev1) {
               return isHindi
-                  ? `Dhyan dein! Pichhli baar aapka score ${prev1}% tha, jo gir kar ${current}% ho gaya hai. ${topic} me revision ki zarurat hai.`
-                  : `Performance dropped. You scored ${current}% compared to ${prev1}% last time. Focus more on ${topic} revision.`;
+                  ? `📉 Dhyan dein! Pichhli baar aapka score ${prev1}% tha, jo gir kar ${current}% ho gaya hai. ${topic} me revision ki zarurat hai.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-red-600 font-bold">🔴 Drop</span>`
+                  : `📉 Performance dropped. You scored ${current}% compared to ${prev1}% last time. Focus more on ${topic} revision.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-red-600 font-bold">🔴 Drop</span>`;
           }
 
           // Consistent
           if (current === prev1) {
               return isHindi
-                  ? `Performance consistent hai (${current}%). Thoda aur push karein taaki score badhe.`
-                  : `Performance is consistent at ${current}%. Push a little harder to improve next time.`;
+                  ? `🔵 Performance consistent hai (${current}%). Thoda aur push karein taaki score badhe.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-blue-600 font-bold">🔵 Plateau</span>`
+                  : `🔵 Performance is consistent at ${current}%. Push a little harder to improve next time.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-blue-600 font-bold">🔵 Plateau</span>`;
           }
       }
 
       // Fallback for single attempt
       if (percent >= 80) return isHindi
-          ? `Shabash! ${topic} me aapne bahut achha kiya hai. Is pakad ko banaye rakhein.`
-          : `Excellent work in ${topic}! Your grasp on this topic is strong. Keep practicing to maintain this level.`;
+          ? `📈 Shabash! ${topic} me aapne bahut achha kiya hai. Is pakad ko banaye rakhein.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-green-600 font-bold">📈 Strong</span>`
+          : `📈 Excellent work in ${topic}! Your grasp on this topic is strong. Keep practicing to maintain this level.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-green-600 font-bold">📈 Strong</span>`;
 
       if (percent >= 50) return isHindi
-          ? `${topic} me thik hai, par thoda aur sudhar ho sakta hai. Revision karein.`
-          : `Good effort in ${topic}. You are doing okay, but a little more revision will help you reach the top level.`;
+          ? `🟡 ${topic} me thik hai, par thoda aur sudhar ho sakta hai. Revision karein.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-yellow-600 font-bold">🟡 Average</span>`
+          : `🟡 Good effort in ${topic}. You are doing okay, but a little more revision will help you reach the top level.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-yellow-600 font-bold">🟡 Average</span>`;
 
       return isHindi
-          ? `${topic} me aapka performance kamzor hai. Kripya notes padhein aur dubara koshish karein.`
-          : `You need to focus on ${topic}. Your score is low here. Please read the recommended notes and try again.`;
+          ? `🔴 ${topic} me aapka performance kamzor hai. Kripya notes padhein aur dubara koshish karein.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-red-600 font-bold">🔴 Weak</span>`
+          : `🔴 You need to focus on ${topic}. Your score is low here. Please read the recommended notes and try again.<br/><br/><b>🔥 Engine Tag</b><br/>Trend: <span class="text-red-600 font-bold">🔴 Weak</span>`;
   };
 
   const renderWeakAreasSummary = () => {
@@ -641,11 +641,14 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   <AlertCircle size={16} /> Weak Areas (Needs Focus)
               </h3>
               <div className="flex flex-wrap gap-2">
-                  {weakTopics.map(t => (
-                      <span key={t} className="px-3 py-1 bg-white border border-red-200 rounded-full text-xs font-bold text-red-600 shadow-sm">
-                          {t} ({topicStats[t].percent}%)
-                      </span>
-                  ))}
+                  {weakTopics.map(t => {
+                      const percent = topicStats[t]?.percent ?? result.topicAnalysis![t].percentage;
+                      return (
+                          <span key={t} className="px-3 py-1 bg-white border border-red-200 rounded-full text-xs font-bold text-red-600 shadow-sm">
+                              {t} ({percent}%)
+                          </span>
+                      );
+                  })}
               </div>
               <p className="text-[10px] text-red-500 font-bold mt-3">
                   Please review these topics carefully before the next test.
@@ -683,7 +686,15 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               {renderWeakAreasSummary()}
 
               {topics.map((topic, i) => {
+
+                  const stats = topicStats[topic] || (result.topicAnalysis && result.topicAnalysis[topic] ? {
+                      correct: result.topicAnalysis[topic].correct,
+                      total: result.topicAnalysis[topic].total,
+                      percent: result.topicAnalysis[topic].percentage
+                  } : { correct: 0, total: 0, percent: 0 });
+
                   const stats = topicStats[topic] || { percent: 0, correct: 0, total: 0 };
+
 
                   // For standalone revision hub without questions loaded, use topicAnalysis natively from result
                   let finalTopicPercent = stats.percent;
@@ -1065,6 +1076,12 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2"><BarChart3 size={18} /> Topic Breakdown</h3>
                   <div className="space-y-4">
                       {topics.map((topic, i) => {
+                          const stats = topicStats[topic] || (result.topicAnalysis && result.topicAnalysis[topic] ? {
+                              correct: result.topicAnalysis[topic].correct,
+                              total: result.topicAnalysis[topic].total,
+                              percent: result.topicAnalysis[topic].percentage
+                          } : { correct: 0, total: 0, percent: 0 });
+
                           let stats = topicStats[topic];
                           if (!stats && result.topicAnalysis && result.topicAnalysis[topic]) {
                               stats = {
@@ -1074,6 +1091,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                               };
                           }
                           if (!stats) stats = { correct: 0, total: 0, percent: 0 };
+
 
                           return (
                               <div key={i}>

@@ -500,15 +500,9 @@ export const PdfView: React.FC<Props> = ({
       // For Deep Dive, we handle specially
       const targetContent = type === 'DEEP_DIVE' ? 'DEEP_DIVE_MODE' : (link || htmlContent);
 
-      if (!targetContent && type !== 'DEEP_DIVE') {
-          setAlertConfig({isOpen: true, message: "Coming Soon! This content is being prepared."});
-          return;
-      }
+      if (!targetContent && type !== 'DEEP_DIVE') return;
 
-      if (type === 'DEEP_DIVE' && (!htmlContent || htmlContent.length < 10)) {
-           setAlertConfig({isOpen: true, message: "Coming Soon! Deep Dive notes are being prepared."});
-           return;
-      }
+      if (type === 'DEEP_DIVE' && (!htmlContent || htmlContent.length < 10)) return;
 
       // ... (Access Check Logic - mostly same) ...
       // Only change: If type === 'DEEP_DIVE', we activate the mode instead of setActivePdf link

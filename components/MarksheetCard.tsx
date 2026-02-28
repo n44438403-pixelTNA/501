@@ -784,21 +784,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                           )}
 
                           <div className="p-4 bg-white">
-                              {/* 4. Teacher Remarks */}
-                              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-4 flex gap-3">
-                                  <div className="shrink-0 bg-white p-1.5 rounded-full h-fit shadow-sm text-indigo-600">
-                                      <Sparkles size={16} />
-                                  </div>
-                                  <div>
-                                      <div className="text-xs text-indigo-900 font-medium leading-relaxed italic">
-                                          "<span dangerouslySetInnerHTML={{ __html: renderMathInHtml(remarks) }} />"
-                                      </div>
-                                      <div className="flex gap-2 mt-2 items-center">
-                                          <SpeakButton text={stripHtml(remarks)} className="p-0 hover:bg-transparent text-indigo-600" iconSize={14} />
-                                          <span className="text-[10px] font-bold text-indigo-600">Teacher Remark</span>
-                                      </div>
-                                  </div>
-                              </div>
 
                               {/* 5. Questions Accordion List */}
                               <div className="space-y-2">

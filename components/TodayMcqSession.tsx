@@ -175,7 +175,8 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
 
         // Generate Granular Topic Analysis for History Comparison (identical to McqView)
         const topicAnalysis: Record<string, { correct: number, total: number, percentage: number }> = {};
-        const omrData: { qIndex: number, selected: number }[] = [];
+        const omrData: { qIndex: number, selected: number, correct: number }[] = [];
+        const wrongQuestions: { question: string, qIndex: number, correctAnswer: number, explanation?: string }[] = [];
 
         currentMcqData.forEach((q, idx) => {
             const t = (q.topic || 'General').trim();
@@ -186,11 +187,19 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
 
             omrData.push({
                 qIndex: idx,
-                selected: selectedOpt !== undefined ? selectedOpt : -1
+                selected: selectedOpt !== undefined ? selectedOpt : -1,
+                correct: q.correctAnswer
             });
 
             if (selectedOpt === q.correctAnswer) {
                 topicAnalysis[t].correct += 1;
+            } else if (selectedOpt !== undefined && selectedOpt !== -1) {
+                wrongQuestions.push({
+                    question: q.question,
+                    qIndex: idx,
+                    correctAnswer: q.correctAnswer,
+                    explanation: q.explanation
+                });
             }
         });
 
@@ -218,6 +227,7 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
             ultraAnalysisReport: analysisJson,
             topicAnalysis: topicAnalysis,
             omrData: omrData,
+            wrongQuestions: wrongQuestions,
             topic: topic.name // Store the revision topic name
         };
 

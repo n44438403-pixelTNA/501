@@ -754,7 +754,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                                       {hasPrev && (
                                           <span className={`text-[10px] font-bold flex items-center gap-1 ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-500' : 'text-slate-400'}`}>
                                               {diff > 0 ? <ArrowUp size={10} /> : diff < 0 ? <TrendingDown size={10} /> : <Minus size={10} />}
-                                              {Math.abs(diff)}% vs Last ({prevPercent}%)
+                                              {diff > 0 ? '+' : ''}{diff}% vs Last
                                           </span>
                                       )}
                                   </div>
@@ -765,6 +765,23 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                                   <div className="text-[10px] text-slate-500 font-bold">{finalCorrect}/{finalTotal} Correct</div>
                               </div>
                           </div>
+
+                          {/* EXPLICIT SUB-TOPIC HISTORY COMPARISON */}
+                          {historyArr.length > 1 && (
+                              <div className="bg-slate-100 border-b border-slate-200 px-4 py-2 flex justify-between items-center text-[10px] font-bold text-slate-600">
+                                  <div className="flex items-center gap-1"><BrainCircuit size={12} className="text-purple-500"/> Sub-Topic History:</div>
+                                  <div className="flex gap-3">
+                                      {historyArr.slice(0, -1).map((pastScore, pIdx) => (
+                                          <span key={pIdx} className="bg-white px-2 py-0.5 rounded border border-slate-200">
+                                              Past {pIdx + 1}: <span className={`${pastScore >= 80 ? 'text-green-600' : pastScore < 50 ? 'text-red-600' : 'text-yellow-600'}`}>{pastScore}%</span>
+                                          </span>
+                                      ))}
+                                      <span className="bg-white px-2 py-0.5 rounded border border-purple-200 shadow-sm">
+                                          Current: <span className={`${finalTopicPercent >= 80 ? 'text-green-600' : finalTopicPercent < 50 ? 'text-red-600' : 'text-yellow-600'}`}>{finalTopicPercent}%</span>
+                                      </span>
+                                  </div>
+                              </div>
+                          )}
 
                           <div className="p-4 bg-white">
                               {/* 4. Teacher Remarks */}

@@ -75,8 +75,8 @@ const extractTopicsFromHtml = (html: string): { title: string, content: string }
                 // Push previous topic if exists
                 if (currentContent.length > 0) {
                     topics.push({
-                        title: currentTitle,
-                        content: currentContent.join('')
+                        title: currentTitle || "Untitled Topic",
+                        content: currentContent.join(""),
                     });
                     currentContent = [];
                 }
@@ -89,8 +89,8 @@ const extractTopicsFromHtml = (html: string): { title: string, content: string }
         // Push the last topic
         if (currentContent.length > 0 || topics.length === 0) {
             topics.push({
-                title: currentTitle,
-                content: currentContent.join('')
+                title: currentTitle || "Untitled Topic",
+                content: currentContent.join(""),
             });
         }
 

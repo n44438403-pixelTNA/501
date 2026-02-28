@@ -619,13 +619,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
       return (
           <div className="space-y-6">
-              <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
-                  <div className="relative z-10">
-                      <h3 className="text-xl font-black mb-2 flex items-center gap-2"><BrainCircuit className="text-yellow-400" /> Analysis Dashboard</h3>
-                      <p className="text-slate-300 text-xs font-medium mb-4">Detailed breakdown of your performance by topic.</p>
-                  </div>
-                  <div className="absolute right-0 top-0 bottom-0 w-32 bg-white/5 skew-x-12 -mr-8"></div>
-              </div>
+
 
               {renderWeakAreasSummary()}
 
@@ -728,6 +722,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                           )}
 
                           <div className="p-4 bg-white">
+
 
                               {/* 5. Questions Accordion List */}
                               <div className="space-y-2">
@@ -1360,45 +1355,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                     </div>
                 )}
 
-                {activeTab === 'MISTAKES' && isAnalysisUnlocked && (
-                    <div className="animate-in slide-in-from-bottom-4 h-full">
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-red-100 mb-6">
-                            <h3 className="text-lg font-black text-red-700 flex items-center gap-2 mb-4">
-                                <XCircle className="text-red-500" /> Mistakes Review
-                            </h3>
 
-                            {result.wrongQuestions && result.wrongQuestions.length > 0 ? (
-                                <>
-                                    <button onClick={handleRetryMistakes} className="w-full py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-2 mb-6">
-                                        <RefreshCw size={20} /> Retry {result.wrongQuestions.length} Mistakes Now
-                                    </button>
-
-                                    <div className="space-y-4">
-                                        {result.wrongQuestions.map((wq, i) => (
-                                            <div key={i} className="p-4 rounded-xl border border-red-200 bg-red-50/50">
-                                                <div className="flex gap-3">
-                                                    <span className="shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold text-xs">{wq.qIndex + 1}</span>
-                                                    <div className="flex-1">
-                                                        <div className="font-bold text-slate-800 text-sm mb-2" dangerouslySetInnerHTML={{__html: renderMathInHtml(wq.question)}} />
-                                                        <div className="text-xs text-slate-500 italic">
-                                                            Correct Answer: Option {String.fromCharCode(65 + (typeof wq.correctAnswer === 'number' ? wq.correctAnswer : 0))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="text-center py-10">
-                                    <CheckCircle size={48} className="mx-auto text-green-500 mb-4" />
-                                    <h4 className="font-bold text-slate-800">Perfect Score!</h4>
-                                    <p className="text-sm text-slate-500">You have no mistakes to review.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
 
                 {activeTab === 'AI_ANALYSIS' && isAnalysisUnlocked && (
                     <div className="animate-in slide-in-from-bottom-4 h-full">

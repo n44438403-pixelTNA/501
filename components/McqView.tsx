@@ -28,6 +28,7 @@ export const McqView: React.FC<Props> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'SELECTION' | 'PRACTICE' | 'TEST'>('SELECTION');
+  const [visibleHistoryCount, setVisibleHistoryCount] = useState(5);
   const [lessonContent, setLessonContent] = useState<any>(null); // To pass to LessonView
   const [resultData, setResultData] = useState<MCQResult | null>(null);
   const [completedMcqData, setCompletedMcqData] = useState<any[]>([]); // Store used data for analysis
@@ -856,28 +857,41 @@ export const McqView: React.FC<Props> = ({
                        <Clock size={16} /> History & Unlocked
                    </h4>
                    <div className="space-y-2">
-                       {user.mcqHistory.filter(h => h.chapterId === chapter.id).map((attempt, idx) => (
-                           <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-                               <div>
-                                   <div className="flex items-center gap-2">
-                                       <span className={`text-xs font-bold px-2 py-0.5 rounded ${attempt.score/attempt.totalQuestions >= 0.8 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                           {Math.round((attempt.score/attempt.totalQuestions)*100)}%
-                                       </span>
-                                       <span className="text-xs text-slate-500">{new Date(attempt.date).toLocaleDateString()}</span>
-                                   </div>
-                               </div>
-                               <button 
-                                   onClick={() => {
-                                       setResultData(attempt);
-                                       setMcqMode('FREE'); // Default to restricted view for history
-                                       // History logic...
-                                   }}
-                                   className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100"
-                               >
-                                   View
-                               </button>
-                           </div>
-                       ))}
+
+                       {(() => {
+                           const filteredHistory = user.mcqHistory.filter(h => h.chapterId === chapter.id);
+                           const visibleHistory = filteredHistory.slice(0, visibleHistoryCount);
+                           return (
+                               <>
+                                   {visibleHistory.map((attempt, idx) => (
+                                       <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                                           <div>
+                                               <p className="text-xs font-bold text-slate-800">{new Date(attempt.date).toLocaleString()}</p>
+                                               <p className="text-[10px] text-slate-500">Score: {attempt.score}/{attempt.totalQuestions}</p>
+                                           </div>
+                                           <button
+                                               onClick={() => {
+                                                   setResultData(attempt);
+                                                   setViewMode('ANALYSIS');
+                                               }}
+                                               className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded border border-indigo-100 hover:bg-indigo-100"
+                                           >
+                                               View
+                                           </button>
+                                       </div>
+                                   ))}
+                                   {filteredHistory.length > visibleHistoryCount && (
+                                       <button
+                                           onClick={() => setVisibleHistoryCount(prev => prev + 5)}
+                                           className="w-full text-center py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-white rounded-xl border border-dashed border-slate-300 mt-2 transition-colors"
+                                       >
+                                           + Show More History
+                                       </button>
+                                   )}
+                               </>
+                           );
+                       })()}
+
                    </div>
                </div>
            )}

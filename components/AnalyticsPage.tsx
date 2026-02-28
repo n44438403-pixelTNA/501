@@ -13,6 +13,7 @@ interface Props {
 
 export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavigateToChapter }) => {
   const [selectedResult, setSelectedResult] = useState<MCQResult | null>(null);
+  const [visibleLimit, setVisibleLimit] = useState(10);
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
   const [initialView, setInitialView] = useState<'ANALYSIS' | 'RECOMMEND' | undefined>(undefined);
   const [showMoreTests, setShowMoreTests] = useState(false);
@@ -80,7 +81,7 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
 
   // Trend Analysis (Last 10 tests)
     const trendData = history
-        .slice(0, 10)
+        .slice(0, visibleLimit)
         .reverse() // Oldest to newest
         .map(h => ({
             date: new Date(h.date).toLocaleDateString(undefined, {day: 'numeric', month: 'short'}),
@@ -322,7 +323,12 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                 </h3>
                 <div className="space-y-3">
                     {history.length === 0 && <p className="text-slate-400 text-sm text-center py-8 bg-white rounded-xl border border-dashed">No tests taken yet.</p>}
-                    {history.map((item) => (
+                    {
+                    history
+                        .filter(h => new Date(h.date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+                        .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .slice(0, visibleLimit)
+                        .map((item) => (
                         <div 
                             key={item.id} 
                             className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3 group"
@@ -352,38 +358,21 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                                 </div>
                             </div>
                             
-                            <div className="flex gap-2">
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenMarksheet(item);
-                                    }}
-                                    className="flex-1 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-900 transition-colors"
-                                >
-                                    <FileText size={14} /> Marksheet
-                                </button>
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenMarksheet(item, 'ANALYSIS');
-                                    }}
-                                    className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors"
-                                >
-                                    <TrendingUp size={14} /> Free Analysis
-                                </button>
+                            <div className="flex gap-2 pt-2 border-t border-slate-100">
                                 <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Open Smart Recommendations
-                                        handleOpenMarksheet(item, 'RECOMMEND');
-                                    }}
-                                    className="flex-1 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-md shadow-indigo-200"
+                                    onClick={() => handleOpenMarksheet(item, 'ANALYSIS')}
+                                    className="flex-1 bg-indigo-50 text-indigo-700 py-2 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1"
                                 >
-                                    <BrainCircuit size={14} /> Recommend
+                                    Details
                                 </button>
                             </div>
                         </div>
                     ))}
+                    {history.filter(h => new Date(h.date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length > 10 && (
+                        <button onClick={() => setVisibleLimit(prev => prev + 10)} className="w-full text-center py-3 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors bg-white rounded-xl border border-dashed border-slate-300 mt-4">
+                            + Load More Tests
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

@@ -89,8 +89,16 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
   const generateLocalAnalysis = () => {
       // Calculate weak/strong based on topicStats
-      const topics = Object.keys(topicStats).map(t => {
-          const s = topicStats[t];
+
+      let analysisSource: any = Object.keys(topicStats).length > 0 ? { ...topicStats } : {};
+      if (Object.keys(analysisSource).length === 0 && result.topicAnalysis) {
+          // Convert topicAnalysis to topicStats format
+          Object.keys(result.topicAnalysis).forEach(t => {
+              analysisSource[t] = { correct: result.topicAnalysis![t].correct, total: result.topicAnalysis![t].total, percent: result.topicAnalysis![t].percentage };
+          });
+      }
+      const topics = Object.keys(analysisSource).map(t => {
+          const s = analysisSource[t];
           let status = 'AVERAGE';
           if (s.percent >= 80) status = 'STRONG';
           else if (s.percent < 50) status = 'WEAK';
@@ -549,27 +557,62 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
   // --- SECTION RENDERERS ---
 
-  const generateTeacherRemarks = (percent: number, topic: string, prevPercent?: number, hasPrev?: boolean) => {
-      const isHindi = user.board === 'BSEB';
+  const generateTeacherRemarks = (percent: number, topic: string, historyArr: number[]) => {
+      // historyArr contains up to 3 scores: [oldest, ..., newest(current)]
+      // Example: [40, 60, 70] (Current is 70)
 
-      // Comparison Logic
-      if (hasPrev && prevPercent !== undefined) {
-          const diff = percent - prevPercent;
-          if (diff > 0) {
+      const isHindi = user.board === 'BSEB';
+      const c = historyArr.length;
+
+      // New 3-Case Intelligent Feedback Engine (Fallback to old if < 2 items)
+      if (c >= 2) {
+          const current = historyArr[c - 1];
+          const prev1 = historyArr[c - 2];
+          const prev2 = c >= 3 ? historyArr[c - 3] : null;
+
+          // CASE 1: Strong Upward Trend (e.g. 40 -> 60 -> 70, or 60 -> 70)
+          if ((prev2 === null && current > prev1) || (prev2 !== null && current > prev1 && prev1 > prev2)) {
+              let msg = isHindi
+                ? `📈 Aapka performance lagataar improve ho raha hai. ${prev2 !== null ? `${prev2}% -> ` : ''}${prev1}% -> ${current}% strong growth dikhata hai.<br/><br/>📌 Concepts ab clear ho rahe hain.<br/>🎯 Ab target rakhein: 75%+ stable score.`
+                : `📈 Your performance is steadily improving. ${prev2 !== null ? `${prev2}% -> ` : ''}${prev1}% -> ${current}% shows strong growth.<br/><br/>📌 Concepts are getting clearer.<br/>🎯 Target: 75%+ stable score.`;
+
+              return `${msg}<br/><br/><b>🔥 Engine Tag:</b><br/>• Trend: <span class="text-green-600 font-bold">Strong Growth</span><br/>• Confidence Level: <span class="text-green-600 font-bold">Increasing</span><br/>• Risk: <span class="text-yellow-600 font-bold">Overconfidence</span>`;
+          }
+
+          // CASE 2: Sharp Drop (e.g. 60 -> 40)
+          if (current < prev1 && (prev1 - current >= 15)) {
+               let msg = isHindi
+                ? `⚠ Aapka score ${prev1}% se ${current}% hua hai. Ye sudden drop hai.<br/><br/>📌 Possible reasons: Revision gap, Time pressure, Naye type ke questions.<br/>🎯 Next step: Last test ke galat questions analyse karein.`
+                : `⚠ Your score dropped from ${prev1}% to ${current}%. This is a sudden drop.<br/><br/>📌 Possible reasons: Revision gap, Time pressure, New question types.<br/>🎯 Next step: Analyze incorrect questions from the last test.`;
+
+               return `${msg}<br/><br/><b>🔥 Engine Tag:</b><br/>• Trend: <span class="text-red-600 font-bold">Alert</span><br/>• Stability: <span class="text-red-600 font-bold">Low</span><br/>• Immediate Action Needed`;
+          }
+
+          // CASE 3: Improved, then Slight Drop (e.g. 40 -> 60 -> 50)
+          if (prev2 !== null && prev1 > prev2 && current < prev1) {
+              let msg = isHindi
+                ? `📈 Aapne ${prev2}% se ${prev1}% tak strong improvement kiya.<br/>📉 Latest test me ${current}% hai — thoda drop hai.<br/><br/>📌 Overall progress positive hai, lekin consistency improve karni hogi.<br/>🎯 Target: 65% stable score before moving ahead.`
+                : `📈 You showed strong improvement from ${prev2}% to ${prev1}%.<br/>📉 Latest test is ${current}% — a slight drop.<br/><br/>📌 Overall progress is positive, but consistency needs improvement.<br/>🎯 Target: 65% stable score before moving ahead.`;
+
+              return `${msg}<br/><br/><b>🔥 Engine Tag:</b><br/>• Trend: <span class="text-yellow-600 font-bold">Growing but Unstable</span><br/>• Stability: <span class="text-yellow-600 font-bold">Medium</span><br/>• Revision Cycle Required`;
+          }
+
+          // General Drop (Not Sharp)
+          if (current < prev1) {
               return isHindi
-                  ? `Badhai ho! Pichhli baar se aapne ${diff}% improve kiya hai (${prevPercent}% -> ${percent}%). ${topic} me aapki mehnat dikh rahi hai!`
-                  : `Great improvement! You scored ${percent}% compared to ${prevPercent}% last time. Your hard work in ${topic} is showing!`;
-          } else if (diff < 0) {
-               return isHindi
-                  ? `Dhyan dein! Pichhli baar aapka score ${prevPercent}% tha, jo gir kar ${percent}% ho gaya hai. ${topic} me revision ki zarurat hai.`
-                  : `Performance dropped. You scored ${percent}% compared to ${prevPercent}% last time. Focus more on ${topic} revision.`;
-          } else {
-               return isHindi
-                  ? `Performance consistent hai (${percent}%). Thoda aur push karein taaki score badhe.`
-                  : `Performance is consistent at ${percent}%. Push a little harder to improve next time.`;
+                  ? `Dhyan dein! Pichhli baar aapka score ${prev1}% tha, jo gir kar ${current}% ho gaya hai. ${topic} me revision ki zarurat hai.`
+                  : `Performance dropped. You scored ${current}% compared to ${prev1}% last time. Focus more on ${topic} revision.`;
+          }
+
+          // Consistent
+          if (current === prev1) {
+              return isHindi
+                  ? `Performance consistent hai (${current}%). Thoda aur push karein taaki score badhe.`
+                  : `Performance is consistent at ${current}%. Push a little harder to improve next time.`;
           }
       }
 
+      // Fallback for single attempt
       if (percent >= 80) return isHindi
           ? `Shabash! ${topic} me aapne bahut achha kiya hai. Is pakad ko banaye rakhein.`
           : `Excellent work in ${topic}! Your grasp on this topic is strong. Keep practicing to maintain this level.`;
@@ -584,7 +627,12 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   };
 
   const renderWeakAreasSummary = () => {
-      const weakTopics = Object.keys(topicStats).filter(t => topicStats[t].percent < 50);
+
+      let weakTopics = Object.keys(topicStats).filter(t => topicStats[t].percent < 50);
+      if (weakTopics.length === 0 && result.topicAnalysis) {
+          weakTopics = Object.keys(result.topicAnalysis).filter(t => result.topicAnalysis![t].percentage < 50);
+      }
+
       if (weakTopics.length === 0) return null;
 
       return (
@@ -607,12 +655,20 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   };
 
   const renderGranularAnalysis = () => {
-      const topics = Object.keys(topicStats);
 
-      // Find previous result for comparison
-      const previousResult = (user.mcqHistory || [])
+      let topics = Object.keys(topicStats);
+      if (topics.length === 0 && result.topicAnalysis) {
+          topics = Object.keys(result.topicAnalysis);
+      }
+
+
+      // Find all previous results for comparison (sorted newest to oldest)
+      const previousResults = (user.mcqHistory || [])
           .filter(h => h.chapterId === result.chapterId && h.id !== result.id)
-          .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+          .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // Extract the most recent previous result for the top-level stats display
+      const previousResult = previousResults[0];
 
       return (
           <div className="space-y-6">
@@ -628,43 +684,51 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
               {topics.map((topic, i) => {
                   const stats = topicStats[topic];
-                  const percent = stats.percent;
-                  const status = percent >= 80 ? 'STRONG' : percent >= 50 ? 'AVERAGE' : 'WEAK';
 
-                  // Compare with previous
-                  let prevPercent = 0;
-                  let hasPrev = false;
-                  if (previousResult && previousResult.topicAnalysis && previousResult.topicAnalysis[topic]) {
-                      prevPercent = previousResult.topicAnalysis[topic].percentage;
-                      hasPrev = true;
+                  // For standalone revision hub without questions loaded, use topicAnalysis natively from result
+                  let finalTopicPercent = stats.percent;
+                  let finalCorrect = stats.correct;
+                  let finalTotal = stats.total;
+
+                  if (result.topicAnalysis && result.topicAnalysis[topic]) {
+                      finalTopicPercent = result.topicAnalysis[topic].percentage;
+                      finalCorrect = result.topicAnalysis[topic].correct;
+                      finalTotal = result.topicAnalysis[topic].total;
                   }
 
-                  const diff = percent - prevPercent;
-                  // Filter questions for this topic
+                  const status = finalTopicPercent >= 80 ? 'STRONG' : finalTopicPercent >= 50 ? 'AVERAGE' : 'WEAK';
+
+                  // Generate History Array for the Intelligent Feedback Engine (oldest -> newest)
+                  const historyArr: number[] = [];
+
+                  // Add previous 2 attempts if available (reverse from sorted newer->older so it is older->newer)
+                  let addedPrev = 0;
+                  for (let j = 0; j < previousResults.length; j++) {
+                      if (addedPrev >= 2) break;
+                      const res = previousResults[j];
+                      if (res.topicAnalysis && res.topicAnalysis[topic]) {
+                          // Unshift to put oldest of the 2 at the front
+                          historyArr.unshift(res.topicAnalysis[topic].percentage);
+                          addedPrev++;
+                      }
+                  }
+
+                  // Push current percent
+                  historyArr.push(finalTopicPercent);
+
+                  // Extract just the immediate last previous percent for UI diff logic
+                  const prevPercent = historyArr.length > 1 ? historyArr[historyArr.length - 2] : 0;
+                  const hasPrev = historyArr.length > 1;
+                  const diff = finalTopicPercent - prevPercent;
+
+                  // Filter questions for this topic (if available)
                   const topicQuestions = questions?.filter((q, idx) => {
-          const t = q.topic || 'General';
-          return t === topic;
-      }) || [];
+                      const t = q.topic || 'General';
+                      return t === topic;
+                  }) || [];
 
-      // Calculate Topic-Specific Percentage
-      const localTopicStats = { correct: 0, total: 0 };
-      topicQuestions.forEach(q => {
-          const globalIdx = questions?.indexOf(q) ?? -1;
-          const omr = result.omrData?.find(d => d.qIndex === globalIdx);
-          if (omr && omr.selected === q.correctAnswer) localTopicStats.correct++;
-          localTopicStats.total++;
-      });
-      const topicPercent = localTopicStats.total > 0 ? Math.round((localTopicStats.correct / localTopicStats.total) * 100) : 0;
-
-      // Find Previous Attempt for SAME Topic
-      let prevTopicPercent = 0;
-      let hasPrevTopic = false;
-      if (previousResult && previousResult.topicAnalysis && previousResult.topicAnalysis[topic]) {
-          prevTopicPercent = previousResult.topicAnalysis[topic].percentage;
-          hasPrevTopic = true;
-      }
-
-      const remarks = generateTeacherRemarks(topicPercent, topic, prevTopicPercent, hasPrevTopic);
+                  // Generate smart remarks using the new 3-Case Feedback Engine
+                  const remarks = generateTeacherRemarks(finalTopicPercent, topic, historyArr);
 
                   return (
                       <div key={i} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md">
@@ -690,8 +754,8 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                               </div>
                               {/* 3. Stats */}
                               <div className="text-right">
-                                  <div className={`text-2xl font-black ${percent >= 80 ? 'text-green-600' : percent < 50 ? 'text-red-600' : 'text-slate-800'}`}>{percent}%</div>
-                                  <div className="text-[10px] text-slate-500 font-bold">{stats.correct}/{stats.total} Correct</div>
+                                  <div className={`text-2xl font-black ${finalTopicPercent >= 80 ? 'text-green-600' : finalTopicPercent < 50 ? 'text-red-600' : 'text-slate-800'}`}>{finalTopicPercent}%</div>
+                                  <div className="text-[10px] text-slate-500 font-bold">{finalCorrect}/{finalTotal} Correct</div>
                               </div>
                           </div>
 
@@ -987,7 +1051,12 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   };
 
   const renderTopicBreakdown = () => {
-      const topics = Object.keys(topicStats);
+
+      let topics = Object.keys(topicStats);
+      if (topics.length === 0 && result.topicAnalysis) {
+          topics = Object.keys(result.topicAnalysis);
+      }
+
       if (topics.length === 0) return null;
       return (
           <div className="space-y-6">

@@ -173,6 +173,33 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
 
         const analysisJson = generateAnalysisJson(currentMcqData, userAnswersMap, user.mcqHistory, topic.chapterId);
 
+        // Generate Granular Topic Analysis for History Comparison (identical to McqView)
+        const topicAnalysis: Record<string, { correct: number, total: number, percentage: number }> = {};
+        const omrData: { qIndex: number, selected: number }[] = [];
+
+        currentMcqData.forEach((q, idx) => {
+            const t = (q.topic || 'General').trim();
+            if (!topicAnalysis[t]) topicAnalysis[t] = { correct: 0, total: 0, percentage: 0 };
+
+            topicAnalysis[t].total += 1;
+            const selectedOpt = userAnswersMap[idx];
+
+            omrData.push({
+                qIndex: idx,
+                selected: selectedOpt !== undefined ? selectedOpt : -1
+            });
+
+            if (selectedOpt === q.correctAnswer) {
+                topicAnalysis[t].correct += 1;
+            }
+        });
+
+        // Calculate Percentages
+        Object.keys(topicAnalysis).forEach(t => {
+            const s = topicAnalysis[t];
+            s.percentage = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+        });
+
         const result: MCQResult = {
             id: `mcq-rev-${Date.now()}`,
             userId: user.id,
@@ -185,10 +212,13 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
             totalQuestions: total,
             correctCount: score,
             wrongCount: total - score,
-            totalTimeSeconds: 0,
-            averageTimePerQuestion: 0,
+            totalTimeSeconds: totalTime,
+            averageTimePerQuestion: totalTime / (total || 1),
             performanceTag: percentage >= 80 ? 'EXCELLENT' : percentage >= 50 ? 'GOOD' : 'BAD',
-            ultraAnalysisReport: analysisJson
+            ultraAnalysisReport: analysisJson,
+            topicAnalysis: topicAnalysis,
+            omrData: omrData,
+            topic: topic.name // Store the revision topic name
         };
 
         setSessionResults(prev => [...prev, result]);

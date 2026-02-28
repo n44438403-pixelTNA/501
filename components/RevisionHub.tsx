@@ -71,6 +71,10 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
     // Custom Alert State
     const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, type: 'SUCCESS'|'ERROR'|'INFO', title?: string, message: string}>({isOpen: false, type: 'INFO', message: ''});
 
+    // Track recently completed MCQs for Marksheet view
+    const [completedMcqResults, setCompletedMcqResults] = useState<any[]>([]);
+    const [showCompletedMarksheets, setShowCompletedMarksheets] = useState(false);
+
     // Calculate Today's Counts (Midnight Comparison)
     const now = new Date();
     const todayStr = now.toDateString();
@@ -881,8 +885,26 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                     onClose={() => setShowTodayMcqSession(false)}
                     onComplete={(results) => {
                         try {
-                            const updatedHistory = [...(user.mcqHistory || []), ...results];
-                            const updatedUser = { ...user, mcqHistory: updatedHistory };
+                            // Prepend new results so they reflect immediately in history
+                            const updatedHistory = [...results, ...(user.mcqHistory || [])];
+                            let updatedUser = { ...user, mcqHistory: updatedHistory };
+
+                            // Update global topicStrength to correctly categorize topics in Revision Hub buckets
+                            if (!updatedUser.topicStrength) updatedUser.topicStrength = {};
+
+                            results.forEach(result => {
+                                if (result.topicAnalysis) {
+                                    Object.keys(result.topicAnalysis).forEach(topicName => {
+                                        const analysis = result.topicAnalysis![topicName];
+                                        const currentStats = updatedUser.topicStrength![topicName] || { correct: 0, total: 0 };
+                                        updatedUser.topicStrength![topicName] = {
+                                            correct: currentStats.correct + analysis.correct,
+                                            total: currentStats.total + analysis.total
+                                        };
+                                    });
+                                }
+                            });
+
                             if (onUpdateUser) {
                                 onUpdateUser(updatedUser);
                                 // Fire and forget save to avoid UI blocking
@@ -893,27 +915,39 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         }
                         setShowTodayMcqSession(false);
 
-                        // "banane ke baad ek analysis page aaya hai jo na aaye to hi achha rahega"
-                        // Disable Final Analysis for Revision Hub as per user request.
-                        // Just show a success message or nothing.
+                        // Show Marksheet for all completed topics instantly
                         if (results.length > 0) {
-                            // Calculate aggregate performance for the alert
-                            const totalQ = results.reduce((acc, r) => acc + r.totalQuestions, 0);
-                            const totalScore = results.reduce((acc, r) => acc + r.score, 0);
-                            const pct = totalQ > 0 ? Math.round((totalScore / totalQ) * 100) : 0;
-
-                            setAlertConfig({
-                                isOpen: true,
-                                type: 'SUCCESS',
-                                title: 'Session Complete!',
-                                message: `You completed ${results.length} topics.\nOverall Score: ${totalScore}/${totalQ} (${pct}%)`
-                            });
+                            setCompletedMcqResults(results);
+                            setShowCompletedMarksheets(true);
                         }
                     }}
                 />
             )}
 
-            {/* Analysis Page Removed for Revision Hub as per request */}
+            {/* Completed Marksheets Overlay */}
+            {showCompletedMarksheets && completedMcqResults.length > 0 && (
+                <div className="fixed inset-0 bg-white z-[100] overflow-y-auto">
+                    <div className="p-4 bg-slate-50 border-b border-slate-200 sticky top-0 z-10 flex justify-between items-center shadow-sm">
+                        <h2 className="text-lg font-black text-slate-800">Session Analysis</h2>
+                        <button
+                            onClick={() => setShowCompletedMarksheets(false)}
+                            className="bg-slate-200 p-2 rounded-full text-slate-600 hover:bg-slate-300 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="p-4 space-y-6 pb-24">
+                        {completedMcqResults.map((result, idx) => (
+                            <MarksheetCard
+                                key={result.id || idx}
+                                result={result}
+                                user={user}
+                                questions={[]} // Questions array handled gracefully by MarksheetCard using topicAnalysis
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {showReport && (
                 <MonthlyMarksheet

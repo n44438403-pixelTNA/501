@@ -731,18 +731,41 @@ export const fetchLessonContent = async (
               STRICT TARGET: 1000-1500 Words.
               
               STYLE: "Gemini Style" - Detailed, Conversational (speak directly to the student), Analytical. Use analogies and real-world examples.
+              IMPORTANT WRITING RULES:
+              - Paragraphs MUST NOT exceed 4-5 lines.
+              - Use bullet points every 3-4 paragraphs.
+              - Always bold the keywords.
+              - Use real-world examples that connect with the student.
+              - Use very simple language (no decorative language, no poetry).
+              - TTS Friendly Format: Keep sentences short. Do not overload with commas. Avoid complex English.
+              - Do NOT just copy-paste NCERT. Do NOT use unnecessary theory. Provide pure clarity.
+              - Use the Icon System where appropriate: 📈 (Green = Growth), 🟡 (Yellow = Unstable), 🔴 (Red = Drop), 🔵 (Blue = Plateau).
               
-              STRUCTURE:
-              1. 🌟 Introduction (Hook with a real-life example or Thinking Question)
-              2. 📘 Detailed Explanation (Step-by-step breakdown of every concept)
-              3. 📊 Text-Based Diagrams / Flowcharts (Use ASCII arrows e.g. Sun -> Plant -> Herbivore)
-              4. 🧠 Deep Dive Section ("Concept Chamka?" - Deep Logic behind concepts)
-              5. 🧪 Examples & Case Studies
-              6. ⚠️ Exam Alerts (Common Mistakes & Exam Traps)
-              7. 🏆 Topper's Trick (Mnemonics)
-              8. 📝 20 Practice MCQs (At the very end, with Answer Key and Solutions)
+              STRUCTURE EXACTLY AS FOLLOWS (Template):
+
+              1. 🚀 Quick Revision (8-12 bullet points of the most crucial concepts)
+
+              2. 📘 Topic 1 (Sub-topic name)
+                 - Definition (Simple language)
+                 - Explanation (Step-by-step)
+                 - Real Life Example (Connect with student)
+                 - Diagram (Text-based ASCII if possible, or describe it)
+                 - Important Points Box: Highlight 📌 Exam Point, 📌 Common Mistake, 📌 Memory Trick
+                 - 🔁 Topic Quick Recap (4-5 bullet points, one line summary, keyword list e.g., "• Needs sunlight • Produces glucose")
+
+              3. 📘 Topic 2 (Same structure as above)
+                 ... (Repeat for all key topics)
+
+              4. 🟡 Memory Anchors (Very Powerful)
+                 - For every important concept, provide: 🧠 Trick, 🔗 Link to previous concept, and 📊 Table comparison (e.g., Difference between X and Y).
+
+              5. 🔴 Final Chapter Brain Map
+                 - "Chapter in 60 Seconds"
+                 - 10 bullet chain flow / small flow diagram (Ultra revision material).
+
+              6. 📝 20 Practice MCQs (At the very end, with Answer Key and Solutions)
               
-              Use bold text for keywords. Make it comprehensive.`;
+              Ensure you follow this strict Topic Wise Deep Dive structure.`;
           } else {
               // FREE PROMPT (200-300 Words)
               prompt = `${customInstruction}

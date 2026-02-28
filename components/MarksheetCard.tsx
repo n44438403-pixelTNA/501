@@ -12,7 +12,6 @@ import { checkFeatureAccess } from '../utils/permissionUtils';
 import { CustomConfirm } from './CustomDialogs'; // Import CustomConfirm
 import { SpeakButton } from './SpeakButton';
 import { renderMathInHtml } from '../utils/mathUtils';
-import { DownloadOptionsModal } from './DownloadOptionsModal';
 import { downloadAsMHTML } from '../utils/downloadUtils';
 
 interface Props {
@@ -47,7 +46,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   const [comparisonMessage, setComparisonMessage] = useState<string | null>(null);
 
   // DOWNLOAD MODAL STATE
-  const [downloadModal, setDownloadModal] = useState<{isOpen: boolean, type: 'MARKSHEET' | 'FULL' | null}>({isOpen: false, type: null});
 
   // Comparison Logic (User Req)
   useEffect(() => {
@@ -337,61 +335,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       });
   }, []);
 
-  const handleDownloadMarksheet = async () => {
-      const element = document.getElementById('marksheet-style-1');
-      if (!element) return;
-      try {
-          const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-          const imgData = canvas.toDataURL('image/png');
 
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-          pdf.save(`Marksheet_${user.name}_${result.chapterTitle}.pdf`);
-      } catch (e) {
-          console.error('Download failed', e);
-          alert("Failed to generate PDF. Please try again.");
-      }
-  };
-
-  const handleDownloadFullReport = async () => {
-      setIsDownloadingAll(true);
-      setTimeout(async () => {
-          const element = document.getElementById('full-report-print-container');
-          if (element) {
-              try {
-                  const canvas = await html2canvas(element, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
-                  const imgData = canvas.toDataURL('image/png');
-
-                  const pdf = new jsPDF('p', 'mm', 'a4');
-                  const pdfWidth = pdf.internal.pageSize.getWidth();
-                  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-                  let heightLeft = pdfHeight;
-                  let position = 0;
-                  const pageHeight = pdf.internal.pageSize.getHeight();
-
-                  pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-                  heightLeft -= pageHeight;
-
-                  while (heightLeft >= 0) {
-                      position = heightLeft - pdfHeight;
-                      pdf.addPage();
-                      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-                      heightLeft -= pageHeight;
-                  }
-
-                  pdf.save(`Full_Report_${user.name}.pdf`);
-              } catch (e) {
-                  console.error('Full PDF Download Failed', e);
-                  alert("Could not generate PDF. Please try again.");
-              }
-          }
-          setIsDownloadingAll(false);
-      }, 500);
-  };
 
   const handleShare = async () => {
       const appLink = settings?.officialAppUrl || "https://play.google.com/store/apps/details?id=com.nsta.app"; 
@@ -1517,18 +1461,24 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                 <button onClick={handleShare} className="p-3 bg-green-50 text-green-600 rounded-full hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-95" title="Share Result">
                     <Share2 size={20} />
                 </button>
+                {activeTab === 'OFFICIAL_MARKSHEET' && (
                 <button
-                    onClick={() => setDownloadModal({isOpen: true, type: 'MARKSHEET'})}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors shadow-sm"
+                    onClick={() => downloadAsMHTML('marksheet-style-1', `Marksheet_${user.name}`)}
+                    className="flex items-center justify-center p-3 bg-slate-100 text-slate-700 rounded-full font-bold hover:bg-slate-200 transition-colors shadow-sm active:scale-95"
+                    title="Download Marksheet"
                 >
-                    <Download size={16} /> Download Marksheet
+                    <Download size={20} />
                 </button>
+            )}
+                {activeTab !== 'OFFICIAL_MARKSHEET' && (
                 <button
-                    onClick={() => setDownloadModal({isOpen: true, type: 'FULL'})}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                    onClick={() => downloadAsMHTML('full-report-print-container', `Full_Analysis_${user.name}`)}
+                    className="flex items-center justify-center p-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 active:scale-95"
+                    title="Download Full Analysis"
                 >
-                    {isDownloadingAll ? <span className="animate-spin">⏳</span> : <Download size={16} />} Download Full Analysis
+                    {isDownloadingAll ? <span className="animate-spin">⏳</span> : <Download size={20} />}
                 </button>
+            )}
             </div>
              
              <div className="text-center py-2 bg-slate-50 border-t border-slate-100">
@@ -1536,35 +1486,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
              </div>
         </div>
 
-        <DownloadOptionsModal
-            isOpen={downloadModal.isOpen}
-            onClose={() => setDownloadModal({isOpen: false, type: null})}
-            title={downloadModal.type === 'MARKSHEET' ? "Download Marksheet" : "Download Full Report"}
-            onDownloadPdf={() => {
-                if (downloadModal.type === 'MARKSHEET') handleDownloadMarksheet();
-                else handleDownloadFullReport();
-            }}
-            onDownloadMhtml={() => {
-                if (downloadModal.type === 'MARKSHEET') {
-                    // Temporarily show the hidden marksheet container if needed, or clone it
-                    // The marksheet is rendered conditionally. We might need to ensure it's in DOM.
-                    // But 'marksheet-style-1' is in render logic. If tab is not OFFICIAL, it might not be there.
-                    // Actually, renderMarksheetStyle1 is called in renderFullReport into a hidden container.
-                    // Let's use the hidden container for Full Report MHTML.
-                    // For Marksheet Only, we should use 'marksheet-style-1' if visible, or re-render it.
-                    // Robust way: Use the 'full-report-print-container' for Full, and ensure 'marksheet-style-1' is available for Marksheet.
-                    // If activeTab !== 'OFFICIAL_MARKSHEET', 'marksheet-style-1' might not be in the visible tree.
-                    // But 'renderFullReport' puts it in a hidden div. So we can grab it from there for Marksheet too?
-                    // 'renderFullReport' calls 'renderMarksheetStyle1'.
-                    // Wait, 'full-report-print-container' is always rendered in the JSX return.
-                    // So we can target elements inside it.
 
-                    downloadAsMHTML('marksheet-style-1', `Marksheet_${user.name}`);
-                } else {
-                    downloadAsMHTML('full-report-print-container', `Full_Analysis_${user.name}`);
-                }
-            }}
-        />
 
         {viewingNote && (
             <div className="fixed inset-0 z-[250] bg-slate-900/90 flex items-center justify-center p-4 animate-in fade-in">

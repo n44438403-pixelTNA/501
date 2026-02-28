@@ -338,19 +338,64 @@ export const PdfView: React.FC<Props> = ({
                             }
                         }
 
-                        // 2. DOM based extraction (for standard block tags) - avoid duplicates
-                        const paragraphs = Array.from(tempDiv.querySelectorAll('p, li, blockquote')); // Exclude div to prevent capturing entire pages
-                        paragraphs.forEach(p => {
-                            const text = p.textContent || '';
-                            const lowerText = text.toLowerCase();
-                            if (lowerText.includes('quick revision') || lowerText.includes('mini revision') || lowerText.includes('recap:')) {
-                                const cleanHtml = p.innerHTML.trim();
-                                // Basic duplicate check
-                                if (!quickPoints.some(qp => qp.includes(cleanHtml) || cleanHtml.includes(qp.replace(/<(?:b|strong)>.*?(?:<\/b>|<\/strong>)/gi, '').trim()))) {
-                                     quickPoints.push(cleanHtml);
+                        // 2. DOM based extraction using TreeWalker (to handle headers followed by lists/paragraphs)
+                        const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_ELEMENT, {
+                            acceptNode: (node: Element) => {
+                                const tag = node.tagName.toLowerCase();
+                                if (['p', 'li', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)) {
+                                    return NodeFilter.FILTER_ACCEPT;
                                 }
+                                return NodeFilter.FILTER_SKIP;
                             }
                         });
+
+                        let currentNode = walker.nextNode() as Element | null;
+                        while (currentNode) {
+                            const text = currentNode.textContent || '';
+                            const lowerText = text.toLowerCase();
+
+                            // Check if the current node contains a trigger word
+                            if (lowerText.includes('quick revision') || lowerText.includes('mini revision') || lowerText.includes('recap')) {
+
+                                // If it's a heading (like <h3>5. 🔁 Recap</h3>), we want to extract the NEXT block-level sibling (like a <ul> or <p>)
+                                if (/^h[1-6]$/.test(currentNode.tagName.toLowerCase())) {
+                                    let nextSibling = currentNode.nextElementSibling;
+
+                                    // Sometimes there are empty text nodes or <br>s between elements
+                                    while (nextSibling && !['p', 'ul', 'ol', 'div', 'blockquote'].includes(nextSibling.tagName.toLowerCase())) {
+                                        nextSibling = nextSibling.nextElementSibling;
+                                    }
+
+                                    if (nextSibling) {
+                                        // If the next sibling is a list (ul/ol), extract each <li> individually for better formatting
+                                        if (['ul', 'ol'].includes(nextSibling.tagName.toLowerCase())) {
+                                            const listItems = Array.from(nextSibling.querySelectorAll('li'));
+                                            listItems.forEach(li => {
+                                                const cleanLiHtml = li.innerHTML.trim();
+                                                if (cleanLiHtml && !quickPoints.some(qp => qp.includes(cleanLiHtml) || cleanLiHtml.includes(qp))) {
+                                                    quickPoints.push(`<li>${cleanLiHtml}</li>`);
+                                                }
+                                            });
+                                        } else {
+                                            // Extract the entire block (e.g., <p>)
+                                            const cleanBlockHtml = nextSibling.innerHTML.trim();
+                                            if (cleanBlockHtml && !quickPoints.some(qp => qp.includes(cleanBlockHtml) || cleanBlockHtml.includes(qp))) {
+                                                quickPoints.push(cleanBlockHtml);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // If it's a paragraph, li, or div directly containing the trigger word, extract it directly
+                                    const cleanHtml = currentNode.innerHTML.trim();
+
+                                    // Basic duplicate check to prevent adding the exact same string or a subset
+                                    if (cleanHtml && !quickPoints.some(qp => qp.includes(cleanHtml) || cleanHtml.includes(qp.replace(/<(?:b|strong)>.*?(?:<\/b>|<\/strong>)/gi, '').trim()))) {
+                                         quickPoints.push(cleanHtml);
+                                    }
+                                }
+                            }
+                            currentNode = walker.nextNode() as Element | null;
+                        }
                     }
                 });
             } catch(e) {

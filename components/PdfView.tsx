@@ -94,7 +94,11 @@ const extractTopicsFromHtml = (html: string): { title: string, content: string }
             });
         }
 
-        return topics;
+        // Ensure no Objects are passed into content by accident, and sanitize structure
+        return topics.map(t => ({
+            title: typeof t.title === 'string' ? t.title : "Topic",
+            content: typeof t.content === 'string' ? t.content : ""
+        }));
     } catch (e) {
         console.error("HTML Parsing Error (Safe Fallback):", e);
         // Fallback to single safe block
@@ -317,29 +321,45 @@ export const PdfView: React.FC<Props> = ({
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = entry.htmlContent;
 
-                        // 1. Fallback regex approach to grab the specific blocks provided by user
-                        // Look for patterns like "<b>Quick Revision:</b> text..." or similar
-                        const regex = /(?:<b>|<strong>)?\s*Quick Revision:?\s*(?:<\/b>|<\/strong>)?\s*(.*?)(?:<hr\/?>|<\/p>|<br\/?>|$)/gi;
-                        let match;
-                        while ((match = regex.exec(entry.htmlContent)) !== null) {
-                            if (match[1] && match[1].trim().length > 0) {
-                                // We found a match using regex, strip any leftover tags for clean text, or keep basic formatting
-                                quickPoints.push(`<b>Quick Revision:</b> ${match[1].trim()}`);
+                        // Try parsing with DOM first, to avoid pulling in nested nodes multiple times
+                        const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_ELEMENT, null);
+                        let node;
+                        while ((node = walker.nextNode())) {
+                            const el = node as HTMLElement;
+                            // Only look at block-level elements
+                            if (['P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4'].includes(el.tagName)) {
+                                const text = el.textContent || '';
+                                if (text.toLowerCase().includes('quick revision')) {
+                                    // Extract the html of this node directly
+                                    const cleanHtml = el.innerHTML.trim();
+
+                                    // Make sure we only add it if it's not already covered by a parent node we processed,
+                                    // or we haven't already added this exact text
+                                    const plainText = text.trim();
+
+                                    const isDuplicate = quickPoints.some(qp => {
+                                        const temp2 = document.createElement('div');
+                                        temp2.innerHTML = qp;
+                                        return temp2.textContent?.trim() === plainText || plainText.includes(temp2.textContent?.trim() || '') || (temp2.textContent?.trim() || '').includes(plainText);
+                                    });
+
+                                    if (!isDuplicate && cleanHtml.length > 0) {
+                                        quickPoints.push(cleanHtml);
+                                    }
+                                }
                             }
                         }
 
-                        // 2. DOM based extraction (for standard block tags) - avoid duplicates
-                        const paragraphs = Array.from(tempDiv.querySelectorAll('p, li, div'));
-                        paragraphs.forEach(p => {
-                            const text = p.textContent || '';
-                            if (text.toLowerCase().includes('quick revision')) {
-                                const cleanHtml = p.innerHTML.trim();
-                                // Basic duplicate check
-                                if (!quickPoints.some(qp => qp.includes(cleanHtml) || cleanHtml.includes(qp.replace('<b>Quick Revision:</b> ', '')))) {
-                                     quickPoints.push(cleanHtml);
+                        // If nothing found via DOM, try regex fallback
+                        if (quickPoints.length === 0) {
+                            const regex = /(?:<b>|<strong>)?\s*Quick Revision:?\s*(?:<\/b>|<\/strong>)?\s*(.*?)(?:<hr\/?>|<\/p>|<br\/?>|$)/gi;
+                            let match;
+                            while ((match = regex.exec(entry.htmlContent)) !== null) {
+                                if (match[1] && match[1].trim().length > 0) {
+                                    quickPoints.push(`<b>Quick Revision:</b> ${match[1].trim()}`);
                                 }
                             }
-                        });
+                        }
                     }
                 });
             } catch(e) {
@@ -358,15 +378,24 @@ export const PdfView: React.FC<Props> = ({
                     allTopics = [...allTopics, ...extractTopicsFromHtml(legacyHtml)];
                 }
 
-                entries.forEach(entry => {
+                entries.forEach((entry, idx) => {
                     if (entry.htmlContent) {
-                        allTopics = [...allTopics, ...extractTopicsFromHtml(entry.htmlContent)];
+                        const extracted = extractTopicsFromHtml(entry.htmlContent);
+                        // If the entry already has a title, override the generic "Introduction" extracted from the HTML if it's the only one.
+                        if (entry.title && extracted.length === 1 && extracted[0].title === "Introduction") {
+                            extracted[0].title = entry.title;
+                        }
+                        allTopics = [...allTopics, ...extracted];
                     }
                 });
             } catch(e) {
                 console.error("Deep Dive Aggregation Error:", e);
             }
-            setDeepDiveTopics(allTopics);
+            // Ensure no invalid react children are in the topics array
+            setDeepDiveTopics(allTopics.map(t => ({
+                title: typeof t.title === 'string' ? t.title : "Topic",
+                content: typeof t.content === 'string' ? t.content : ""
+            })));
         }
 
       } catch (error) {
@@ -416,9 +445,14 @@ export const PdfView: React.FC<Props> = ({
           price = contentData?.ultraPdfPrice !== undefined ? contentData.ultraPdfPrice : 10;
       } else if (type === 'DEEP_DIVE') {
           htmlContent = syllabusMode === 'SCHOOL' ? (contentData?.deepDiveNotesHtml || '') : (contentData?.competitionDeepDiveNotesHtml || '');
-          // Prepare Topics immediately
-          const extracted = extractTopicsFromHtml(htmlContent);
-          setDeepDiveTopics(extracted);
+          // Prepare Topics immediately (Note: Since we already do this on component mount, this is just a fallback for legacy support)
+          if (htmlContent && deepDiveTopics.length === 0) {
+              const extracted = extractTopicsFromHtml(htmlContent);
+              setDeepDiveTopics(extracted.map(t => ({
+                  title: typeof t.title === 'string' ? t.title : "Topic",
+                  content: typeof t.content === 'string' ? t.content : ""
+              })));
+          }
 
           // Access Check Handled Below
       } else if (type === 'AUDIO_SLIDE') {

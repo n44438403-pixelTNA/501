@@ -186,7 +186,9 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
 
             omrData.push({
                 qIndex: idx,
-                selected: selectedOpt !== undefined ? selectedOpt : -1
+                selected: selectedOpt !== undefined ? selectedOpt : -1,
+                correct: q.correctAnswer,
+                timeSpent: 0 // Optional: Could track real per-question time in future
             });
 
             if (selectedOpt === q.correctAnswer) {
@@ -199,6 +201,20 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
             const s = topicAnalysis[t];
             s.percentage = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
         });
+
+        // Generate wrongQuestions for MarksheetCard
+        const wrongQuestions = currentMcqData.map((q, idx) => {
+            const selected = userAnswersMap[idx] !== undefined ? userAnswersMap[idx] : -1;
+            if (selected !== -1 && selected !== q.correctAnswer) {
+                return {
+                    question: q.question,
+                    qIndex: idx,
+                    explanation: q.explanation,
+                    correctAnswer: q.correctAnswer
+                };
+            }
+            return null;
+        }).filter((item): item is { question: string; qIndex: number; explanation?: string; correctAnswer?: number } => item !== null);
 
         const result: MCQResult = {
             id: `mcq-rev-${Date.now()}`,
@@ -218,6 +234,7 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
             ultraAnalysisReport: analysisJson,
             topicAnalysis: topicAnalysis,
             omrData: omrData,
+            wrongQuestions: wrongQuestions,
             topic: topic.name // Store the revision topic name
         };
 

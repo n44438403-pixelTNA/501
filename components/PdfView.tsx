@@ -116,7 +116,7 @@ export const PdfView: React.FC<Props> = ({
   // NEW: TAB STATE
   const [activeTab, setActiveTab] = useState<'QUICK' | 'DEEP_DIVE' | 'PREMIUM' | 'RESOURCES'>('QUICK');
   const [sessionUnlockedTabs, setSessionUnlockedTabs] = useState<string[]>([]);
-  const [quickRevisionPoints, setQuickRevisionPoints] = useState<string[]>([]);
+  const [quickRevisionPoints, setQuickRevisionPoints] = useState<{title: string, points: string[]}[]>([]);
   const [currentPremiumEntryIdx, setCurrentPremiumEntryIdx] = useState(0);
 
   // PREMIUM TTS STATE
@@ -316,29 +316,38 @@ export const PdfView: React.FC<Props> = ({
             }
 
             // 1. QUICK REVISION EXTRACTION
-            const quickPoints: string[] = [];
+            const quickGroups: {title: string, points: string[]}[] = [];
 
             try {
-                entries.forEach(entry => {
+                entries.forEach((entry, index) => {
                     if (entry.htmlContent) {
-                        // Sometimes the quick revision point might just be a bare text node mixed with tags,
-                        // or it might be directly inside the root without a wrapping <p> tag.
-                        // Create a temporary div to parse HTML
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = entry.htmlContent;
 
-                        // 1. Fallback regex approach to grab the specific blocks provided by user
-                        // Look for patterns like "<b>Quick Revision:</b> text..." or similar
+                        // Look for a fallback title if entry.title is undefined.
+                        // Many NCERT-style HTML files start with an <h2> or <h3>
+                        let topicTitle = entry.title?.trim();
+                        if (!topicTitle) {
+                            const firstHeading = tempDiv.querySelector('h1, h2, h3, h4');
+                            if (firstHeading && firstHeading.textContent) {
+                                topicTitle = firstHeading.textContent.trim();
+                            } else {
+                                topicTitle = `Topic ${index + 1}`;
+                            }
+                        }
+
+                        const currentTopicPoints: string[] = [];
+
+                        // 1. Fallback regex approach to grab specific blocks
                         const regex = /(?:<b>|<strong>)?\s*Quick Revision:?\s*(?:<\/b>|<\/strong>)?\s*(.*?)(?:<hr\/?>|<\/p>|<br\/?>|$)/gi;
                         let match;
                         while ((match = regex.exec(entry.htmlContent)) !== null) {
                             if (match[1] && match[1].trim().length > 0) {
-                                // We found a match using regex, strip any leftover tags for clean text, or keep basic formatting
-                                quickPoints.push(`<b>Quick Revision:</b> ${match[1].trim()}`);
+                                currentTopicPoints.push(`<b>Quick Revision:</b> ${match[1].trim()}`);
                             }
                         }
 
-                        // 2. DOM based extraction using TreeWalker (to handle headers followed by lists/paragraphs)
+                        // 2. DOM based extraction using TreeWalker
                         const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_ELEMENT, {
                             acceptNode: (node: Element) => {
                                 const tag = node.tagName.toLowerCase();
@@ -357,51 +366,55 @@ export const PdfView: React.FC<Props> = ({
                             // Check if the current node contains a trigger word
                             if (lowerText.includes('quick revision') || lowerText.includes('mini revision') || lowerText.includes('recap')) {
 
-                                // If it's a heading (like <h3>5. 🔁 Recap</h3>), we want to extract the NEXT block-level sibling (like a <ul> or <p>)
+                                // Avoid re-extracting the overall topic title if it contains the word "revision" by accident
+                                if (currentNode.textContent?.trim() === topicTitle) {
+                                    currentNode = walker.nextNode() as Element | null;
+                                    continue;
+                                }
+
                                 if (/^h[1-6]$/.test(currentNode.tagName.toLowerCase())) {
                                     let nextSibling = currentNode.nextElementSibling;
 
-                                    // Sometimes there are empty text nodes or <br>s between elements
                                     while (nextSibling && !['p', 'ul', 'ol', 'div', 'blockquote'].includes(nextSibling.tagName.toLowerCase())) {
                                         nextSibling = nextSibling.nextElementSibling;
                                     }
 
                                     if (nextSibling) {
-                                        // If the next sibling is a list (ul/ol), extract each <li> individually for better formatting
                                         if (['ul', 'ol'].includes(nextSibling.tagName.toLowerCase())) {
                                             const listItems = Array.from(nextSibling.querySelectorAll('li'));
                                             listItems.forEach(li => {
                                                 const cleanLiHtml = li.innerHTML.trim();
-                                                if (cleanLiHtml && !quickPoints.some(qp => qp.includes(cleanLiHtml) || cleanLiHtml.includes(qp))) {
-                                                    quickPoints.push(`<li>${cleanLiHtml}</li>`);
+                                                if (cleanLiHtml && !currentTopicPoints.some(qp => qp.includes(cleanLiHtml) || cleanLiHtml.includes(qp))) {
+                                                    currentTopicPoints.push(`<li>${cleanLiHtml}</li>`);
                                                 }
                                             });
                                         } else {
-                                            // Extract the entire block (e.g., <p>)
                                             const cleanBlockHtml = nextSibling.innerHTML.trim();
-                                            if (cleanBlockHtml && !quickPoints.some(qp => qp.includes(cleanBlockHtml) || cleanBlockHtml.includes(qp))) {
-                                                quickPoints.push(cleanBlockHtml);
+                                            if (cleanBlockHtml && !currentTopicPoints.some(qp => qp.includes(cleanBlockHtml) || cleanBlockHtml.includes(qp))) {
+                                                currentTopicPoints.push(cleanBlockHtml);
                                             }
                                         }
                                     }
                                 } else {
-                                    // If it's a paragraph, li, or div directly containing the trigger word, extract it directly
                                     const cleanHtml = currentNode.innerHTML.trim();
 
-                                    // Basic duplicate check to prevent adding the exact same string or a subset
-                                    if (cleanHtml && !quickPoints.some(qp => qp.includes(cleanHtml) || cleanHtml.includes(qp.replace(/<(?:b|strong)>.*?(?:<\/b>|<\/strong>)/gi, '').trim()))) {
-                                         quickPoints.push(cleanHtml);
+                                    if (cleanHtml && !currentTopicPoints.some(qp => qp.includes(cleanHtml) || cleanHtml.includes(qp.replace(/<(?:b|strong)>.*?(?:<\/b>|<\/strong>)/gi, '').trim()))) {
+                                         currentTopicPoints.push(cleanHtml);
                                     }
                                 }
                             }
                             currentNode = walker.nextNode() as Element | null;
+                        }
+
+                        if (currentTopicPoints.length > 0) {
+                            quickGroups.push({ title: topicTitle, points: currentTopicPoints });
                         }
                     }
                 });
             } catch(e) {
                 console.error("Quick Revision Extraction Error:", e);
             }
-            setQuickRevisionPoints(quickPoints);
+            setQuickRevisionPoints(quickGroups);
 
             // 2. DEEP DIVE TOPICS AGGREGATION
             // Combine all entries
@@ -787,7 +800,7 @@ export const PdfView: React.FC<Props> = ({
                                        stopAllSpeech();
                                    } else {
                                        setIsAutoPlaying(true);
-                                       const fullText = quickRevisionPoints.map(p => p.replace(/<[^>]*>?/gm, ' ')).join('. ');
+                                       const fullText = quickRevisionPoints.flatMap(g => g.points).map(p => p.replace(/<[^>]*>?/gm, ' ')).join('. ');
                                        speakText(fullText, null, speechRate, 'hi-IN', undefined, () => setIsAutoPlaying(false));
                                    }
                                }}
@@ -806,20 +819,31 @@ export const PdfView: React.FC<Props> = ({
                            <p className="text-xs">Points marked "Quick Revision" in notes appear here.</p>
                        </div>
                    ) : (
-                       <div className="space-y-3">
-                           {quickRevisionPoints.map((point, idx) => (
-                               <div key={idx} className="bg-white p-4 rounded-xl border-l-4 border-yellow-400 shadow-sm relative group">
-                                   <div className="prose prose-sm text-slate-700" dangerouslySetInnerHTML={{ __html: point }} />
-                                   <button
-                                       onClick={() => {
-                                           stopAllSpeech();
-                                           const plainText = point.replace(/<[^>]*>?/gm, ' ');
-                                           speakText(plainText, null, speechRate, 'hi-IN');
-                                       }}
-                                       className="absolute top-2 right-2 p-1.5 bg-yellow-100 text-yellow-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                   >
-                                       <Volume2 size={14} />
-                                   </button>
+                       <div className="space-y-6">
+                           {quickRevisionPoints.map((group, groupIdx) => (
+                               <div key={groupIdx} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative group overflow-hidden">
+                                   <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
+
+                                   <div className="flex justify-between items-start mb-4">
+                                       <h3 className="font-black text-slate-800 text-lg pr-8">{group.title}</h3>
+                                       <button
+                                           onClick={() => {
+                                               stopAllSpeech();
+                                               const plainText = group.points.map(p => p.replace(/<[^>]*>?/gm, ' ')).join('. ');
+                                               speakText(plainText, null, speechRate, 'hi-IN');
+                                           }}
+                                           className="p-2 bg-yellow-50 text-yellow-600 rounded-full hover:bg-yellow-100 transition-colors"
+                                           title="Read Topic Revision"
+                                       >
+                                           <Volume2 size={16} />
+                                       </button>
+                                   </div>
+
+                                   <div className="space-y-3 pl-2">
+                                       {group.points.map((point, idx) => (
+                                            <div key={idx} className="prose prose-sm text-slate-700 bg-slate-50/50 p-3 rounded-xl border border-slate-50" dangerouslySetInnerHTML={{ __html: point }} />
+                                       ))}
+                                   </div>
                                </div>
                            ))}
                        </div>

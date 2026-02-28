@@ -175,8 +175,13 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
 
         // Generate Granular Topic Analysis for History Comparison (identical to McqView)
         const topicAnalysis: Record<string, { correct: number, total: number, percentage: number }> = {};
+
+        const omrData: { qIndex: number, selected: number, correct: number, timeSpent?: number }[] = [];
+        const wrongQuestions: { question: string, qIndex: number, explanation?: string, correctAnswer?: string | number }[] = [];
+
         const omrData: { qIndex: number, selected: number, correct: number }[] = [];
         const wrongQuestions: { question: string, qIndex: number, correctAnswer: number, explanation?: string }[] = [];
+
 
         currentMcqData.forEach((q, idx) => {
             const t = (q.topic || 'General').trim();
@@ -184,12 +189,28 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
 
             topicAnalysis[t].total += 1;
             const selectedOpt = userAnswersMap[idx];
+            const isSelected = selectedOpt !== undefined ? selectedOpt : -1;
 
             omrData.push({
                 qIndex: idx,
+
+                selected: isSelected,
+                correct: q.correctAnswer,
+                timeSpent: 0 // Mocked for now, not tracked per question here
+
                 selected: selectedOpt !== undefined ? selectedOpt : -1,
                 correct: q.correctAnswer
+
             });
+
+            if (isSelected !== -1 && isSelected !== q.correctAnswer) {
+                wrongQuestions.push({
+                    question: q.question,
+                    qIndex: idx,
+                    explanation: q.explanation,
+                    correctAnswer: q.correctAnswer
+                });
+            }
 
             if (selectedOpt === q.correctAnswer) {
                 topicAnalysis[t].correct += 1;

@@ -276,6 +276,16 @@ export const PdfView: React.FC<Props> = ({
   // Alert
   const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, message: string}>({isOpen: false, message: ''});
 
+  // DEEP DIVE AUTO-OPEN ZEN MODE LOGIC
+  // Moved to top level to avoid React Hook Error #310
+  const deepDiveAccess = getTabAccess('DEEP_DIVE');
+  useEffect(() => {
+      if (activeTab === 'DEEP_DIVE' && deepDiveAccess.hasAccess) {
+          // Auto open first premium content
+          handlePdfClick('PREMIUM');
+      }
+  }, [activeTab, deepDiveAccess.hasAccess]);
+
   // Data Fetching & Processing
   useEffect(() => {
     if (directResource) {
@@ -804,15 +814,6 @@ export const PdfView: React.FC<Props> = ({
                                 </div>
                             );
                         }
-
-                        // IF ACCESS IS GRANTED, AUTO-TRIGGER THE PDF CLICK TO OPEN ZEN MODE
-                        // Use a side-effect to avoid render loop
-                        useEffect(() => {
-                            if (access.hasAccess) {
-                                // Auto open first premium content
-                                handlePdfClick('PREMIUM');
-                            }
-                        }, [access.hasAccess]);
 
                         return (
                            <>

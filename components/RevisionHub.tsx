@@ -776,11 +776,11 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                 </div>
                 <div className="z-10">
                     <p className="text-sm text-indigo-800 leading-relaxed">
-                        Hello, <span className="font-bold">{user.name}</span>! 👋 <br/>
+                        Welcome back, <span className="font-bold text-indigo-900">{user.name}</span>. <br/>
                         {hubMode === 'FREE' ? (
-                            <span>Here is your revision list for today. Upgrade to Premium for AI analysis.</span>
+                            <span className="text-indigo-700">Your personalized revision dashboard is ready. Upgrade to Premium for deep AI analytics.</span>
                         ) : (
-                            <span>You have <span className="font-black bg-white px-1 rounded text-indigo-600">{pendingNotes.length} notes</span> to read and <span className="font-black bg-white px-1 rounded text-purple-600">{pendingMcqs.length} MCQs</span> pending.</span>
+                            <span className="text-indigo-700">Your intelligent revision dashboard is mapped. You currently have <span className="font-black bg-white px-1.5 py-0.5 rounded shadow-sm text-indigo-600">{pendingNotes.length} notes</span> queued for review and <span className="font-black bg-white px-1.5 py-0.5 rounded shadow-sm text-purple-600">{pendingMcqs.length} assessments</span> scheduled.</span>
                         )}
                     </p>
                 </div>
@@ -1252,7 +1252,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                                                             {/* STATS ROW */}
                                                             {(t.totalQs || 0) > 0 && (
                                                                 <span className="text-[10px] text-slate-400 font-medium">
-                                                                    {t.totalCorrect || 0}/{t.totalQs} Correct • {percent}% • <span className="text-purple-600 font-bold">Cycle {t.cycleCount || 1}</span>
+                                                                    {t.totalCorrect || 0}/{t.totalQs} Correct • {percent}% • <span className="text-purple-600 font-bold">Tot. Cycles {t.cycleCount || 1} • Last: {new Date(t.lastAttempt).toLocaleDateString()}</span>
                                                                 </span>
                                                             )}
                                                             {/* NOTES INDICATOR */}

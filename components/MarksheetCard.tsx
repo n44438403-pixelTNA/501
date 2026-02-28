@@ -686,11 +686,15 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               {renderWeakAreasSummary()}
 
               {topics.map((topic, i) => {
+
                   const stats = topicStats[topic] || (result.topicAnalysis && result.topicAnalysis[topic] ? {
                       correct: result.topicAnalysis[topic].correct,
                       total: result.topicAnalysis[topic].total,
                       percent: result.topicAnalysis[topic].percentage
                   } : { correct: 0, total: 0, percent: 0 });
+
+                  const stats = topicStats[topic] || { percent: 0, correct: 0, total: 0 };
+
 
                   // For standalone revision hub without questions loaded, use topicAnalysis natively from result
                   let finalTopicPercent = stats.percent;
@@ -1077,6 +1081,18 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                               total: result.topicAnalysis[topic].total,
                               percent: result.topicAnalysis[topic].percentage
                           } : { correct: 0, total: 0, percent: 0 });
+
+                          let stats = topicStats[topic];
+                          if (!stats && result.topicAnalysis && result.topicAnalysis[topic]) {
+                              stats = {
+                                  correct: result.topicAnalysis[topic].correct,
+                                  total: result.topicAnalysis[topic].total,
+                                  percent: result.topicAnalysis[topic].percentage
+                              };
+                          }
+                          if (!stats) stats = { correct: 0, total: 0, percent: 0 };
+
+
                           return (
                               <div key={i}>
                                   <div className="flex justify-between items-end mb-1">

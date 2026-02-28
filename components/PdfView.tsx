@@ -501,6 +501,7 @@ export const PdfView: React.FC<Props> = ({
           saveUserToLive(updatedUser);
           onUpdateUser(updatedUser);
 
+          setActiveTab(tabId as any); // Actually switch the tab now that it's paid
           setPendingPdf(null);
           return;
       }
@@ -672,6 +673,14 @@ export const PdfView: React.FC<Props> = ({
                                <button
                                    key={tab.id}
                                    onClick={() => {
+                                       if (isLocked) {
+                                           if (cost > 0) {
+                                               setPendingPdf({ type: tab.id as any, price: cost, link: `UNLOCK_TAB_${tab.id}` });
+                                           } else {
+                                               setAlertConfig({isOpen: true, message: `🔒 Locked! Upgrade your plan or wait for Admin access.`});
+                                           }
+                                           return;
+                                       }
                                        setActiveTab(tab.id as any);
                                        stopAllSpeech();
                                    }}

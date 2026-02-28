@@ -179,10 +179,6 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
         const omrData: { qIndex: number, selected: number, correct: number, timeSpent?: number }[] = [];
         const wrongQuestions: { question: string, qIndex: number, explanation?: string, correctAnswer?: string | number }[] = [];
 
-        const omrData: { qIndex: number, selected: number, correct: number }[] = [];
-        const wrongQuestions: { question: string, qIndex: number, correctAnswer: number, explanation?: string }[] = [];
-
-
         currentMcqData.forEach((q, idx) => {
             const t = (q.topic || 'General').trim();
             if (!topicAnalysis[t]) topicAnalysis[t] = { correct: 0, total: 0, percentage: 0 };
@@ -193,14 +189,9 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
 
             omrData.push({
                 qIndex: idx,
-
                 selected: isSelected,
                 correct: q.correctAnswer,
                 timeSpent: 0 // Mocked for now, not tracked per question here
-
-                selected: selectedOpt !== undefined ? selectedOpt : -1,
-                correct: q.correctAnswer
-
             });
 
             if (isSelected !== -1 && isSelected !== q.correctAnswer) {

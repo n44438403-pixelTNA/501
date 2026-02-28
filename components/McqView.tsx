@@ -354,12 +354,13 @@ export const McqView: React.FC<Props> = ({
                 return {
                     question: q.question,
                     qIndex: idx,
+                    correctAnswer: q.correctAnswer,
                     explanation: q.explanation
                 };
             }
             return null;
         })
-        .filter((item): item is { question: string; qIndex: number } => item !== null);
+        .filter((item): item is { question: string; qIndex: number, correctAnswer: number } => item !== null);
 
       // Performance Label based on marks (Excllent, Good, Average, Bad)
       const scorePct = (score / attemptsCount) * 100;

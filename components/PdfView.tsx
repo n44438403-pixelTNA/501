@@ -776,6 +776,15 @@ export const PdfView: React.FC<Props> = ({
                             );
                         }
 
+                        // IF ACCESS IS GRANTED, AUTO-TRIGGER THE PDF CLICK TO OPEN ZEN MODE
+                        // Use a side-effect to avoid render loop
+                        useEffect(() => {
+                            if (access.hasAccess) {
+                                // Auto open first premium content
+                                handlePdfClick('PREMIUM');
+                            }
+                        }, [access.hasAccess]);
+
                         return (
                            <>
                                <div className="flex justify-between items-center mb-4">

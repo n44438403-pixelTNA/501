@@ -5677,7 +5677,7 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                               </div>
 
                               <button onClick={saveChapterContent} className="w-full bg-pink-600 text-white font-bold py-3 rounded-xl shadow hover:bg-pink-700 transition sticky bottom-0 z-10 border-2 border-white">
-                                  💾 Save Audio Playlist
+                                  <Save size={18} className="inline mr-2" /> Save Audio Playlist
                               </button>
                           </div>
                       )}
@@ -5919,6 +5919,9 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                       </label>
                                       <button onClick={() => generateDirectCode('MCQ', editingChapterId!)} className="px-3 bg-yellow-400 text-black font-bold py-1.5 rounded-lg shadow hover:bg-yellow-500 flex items-center justify-center gap-2 text-xs">
                                           <Key size={14} /> Code
+                                      </button>
+                                      <button onClick={saveChapterContent} className="px-4 py-1.5 bg-cyan-600 text-white font-bold rounded-lg shadow hover:bg-cyan-700 flex items-center justify-center gap-2 text-xs">
+                                          <Save size={14} /> Save
                                       </button>
                                   </div>
                               </div>
@@ -9418,15 +9421,12 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                       <Save size={16} /> Save Changes
                                   </button>
                               </div>
-                                  <button onClick={() => generateDirectCode('VIDEO', editingChapterId!)} className="px-4 bg-yellow-400 text-black font-bold py-3 rounded-xl shadow hover:bg-yellow-500 flex items-center justify-center gap-2">
-                                      <Key size={16} />
-                                  </button>
-                                  <button onClick={() => generateDirectCode('AUDIO', editingChapterId!)} className="px-4 bg-yellow-400 text-black font-bold py-3 rounded-xl shadow hover:bg-yellow-500 flex items-center justify-center gap-2">
-                                      <Key size={16} />
-                                  </button>
-                                  <div className="flex gap-2 mt-2">
+                                  <div className="flex gap-2">
                                       <button onClick={() => generateDirectCode('MCQ', editingChapterId!)} className="px-4 bg-yellow-400 text-black font-bold py-3 rounded-xl shadow hover:bg-yellow-500 flex items-center justify-center gap-2">
                                           <Key size={16} /> Code
+                                      </button>
+                                      <button onClick={saveChapterContent} className="flex-1 bg-cyan-600 text-white font-bold py-3 rounded-xl shadow hover:bg-cyan-700 transition flex items-center justify-center gap-2">
+                                          <Save size={16} /> Save Changes
                                       </button>
                                   </div>
                                   <button onClick={saveChapterContent} className="w-full mt-4 bg-cyan-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-cyan-700 transition flex items-center justify-center gap-2 sticky bottom-0 z-10 border-2 border-white">

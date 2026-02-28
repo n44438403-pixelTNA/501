@@ -94,7 +94,10 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       if (Object.keys(analysisSource).length === 0 && result.topicAnalysis) {
           // Convert topicAnalysis to topicStats format
           Object.keys(result.topicAnalysis).forEach(t => {
-              analysisSource[t] = { correct: result.topicAnalysis![t].correct, total: result.topicAnalysis![t].total, percent: result.topicAnalysis![t].percentage };
+              const ta = result.topicAnalysis![t];
+              if (ta) {
+                  analysisSource[t] = { correct: ta.correct ?? 0, total: ta.total ?? 0, percent: ta.percentage ?? 0 };
+              }
           });
       }
       const topics = Object.keys(analysisSource).map(t => {
@@ -630,7 +633,10 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
       let weakTopics = Object.keys(topicStats).filter(t => topicStats[t].percent < 50);
       if (weakTopics.length === 0 && result.topicAnalysis) {
-          weakTopics = Object.keys(result.topicAnalysis).filter(t => result.topicAnalysis![t].percentage < 50);
+          weakTopics = Object.keys(result.topicAnalysis).filter(t => {
+              const ta = result.topicAnalysis![t];
+              return ta && ta.percentage < 50;
+          });
       }
 
       if (weakTopics.length === 0) return null;
@@ -642,7 +648,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               </h3>
               <div className="flex flex-wrap gap-2">
                   {weakTopics.map(t => {
-                      const percent = topicStats[t]?.percent ?? result.topicAnalysis![t].percentage;
+                      const percent = topicStats[t]?.percent ?? result.topicAnalysis?.[t]?.percentage ?? 0;
                       return (
                           <span key={t} className="px-3 py-1 bg-white border border-red-200 rounded-full text-xs font-bold text-red-600 shadow-sm">
                               {t} ({percent}%)
@@ -686,10 +692,11 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
               {renderWeakAreasSummary()}
 
               {topics.map((topic, i) => {
-                  const stats = topicStats[topic] || (result.topicAnalysis && result.topicAnalysis[topic] ? {
-                      correct: result.topicAnalysis[topic].correct,
-                      total: result.topicAnalysis[topic].total,
-                      percent: result.topicAnalysis[topic].percentage
+                  const ta = result.topicAnalysis?.[topic];
+                  const stats = topicStats[topic] || (ta ? {
+                      correct: ta.correct ?? 0,
+                      total: ta.total ?? 0,
+                      percent: ta.percentage ?? 0
                   } : { correct: 0, total: 0, percent: 0 });
 
                   // For standalone revision hub without questions loaded, use topicAnalysis natively from result
@@ -697,10 +704,10 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   let finalCorrect = stats.correct;
                   let finalTotal = stats.total;
 
-                  if (result.topicAnalysis && result.topicAnalysis[topic]) {
-                      finalTopicPercent = result.topicAnalysis[topic].percentage;
-                      finalCorrect = result.topicAnalysis[topic].correct;
-                      finalTotal = result.topicAnalysis[topic].total;
+                  if (ta) {
+                      finalTopicPercent = ta.percentage ?? 0;
+                      finalCorrect = ta.correct ?? 0;
+                      finalTotal = ta.total ?? 0;
                   }
 
                   const status = finalTopicPercent >= 80 ? 'STRONG' : finalTopicPercent >= 50 ? 'AVERAGE' : 'WEAK';
@@ -1072,10 +1079,11 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                   <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2"><BarChart3 size={18} /> Topic Breakdown</h3>
                   <div className="space-y-4">
                       {topics.map((topic, i) => {
-                          const stats = topicStats[topic] || (result.topicAnalysis && result.topicAnalysis[topic] ? {
-                              correct: result.topicAnalysis[topic].correct,
-                              total: result.topicAnalysis[topic].total,
-                              percent: result.topicAnalysis[topic].percentage
+                          const ta = result.topicAnalysis?.[topic];
+                          const stats = topicStats[topic] || (ta ? {
+                              correct: ta.correct ?? 0,
+                              total: ta.total ?? 0,
+                              percent: ta.percentage ?? 0
                           } : { correct: 0, total: 0, percent: 0 });
                           return (
                               <div key={i}>
@@ -1099,7 +1107,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mt-6">
           <h3 className="font-black text-slate-800 text-lg mb-4">Complete OMR Sheet</h3>
           <div className="grid grid-cols-4 gap-x-4 gap-y-2">
-              {result.omrData?.map((data) => renderOMRRow(data.qIndex, data.selected, data.correct))}
+              {result.omrData?.map((data) => renderOMRRow(data.qIndex, data.selected, data.correct ?? -1))}
           </div>
       </div>
   );
@@ -1479,7 +1487,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mt-6">
                             <h3 className="font-black text-slate-800 text-lg mb-4 flex items-center gap-2"><Grid size={18} /> OMR Response Sheet</h3>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2">
-                                {currentData.map((data) => renderOMRRow(data.qIndex, data.selected, data.correct))}
+                                {currentData.map((data) => renderOMRRow(data.qIndex, data.selected, data.correct ?? -1))}
                             </div>
                             {/* RESTORED: Pagination */}
                             {hasOMR && (

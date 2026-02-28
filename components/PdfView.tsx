@@ -51,7 +51,7 @@ const formatDriveLink = (link: string) => {
 
 // Helper to split HTML content into topics (SAFE)
 const extractTopicsFromHtml = (html: string): { title: string, content: string }[] => {
-    if (!html) return [];
+    if (!html || typeof html !== 'string') return [];
 
     try {
         // Create a temporary element to parse HTML
@@ -66,7 +66,7 @@ const extractTopicsFromHtml = (html: string): { title: string, content: string }
 
         // Fallback if no children (raw text)
         if (children.length === 0 && html.trim().length > 0) {
-            return [{ title: "Notes", content: html }];
+            return [{ title: "Notes", content: String(html) }];
         }
 
         children.forEach((child) => {
@@ -75,8 +75,8 @@ const extractTopicsFromHtml = (html: string): { title: string, content: string }
                 // Push previous topic if exists
                 if (currentContent.length > 0) {
                     topics.push({
-                        title: currentTitle,
-                        content: currentContent.join('')
+                        title: String(currentTitle),
+                        content: String(currentContent.join(''))
                     });
                     currentContent = [];
                 }
@@ -89,8 +89,8 @@ const extractTopicsFromHtml = (html: string): { title: string, content: string }
         // Push the last topic
         if (currentContent.length > 0 || topics.length === 0) {
             topics.push({
-                title: currentTitle,
-                content: currentContent.join('')
+                title: String(currentTitle),
+                content: String(currentContent.join(''))
             });
         }
 

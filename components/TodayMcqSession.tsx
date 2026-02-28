@@ -186,7 +186,8 @@ export const TodayMcqSession: React.FC<Props> = ({ user, topics, onClose, onComp
 
             omrData.push({
                 qIndex: idx,
-                selected: selectedOpt !== undefined ? selectedOpt : -1
+                selected: selectedOpt !== undefined ? selectedOpt : -1,
+                correct: q.correctAnswer
             });
 
             if (selectedOpt === q.correctAnswer) {

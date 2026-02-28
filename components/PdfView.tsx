@@ -442,11 +442,13 @@ export const PdfView: React.FC<Props> = ({
       if (type === 'DEEP_DIVE') {
           const access = checkFeatureAccess('DEEP_DIVE', user, settings || {});
           if (!access.hasAccess) {
-              if (access.cost > 0) {
+              if (access.reason === 'FEED_LOCKED') {
+                  setAlertConfig({isOpen: true, message: `🔒 Locked! This content is currently disabled by Admin.`});
+              } else if (access.cost > 0) {
                   if (user.isAutoDeductEnabled) processPaymentAndOpen(targetContent, access.cost, false, ttsContent, true);
                   else setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
               } else {
-                  setAlertConfig({isOpen: true, message: `🔒 Locked! ${access.reason === 'FEED_LOCKED' ? 'Disabled by Admin.' : 'Upgrade your plan to access Deep Dive.'}`});
+                  setAlertConfig({isOpen: true, message: `🔒 Locked! Upgrade your plan to access Deep Dive.`});
               }
               return;
           }
@@ -456,11 +458,13 @@ export const PdfView: React.FC<Props> = ({
       if (type === 'AUDIO_SLIDE' || type === 'PREMIUM') {
           const access = checkFeatureAccess('PREMIUM_NOTES', user, settings || {});
           if (!access.hasAccess) {
-              if (access.cost > 0) {
+              if (access.reason === 'FEED_LOCKED') {
+                  setAlertConfig({isOpen: true, message: `🔒 Locked! This content is currently disabled by Admin.`});
+              } else if (access.cost > 0) {
                   if (user.isAutoDeductEnabled) processPaymentAndOpen(targetContent, access.cost, false, ttsContent, false);
                   else setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
               } else {
-                  setAlertConfig({isOpen: true, message: `🔒 Locked! ${access.reason === 'FEED_LOCKED' ? 'Disabled by Admin.' : 'Upgrade your plan to access Premium Notes.'}`});
+                  setAlertConfig({isOpen: true, message: `🔒 Locked! Upgrade your plan to access Premium Notes.`});
               }
               return;
           }
@@ -756,18 +760,18 @@ export const PdfView: React.FC<Props> = ({
                                         {access.reason === 'FEED_LOCKED' ? 'This content is currently locked by admin.' : 'Unlock in-depth conceptual notes to master this chapter.'}
                                     </p>
 
-                                    {access.cost > 0 ? (
+                                    {access.reason !== 'FEED_LOCKED' && access.cost > 0 ? (
                                         <button
                                             onClick={() => setPendingPdf({ type: 'DEEP_DIVE', price: access.cost, link: 'UNLOCK_TAB_DEEP_DIVE' })}
                                             className="px-8 py-3 bg-teal-600 text-white font-bold rounded-xl shadow-lg hover:bg-teal-700 hover:scale-105 transition-all flex items-center gap-2"
                                         >
                                             <Zap size={18} /> Unlock for {access.cost} Credits
                                         </button>
-                                    ) : (
+                                    ) : access.reason !== 'FEED_LOCKED' ? (
                                         <div className="px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-lg text-xs uppercase tracking-wider">
                                             Upgrade Plan to Access
                                         </div>
-                                    )}
+                                    ) : null}
                                 </div>
                             );
                         }
@@ -859,18 +863,18 @@ export const PdfView: React.FC<Props> = ({
                                         {access.reason === 'FEED_LOCKED' ? 'Content locked by admin.' : 'Visual slides with synchronized audio narration.'}
                                     </p>
 
-                                    {access.cost > 0 ? (
+                                    {access.reason !== 'FEED_LOCKED' && access.cost > 0 ? (
                                         <button
                                             onClick={() => setPendingPdf({ type: 'PREMIUM', price: access.cost, link: 'UNLOCK_TAB_PREMIUM' })}
                                             className="px-8 py-3 bg-purple-600 text-white font-bold rounded-xl shadow-lg hover:bg-purple-700 hover:scale-105 transition-all flex items-center gap-2"
                                         >
                                             <Zap size={18} /> Unlock for {access.cost} Credits
                                         </button>
-                                    ) : (
+                                    ) : access.reason !== 'FEED_LOCKED' ? (
                                         <div className="px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-lg text-xs uppercase tracking-wider">
                                             Upgrade Plan to Access
                                         </div>
-                                    )}
+                                    ) : null}
                                 </div>
                             );
                         }
@@ -1061,18 +1065,18 @@ export const PdfView: React.FC<Props> = ({
                                         {access.reason === 'FEED_LOCKED' ? 'This section is disabled by admin.' : 'Extra reading material and reference documents.'}
                                     </p>
 
-                                    {access.cost > 0 ? (
+                                    {access.reason !== 'FEED_LOCKED' && access.cost > 0 ? (
                                         <button
                                             onClick={() => setPendingPdf({ type: 'RESOURCES', price: access.cost, link: 'UNLOCK_TAB_RESOURCES' })}
                                             className="px-8 py-3 bg-cyan-600 text-white font-bold rounded-xl shadow-lg hover:bg-cyan-700 hover:scale-105 transition-all flex items-center gap-2"
                                         >
                                             <Zap size={18} /> Unlock for {access.cost} Credits
                                         </button>
-                                    ) : (
+                                    ) : access.reason !== 'FEED_LOCKED' ? (
                                         <div className="px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-lg text-xs uppercase tracking-wider">
                                             Upgrade Plan to Access
                                         </div>
-                                    )}
+                                    ) : null}
                                 </div>
                             );
                         }

@@ -281,7 +281,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
   }, [user.id, user.createdAt, user.redeemedReferralCode]);
 
   const handleSupportEmail = () => {
-    const email = "nadim841442@gmail.com";
+    const email = settings?.supportEmail || "nadiman0636indo@gmail.com";
     const subject = encodeURIComponent(`Support Request: ${user.name} (ID: ${user.id})`);
     const body = encodeURIComponent(`Student Details:\nName: ${user.name}\nUID: ${user.id}\nEmail: ${user.email}\n\nIssue Description:\n`);
     window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
@@ -441,26 +441,55 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
       const updatedInbox = user.inbox?.map(m => m.id === msgId ? { ...m, isClaimed: true, read: true } : m);
       let updatedUser: User = { ...user, inbox: updatedInbox };
       let successMsg = '';
+
+      const applySubscription = (tier: string, level: string, duration: number) => {
+          const now = new Date();
+          const currentEnd = user.subscriptionEndDate ? new Date(user.subscriptionEndDate) : now;
+          const isActive = user.isPremium && (currentEnd > now || user.subscriptionTier === 'LIFETIME');
+
+          // Prevent downgrading a higher tier plan
+          const tierPriority: Record<string, number> = { 'LIFETIME': 5, 'YEARLY': 4, '3_MONTHLY': 3, 'MONTHLY': 2, 'WEEKLY': 1, 'FREE': 0, 'CUSTOM': 0 };
+          const currentPriority = tierPriority[user.subscriptionTier || 'FREE'] || 0;
+          const newPriority = tierPriority[tier] || 0;
+
+          if (isActive && currentPriority > newPriority) {
+               // User already has a BETTER active plan, do NOT override tier, just extend date if not lifetime
+               if (user.subscriptionTier !== 'LIFETIME') {
+                   let newEndDate = new Date(currentEnd.getTime() + duration * 60 * 60 * 1000);
+                   updatedUser.subscriptionEndDate = newEndDate.toISOString();
+                   successMsg = `🎁 Gift Claimed! Added ${duration} hours to your existing ${user.subscriptionTier} plan.`;
+               } else {
+                   successMsg = `🎁 Gift Claimed! But you already have a Lifetime plan!`;
+               }
+          } else {
+              // Upgrade or Apply New Plan
+              let newEndDate = new Date(now.getTime() + duration * 60 * 60 * 1000);
+              if (isActive && currentPriority === newPriority) {
+                  newEndDate = new Date(currentEnd.getTime() + duration * 60 * 60 * 1000);
+                  successMsg = `🎁 Gift Claimed! Extended your ${tier} plan by ${duration} hours.`;
+              } else {
+                  successMsg = `🎁 Gift Claimed! ${tier} ${level} unlocked for ${duration} hours.`;
+              }
+              updatedUser.subscriptionTier = tier as any;
+              updatedUser.subscriptionLevel = level as any;
+              updatedUser.subscriptionEndDate = newEndDate.toISOString();
+              updatedUser.isPremium = true;
+          }
+      };
+
       if (gift) {
-          if (gift.type === 'CREDITS') { updatedUser.credits = (user.credits || 0) + Number(gift.value); successMsg = `🎁 Gift Claimed! Added ${gift.value} Credits.`; }
+          if (gift.type === 'CREDITS') {
+              updatedUser.credits = (user.credits || 0) + Number(gift.value);
+              successMsg = `🎁 Gift Claimed! Added ${gift.value} Credits.`;
+          }
           else if (gift.type === 'SUBSCRIPTION') {
               const [tier, level] = (gift.value as string).split('_');
               const duration = gift.durationHours || 24;
-              const now = new Date();
-              const currentEnd = user.subscriptionEndDate ? new Date(user.subscriptionEndDate) : now;
-              const isActive = user.isPremium && currentEnd > now;
-              let newEndDate = new Date(now.getTime() + duration * 60 * 60 * 1000);
-              if (isActive) { newEndDate = new Date(currentEnd.getTime() + duration * 60 * 60 * 1000); updatedUser.subscriptionEndDate = newEndDate.toISOString(); successMsg = `🎁 Gift Claimed! Extended your plan by ${duration} hours.`; }
-              else { updatedUser.subscriptionTier = tier as any; updatedUser.subscriptionLevel = level as any; updatedUser.subscriptionEndDate = newEndDate.toISOString(); updatedUser.isPremium = true; successMsg = `🎁 Gift Claimed! ${tier} ${level} unlocked for ${duration} hours.`; }
+              applySubscription(tier, level, duration);
           }
       } else if (reward) {
           const duration = reward.durationHours || 4;
-          const now = new Date();
-          const currentEnd = user.subscriptionEndDate ? new Date(user.subscriptionEndDate) : now;
-          const isActive = user.isPremium && currentEnd > now;
-          let newEndDate = new Date(now.getTime() + duration * 60 * 60 * 1000);
-          if (isActive) { newEndDate = new Date(currentEnd.getTime() + duration * 60 * 60 * 1000); updatedUser.subscriptionEndDate = newEndDate.toISOString(); successMsg = `✅ Reward Claimed! Extended access by ${duration} hours.`; }
-          else { updatedUser.subscriptionTier = reward.tier; updatedUser.subscriptionLevel = reward.level; updatedUser.subscriptionEndDate = newEndDate.toISOString(); updatedUser.isPremium = true; successMsg = `✅ Reward Claimed! Enjoy ${duration} hours of ${reward.level} access.`; }
+          applySubscription(reward.tier, reward.level, duration);
       }
       handleUserUpdate(updatedUser);
       showAlert(successMsg, 'SUCCESS', 'Rewards Claimed');
@@ -506,20 +535,30 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
           const accountAgeHours = (Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60);
           const firstDayBonusClaimed = localStorage.getItem(`first_day_ultra_${user.id}`);
           if (accountAgeHours < 24 && dailyStudySeconds >= 3600 && !firstDayBonusClaimed) {
-              const endDate = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-              const updatedUser: User = { ...user, subscriptionTier: 'MONTHLY', subscriptionEndDate: endDate, isPremium: true };
-              const storedUsers = JSON.parse(localStorage.getItem('nst_users') || '[]');
-              const idx = storedUsers.findIndex((u:User) => u.id === user.id);
-              if (idx !== -1) storedUsers[idx] = updatedUser;
-              localStorage.setItem('nst_users', JSON.stringify(storedUsers));
-              localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
-              localStorage.setItem(`first_day_ultra_${user.id}`, 'true');
-              onRedeemSuccess(updatedUser);
-              showAlert("🎉 FIRST DAY BONUS: You unlocked 1 Hour Free ULTRA Subscription!", 'SUCCESS');
+
+              // Only apply if user is NOT already on a better plan
+              const tierPriority: Record<string, number> = { 'LIFETIME': 5, 'YEARLY': 4, '3_MONTHLY': 3, 'MONTHLY': 2, 'WEEKLY': 1, 'FREE': 0, 'CUSTOM': 0 };
+              const currentPriority = tierPriority[user.subscriptionTier || 'FREE'] || 0;
+
+              if (currentPriority < 2) { // Less than MONTHLY
+                  const endDate = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+                  const updatedUser: User = { ...user, subscriptionTier: 'MONTHLY', subscriptionLevel: 'ULTRA', subscriptionEndDate: endDate, isPremium: true };
+                  const storedUsers = JSON.parse(localStorage.getItem('nst_users') || '[]');
+                  const idx = storedUsers.findIndex((u:User) => u.id === user.id);
+                  if (idx !== -1) storedUsers[idx] = updatedUser;
+                  localStorage.setItem('nst_users', JSON.stringify(storedUsers));
+                  localStorage.setItem('nst_current_user', JSON.stringify(updatedUser));
+                  localStorage.setItem(`first_day_ultra_${user.id}`, 'true');
+                  onRedeemSuccess(updatedUser);
+                  showAlert("🎉 FIRST DAY BONUS: You unlocked 1 Hour Free ULTRA Subscription!", 'SUCCESS');
+              } else {
+                  // Mark claimed anyway so it doesn't trigger again
+                  localStorage.setItem(`first_day_ultra_${user.id}`, 'true');
+              }
           }
       }, 60000); 
       return () => clearInterval(interval);
-  }, [dailyStudySeconds, user.id, user.createdAt]);
+  }, [dailyStudySeconds, user.id, user.createdAt, user.subscriptionTier]);
 
   const [showInbox, setShowInbox] = useState(false);
   const unreadCount = user.inbox?.filter(m => !m.read).length || 0;
@@ -656,6 +695,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
           { id: 'PRIZES', label: 'Prizes', icon: Trophy, color: 'yellow', action: () => { onTabChange('PRIZES'); setShowSidebar(false); } },
           { id: 'REQUEST', label: 'Request Content', icon: Megaphone, color: 'purple', action: () => { setShowRequestModal(true); setShowSidebar(false); }, featureId: 'REQUEST_CONTENT' },
           { id: 'GUIDE', label: 'App Guide', icon: HelpCircle, color: 'cyan', action: () => { setShowStudentGuide(true); setShowSidebar(false); } }, // NEW
+          { id: 'SUPPORT', label: 'Admin Support', icon: MessageSquare, color: 'rose', action: handleSupportEmail },
       ];
 
       return items.map(item => {

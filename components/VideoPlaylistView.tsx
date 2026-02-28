@@ -355,10 +355,15 @@ export const VideoPlaylistView: React.FC<Props> = ({
                        // NEW: Granular Access Logic
                        let isFree = user.role === 'ADMIN';
 
-                       // 1. Automatic "First 2 Videos Free" Rule - ONLY if not Ultra
+                       // 1. Check Global Video NSTA Config First
+                       const featureConfig = settings?.featureConfig?.['VIDEO_ACCESS'];
+                       const isFeatureVisible = featureConfig ? featureConfig.visible : true;
+                       const isHardLocked = !isFeatureVisible && user.role !== 'ADMIN';
+
+                       // 2. Automatic "First 2 Videos Free" Rule - ONLY if not Ultra
                        if (idx < 2 && vid.access !== 'ULTRA') isFree = true;
 
-                       // 2. Check Explicit Access Level
+                       // 3. Check Explicit Access Level
                        if (!isFree) {
                            if (vid.access === 'FREE') {
                                isFree = true;
@@ -380,7 +385,7 @@ export const VideoPlaylistView: React.FC<Props> = ({
                            }
                        }
                        
-                       // 3. Fallback to Price 0 (Legacy)
+                       // 4. Fallback to Price 0 (Legacy)
                        if (!isFree && price === 0) isFree = true;
 
 
@@ -436,7 +441,14 @@ export const VideoPlaylistView: React.FC<Props> = ({
                                        {isActive && <div className="shrink-0 w-2 h-2 rounded-full bg-red-500 animate-ping mt-1.5"></div>}
                                    </div>
                                    
-                                   {isFree || isActive ? (
+                                   {isHardLocked ? (
+                                        <button
+                                           onClick={() => setAlertConfig({isOpen: true, message: "🔒 This video is currently disabled by Admin."})}
+                                           className="w-full py-2.5 bg-slate-200 text-slate-500 font-bold rounded-xl text-xs flex items-center justify-center gap-2"
+                                       >
+                                           <Lock size={16} /> Locked by Admin
+                                       </button>
+                                   ) : isFree || isActive ? (
                                        <button 
                                            onClick={() => handleVideoClick(idx)}
                                            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-slate-200 transition-all active:scale-95"

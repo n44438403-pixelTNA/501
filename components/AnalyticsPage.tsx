@@ -15,6 +15,7 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
   const [selectedResult, setSelectedResult] = useState<MCQResult | null>(null);
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
   const [initialView, setInitialView] = useState<'ANALYSIS' | 'RECOMMEND' | undefined>(undefined);
+  const [showMoreTests, setShowMoreTests] = useState(false);
 
   const historyRaw = user.mcqHistory || [];
   

@@ -158,8 +158,10 @@ export const AdminPowerManager: React.FC<Props> = ({ settings, onUpdate }) => {
                                     <tr>
                                         <th className="p-3">Plan Name</th>
                                         <th className="p-3">Duration</th>
-                                        <th className="p-3 text-blue-600">Basic Price (₹)</th>
-                                        <th className="p-3 text-purple-600">Ultra Price (₹)</th>
+                                        <th className="p-3 text-blue-600">Basic (₹)</th>
+                                        <th className="p-3 text-slate-400 text-[10px]">Dummy Basic</th>
+                                        <th className="p-3 text-purple-600">Ultra (₹)</th>
+                                        <th className="p-3 text-slate-400 text-[10px]">Dummy Ultra</th>
                                         <th className="p-3 w-10"></th>
                                     </tr>
                                 </thead>
@@ -185,14 +187,28 @@ export const AdminPowerManager: React.FC<Props> = ({ settings, onUpdate }) => {
                                                     const updated = [...localSettings.subscriptionPlans!];
                                                     updated[idx].basicPrice = Number(e.target.value);
                                                     updateSetting('subscriptionPlans', updated);
-                                                }} className="bg-transparent font-bold text-blue-600 w-20 outline-none" />
+                                                }} className="bg-transparent font-bold text-blue-600 w-16 outline-none" />
+                                            </td>
+                                            <td className="p-3">
+                                                <input type="number" value={plan.basicOriginalPrice || ''} onChange={e => {
+                                                    const updated = [...localSettings.subscriptionPlans!];
+                                                    updated[idx].basicOriginalPrice = Number(e.target.value);
+                                                    updateSetting('subscriptionPlans', updated);
+                                                }} className="bg-slate-100 font-bold text-slate-500 w-16 p-1 rounded outline-none text-xs" />
                                             </td>
                                             <td className="p-3">
                                                  <input type="number" value={plan.ultraPrice} onChange={e => {
                                                     const updated = [...localSettings.subscriptionPlans!];
                                                     updated[idx].ultraPrice = Number(e.target.value);
                                                     updateSetting('subscriptionPlans', updated);
-                                                }} className="bg-transparent font-bold text-purple-600 w-20 outline-none" />
+                                                }} className="bg-transparent font-bold text-purple-600 w-16 outline-none" />
+                                            </td>
+                                            <td className="p-3">
+                                                <input type="number" value={plan.ultraOriginalPrice || ''} onChange={e => {
+                                                    const updated = [...localSettings.subscriptionPlans!];
+                                                    updated[idx].ultraOriginalPrice = Number(e.target.value);
+                                                    updateSetting('subscriptionPlans', updated);
+                                                }} className="bg-slate-100 font-bold text-slate-500 w-16 p-1 rounded outline-none text-xs" />
                                             </td>
                                             <td className="p-3 text-center">
                                                  <button onClick={() => {

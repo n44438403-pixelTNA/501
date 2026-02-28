@@ -1,4 +1,4 @@
-import { MCQItem } from '../types';
+import { MCQItem, MCQResult } from '../types';
 
 export const generateLocalAnalysis = (
   questions: MCQItem[],
@@ -110,7 +110,9 @@ export const generateLocalAnalysis = (
 
 export const generateAnalysisJson = (
   questions: MCQItem[],
-  userAnswers: Record<number, number>
+  userAnswers: Record<number, number>,
+  userHistory?: MCQResult[],
+  chapterId?: string
 ): string => {
   const topicStats: Record<string, { total: number, correct: number }> = {};
 
@@ -137,13 +139,43 @@ export const generateAnalysisJson = (
       if (percent >= 80) status = 'STRONG';
       else if (percent < 50) status = 'WEAK';
 
+      let actionPlan = status === 'WEAK' ? 'Focus on basic concepts and practice more questions from this topic.' : 'Good job! Keep revising to maintain speed.';
+
+      // Attempt to find historical performance for this topic
+      if (userHistory && userHistory.length > 0) {
+          // Sort history by date descending
+          const sortedHistory = [...userHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+          let previousTopicPercent: number | null = null;
+
+          // Look for the most recent past test that has data for this specific topic
+          for (const pastResult of sortedHistory) {
+              if (pastResult.topicAnalysis && pastResult.topicAnalysis[t]) {
+                  // We found a past attempt containing this topic!
+                  previousTopicPercent = pastResult.topicAnalysis[t].percentage;
+                  break;
+              }
+          }
+
+          if (previousTopicPercent !== null) {
+              const diff = percent - previousTopicPercent;
+              if (diff > 0) {
+                  actionPlan += ` Pichhli test me aapka score ${previousTopicPercent}% tha, abhi ${percent}% aaya hai. Achhi improvement hai, keep it up!`;
+              } else if (diff < 0) {
+                  actionPlan += ` Dhyan dein: Pichhli test me aapka score ${previousTopicPercent}% tha, abhi gir kar ${percent}% ho gaya hai. Aapko aur revision ki zaroorat hai.`;
+              } else {
+                  actionPlan += ` Pichhli test me bhi aapka score ${previousTopicPercent}% tha. Score consistent hai, par aage badhne ki koshish karein.`;
+              }
+          }
+      }
+
       return {
           name: t,
           status,
           total: s.total,
           correct: s.correct,
           percent: percent,
-          actionPlan: status === 'WEAK' ? 'Focus on basic concepts and practice more questions from this topic.' : 'Good job! Keep revising to maintain speed.',
+          actionPlan: actionPlan,
           studyMode: status === 'WEAK' ? 'DEEP_STUDY' : 'QUICK_REVISION'
       };
   });

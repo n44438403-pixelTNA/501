@@ -369,7 +369,7 @@ export const McqView: React.FC<Props> = ({
       else if (scorePct >= 50) perfLabel = "Average";
 
       // 3. Prepare Result Object
-      const analysisJson = generateAnalysisJson(submittedQuestions, remappedAnswers);
+      const analysisJson = generateAnalysisJson(submittedQuestions, remappedAnswers, user.mcqHistory, chapter.id);
 
       // Generate Granular Topic Analysis for History Comparison
       const topicAnalysis: Record<string, { correct: number, total: number, percentage: number }> = {};

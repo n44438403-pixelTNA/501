@@ -767,10 +767,20 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
             </div>
 
             {/* DAILY BRIEFING */}
-             <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex items-start gap-3 relative overflow-hidden z-10">
-                <div className="absolute -right-4 -bottom-4 opacity-10 text-indigo-900 rotate-12">
-                    <MessageSquare size={100} />
+             <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-5 rounded-2xl border border-blue-500/30 flex items-center gap-4 shadow-xl relative overflow-hidden z-10 mb-6">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                <div className="bg-blue-500/20 p-3 rounded-xl shadow-inner text-blue-400 z-10 backdrop-blur-sm border border-blue-400/20">
+                    <Bot size={28} className="animate-pulse" />
                 </div>
+
+                <div className="z-10 flex-1">
+                    <p className="text-[10px] font-black text-blue-400 tracking-widest uppercase mb-1 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping"></span> System Online
+                    </p>
+                    <p className="text-sm text-slate-300 font-medium leading-snug">
+                        <span className="text-white text-lg">Hello, <span className="font-black text-blue-300 tracking-wider uppercase">{user.name}</span> ! 👋</span><br/>
+                        You have <span className="font-black text-blue-400">{pendingNotes.length} notes</span> to read and <span className="font-black text-purple-400">{pendingMcqs.length} MCQs</span> pending.
+
                 <div className="bg-white p-2 rounded-full shadow-sm text-indigo-600 z-10">
                     <Bot size={24} />
                 </div>
@@ -782,6 +792,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                         ) : (
                             <span className="text-indigo-700">Your intelligent revision dashboard is mapped. You currently have <span className="font-black bg-white px-1.5 py-0.5 rounded shadow-sm text-indigo-600">{pendingNotes.length} notes</span> queued for review and <span className="font-black bg-white px-1.5 py-0.5 rounded shadow-sm text-purple-600">{pendingMcqs.length} assessments</span> scheduled.</span>
                         )}
+
                     </p>
                 </div>
             </div>
@@ -1418,6 +1429,10 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                 </div>
             )}
 
+            {/* FOOTER */}
+            <div className="text-center pt-8 pb-4">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Developed by Nadim Anwar</p>
+            </div>
         </div>
     );
 };

@@ -37,6 +37,7 @@ export const McqView: React.FC<Props> = ({
   const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, message: string, title?: string}>({isOpen: false, message: ''});
   const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void}>({isOpen: false, title: '', message: '', onConfirm: () => {}});
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [showMoreHistory, setShowMoreHistory] = useState(false);
 
   // Interstitial State
   const [showInterstitial, setShowInterstitial] = useState(false);

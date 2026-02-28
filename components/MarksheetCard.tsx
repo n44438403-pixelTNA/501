@@ -619,14 +619,14 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
       }) || [];
 
       // Calculate Topic-Specific Percentage
-      const topicStats = { correct: 0, total: 0 };
+      const localTopicStats = { correct: 0, total: 0 };
       topicQuestions.forEach(q => {
           const globalIdx = questions?.indexOf(q) ?? -1;
           const omr = result.omrData?.find(d => d.qIndex === globalIdx);
-          if (omr && omr.selected === q.correctAnswer) topicStats.correct++;
-          topicStats.total++;
+          if (omr && omr.selected === q.correctAnswer) localTopicStats.correct++;
+          localTopicStats.total++;
       });
-      const topicPercent = topicStats.total > 0 ? Math.round((topicStats.correct / topicStats.total) * 100) : 0;
+      const topicPercent = localTopicStats.total > 0 ? Math.round((localTopicStats.correct / localTopicStats.total) * 100) : 0;
 
       // Find Previous Attempt for SAME Topic
       let prevTopicPercent = 0;

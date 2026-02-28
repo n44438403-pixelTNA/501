@@ -54,8 +54,8 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             // 1. Must exist in NSTA Config AND be visible
             if (!config || config.visible === false) return false;
 
-            // 2. Filter by relevant groups (Tools, Soul, Game, AI, Content)
-            const isRelevant = f.surfaceLevel === 2 || f.group === 'SOUL' || f.group === 'GAME' || f.group === 'AI' || f.group === 'CONTENT' || f.group === 'REVISION';
+            // 2. Filter by relevant groups to ensure ALL visible features show in the menu
+            const isRelevant = true; // Show all features that are visible in NSTA config
 
             return isRelevant;
         }).map(f => {

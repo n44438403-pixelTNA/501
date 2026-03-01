@@ -13,6 +13,7 @@ interface Props {
 
 export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavigateToChapter }) => {
   const [selectedResult, setSelectedResult] = useState<MCQResult | null>(null);
+  const [visibleLimit, setVisibleLimit] = useState(10);
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
   const [initialView, setInitialView] = useState<'ANALYSIS' | 'RECOMMEND' | undefined>(undefined);
   const [showMoreTests, setShowMoreTests] = useState(false);

@@ -500,9 +500,15 @@ export const PdfView: React.FC<Props> = ({
       // For Deep Dive, we handle specially
       const targetContent = type === 'DEEP_DIVE' ? 'DEEP_DIVE_MODE' : (link || htmlContent);
 
-      if (!targetContent && type !== 'DEEP_DIVE') return;
+      if (!targetContent && type !== 'DEEP_DIVE') {
+          // Coming Soon removed
+          return;
+      }
 
-      if (type === 'DEEP_DIVE' && (!htmlContent || htmlContent.length < 10)) return;
+      if (type === 'DEEP_DIVE' && (!htmlContent || htmlContent.length < 10)) {
+           // Coming Soon removed
+           return;
+      }
 
       // ... (Access Check Logic - mostly same) ...
       // Only change: If type === 'DEEP_DIVE', we activate the mode instead of setActivePdf link
@@ -526,7 +532,16 @@ export const PdfView: React.FC<Props> = ({
           if (!access.hasAccess) {
               if (access.reason === 'FEED_LOCKED') {
                   setAlertConfig({isOpen: true, message: `🔒 Locked! This content is currently disabled by Admin.`});
-              } else if (access.cost > 0) {
+                  return;
+              }
+              // If user is FREE, let them pay instead of blocking completely
+              if (access.reason === 'TIER_RESTRICTED' && access.cost > 0) {
+                   if (user.isAutoDeductEnabled) processPaymentAndOpen(targetContent, access.cost, false, ttsContent, true);
+                   else setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
+                   return;
+              }
+              // Otherwise (e.g., zero cost or other reason), default block
+              if (access.cost > 0) {
                   if (user.isAutoDeductEnabled) processPaymentAndOpen(targetContent, access.cost, false, ttsContent, true);
                   else setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
               } else {
@@ -542,7 +557,16 @@ export const PdfView: React.FC<Props> = ({
           if (!access.hasAccess) {
               if (access.reason === 'FEED_LOCKED') {
                   setAlertConfig({isOpen: true, message: `🔒 Locked! This content is currently disabled by Admin.`});
-              } else if (access.cost > 0) {
+                  return;
+              }
+              // If user is FREE, let them pay instead of blocking completely
+              if (access.reason === 'TIER_RESTRICTED' && access.cost > 0) {
+                   if (user.isAutoDeductEnabled) processPaymentAndOpen(targetContent, access.cost, false, ttsContent, false);
+                   else setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
+                   return;
+              }
+              // Otherwise block
+              if (access.cost > 0) {
                   if (user.isAutoDeductEnabled) processPaymentAndOpen(targetContent, access.cost, false, ttsContent, false);
                   else setPendingPdf({ type, price: access.cost, link: targetContent, tts: ttsContent });
               } else {

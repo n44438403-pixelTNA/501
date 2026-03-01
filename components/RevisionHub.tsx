@@ -772,7 +772,6 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                 <div className="bg-blue-500/20 p-3 rounded-xl shadow-inner text-blue-400 z-10 backdrop-blur-sm border border-blue-400/20">
                     <Bot size={28} className="animate-pulse" />
                 </div>
-
                 <div className="z-10 flex-1">
                     <p className="text-[10px] font-black text-blue-400 tracking-widest uppercase mb-1 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping"></span> System Online
@@ -780,19 +779,6 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                     <p className="text-sm text-slate-300 font-medium leading-snug">
                         <span className="text-white text-lg">Hello, <span className="font-black text-blue-300 tracking-wider uppercase">{user.name}</span> ! 👋</span><br/>
                         You have <span className="font-black text-blue-400">{pendingNotes.length} notes</span> to read and <span className="font-black text-purple-400">{pendingMcqs.length} MCQs</span> pending.
-
-                <div className="bg-white p-2 rounded-full shadow-sm text-indigo-600 z-10">
-                    <Bot size={24} />
-                </div>
-                <div className="z-10">
-                    <p className="text-sm text-indigo-800 leading-relaxed">
-                        Welcome back, <span className="font-bold text-indigo-900">{user.name}</span>. <br/>
-                        {hubMode === 'FREE' ? (
-                            <span className="text-indigo-700">Your personalized revision dashboard is ready. Upgrade to Premium for deep AI analytics.</span>
-                        ) : (
-                            <span className="text-indigo-700">Your intelligent revision dashboard is mapped. You currently have <span className="font-black bg-white px-1.5 py-0.5 rounded shadow-sm text-indigo-600">{pendingNotes.length} notes</span> queued for review and <span className="font-black bg-white px-1.5 py-0.5 rounded shadow-sm text-purple-600">{pendingMcqs.length} assessments</span> scheduled.</span>
-                        )}
-
                     </p>
                 </div>
             </div>
@@ -1263,7 +1249,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                                                             {/* STATS ROW */}
                                                             {(t.totalQs || 0) > 0 && (
                                                                 <span className="text-[10px] text-slate-400 font-medium">
-                                                                    {t.totalCorrect || 0}/{t.totalQs} Correct • {percent}% • <span className="text-purple-600 font-bold">Tot. Cycles {t.cycleCount || 1} • Last: {new Date(t.lastAttempt).toLocaleDateString()}</span>
+                                                                    {t.totalCorrect || 0}/{t.totalQs} Correct • {percent}% • <span className="text-purple-600 font-bold">Cycle {t.cycleCount || 1}</span>
                                                                 </span>
                                                             )}
                                                             {/* NOTES INDICATOR */}

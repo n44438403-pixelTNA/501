@@ -619,7 +619,13 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
       return (
           <div className="space-y-6">
-
+              <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+                  <div className="relative z-10">
+                      <h3 className="text-xl font-black mb-2 flex items-center gap-2"><BrainCircuit className="text-yellow-400" /> Analysis Dashboard</h3>
+                      <p className="text-slate-300 text-xs font-medium mb-4">Detailed breakdown of your performance by topic.</p>
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-32 bg-white/5 skew-x-12 -mr-8"></div>
+              </div>
 
               {renderWeakAreasSummary()}
 
@@ -723,7 +729,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
                           <div className="p-4 bg-white">
 
-
                               {/* 5. Questions Accordion List */}
                               <div className="space-y-2">
                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Questions in this Topic</p>
@@ -794,246 +799,23 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   };
 
   const renderAnalysisContent = () => {
-    let data;
-    try { data = JSON.parse(ultraAnalysisResult); } catch (e) {
-        return <div className="p-4 bg-white rounded border border-slate-200 whitespace-pre-wrap text-sm"><ReactMarkdown>{ultraAnalysisResult}</ReactMarkdown></div>;
-    }
-    return (
-        <div className="space-y-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <h3 className="font-bold text-lg uppercase text-slate-800 border-b pb-2">AI Performance Analysis</h3>
-            {data.motivation && (
-                <div className="bg-white p-4 rounded border border-indigo-100 shadow-sm">
-                    <p className="text-sm font-medium text-slate-700 italic">"{data.motivation}"</p>
-                </div>
-            )}
-            <div className="grid gap-4">
-                {data.topics?.map((t: any, i: number) => (
-                    <div key={i} className="bg-white p-3 rounded border border-slate-200">
-                        <div className="flex justify-between items-center mb-1">
-                            <span className="font-bold text-sm text-slate-800">{t.name}</span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${t.status === 'WEAK' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>{t.status}</span>
-                        </div>
-                        <p className="text-xs text-slate-600">{t.actionPlan}</p>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+      // AI Performance Analysis removed
+      return null;
   };
 
   const renderRecommendationsSection = () => {
-      if (recLoading) {
-          return (
-              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                  <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-                  <p className="font-bold text-xs uppercase tracking-widest">Finding best notes...</p>
-              </div>
-          );
-      }
-
-      if (recommendations.length === 0) {
-          return (
-              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                  <FileSearch size={48} className="mb-4 opacity-50" />
-                  <h4 className="font-bold text-slate-600 mb-2">No Recommendations Found</h4>
-                  <p className="text-xs text-center max-w-xs mb-6">
-                      We couldn't find specific notes for your weak topics in this chapter.
-                      Try searching the main library or ask AI for help.
-                  </p>
-                  <button
-                      onClick={() => handleRecommend(false)}
-                      className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 flex items-center gap-2"
-                  >
-                      <RefreshCw size={14} /> Retry
-                  </button>
-              </div>
-          );
-      }
-
-      const groupedRecs: Record<string, any[]> = {};
-      recommendations.forEach(rec => {
-          const topic = rec.topic || 'General';
-          if(!groupedRecs[topic]) groupedRecs[topic] = [];
-          groupedRecs[topic].push(rec);
-      });
-      const displayTopics = Object.keys(topicStats).sort((a, b) => topicStats[a].percent - topicStats[b].percent);
-
-      return (
-          <div className="bg-slate-50 min-h-full">
-              <div className="px-4 space-y-8 pb-20 pt-4">
-                  {displayTopics.map((topicName, idx) => {
-                      const relevantRecs = groupedRecs[topicName] || [];
-                      if (relevantRecs.length === 0) {
-                          const key = Object.keys(groupedRecs).find(k => k.toLowerCase() === topicName.toLowerCase());
-                          if (key) relevantRecs.push(...groupedRecs[key]);
-                      }
-                      const topicWrongQs = questions?.filter(q => {
-                           const isTopicMatch = (q.topic && q.topic.toLowerCase().includes(topicName.toLowerCase()));
-                           if (!isTopicMatch) return false;
-                           const omr = result.omrData?.find((d: any) => questions && d.qIndex === questions.indexOf(q));
-                           return omr && omr.selected !== -1 && omr.selected !== q.correctAnswer;
-                      }) || [];
-                      if (relevantRecs.length === 0 && topicWrongQs.length === 0) return null;
-
-                      return (
-                          <div key={idx} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                              <div className="p-4 border-b border-slate-100 bg-slate-50 font-bold text-sm uppercase">{topicName}</div>
-                              <div className="p-4 space-y-4">
-                                  {relevantRecs.map((rec, rIdx) => (
-                                      <div key={rIdx} className="flex justify-between items-center p-3 border rounded-xl">
-                                          <div className="flex items-center gap-2">
-                                              <div className="text-xs font-bold text-slate-700">{rec.title}</div>
-                                              <SpeakButton text={`Recommended Note: ${rec.title}. Topic: ${topicName}`} className="p-1" iconSize={14} />
-                                          </div>
-                                          <div className="flex gap-2">
-                                              <span className="text-[10px] bg-slate-100 px-2 py-1 rounded">{rec.isPremium ? 'Premium' : 'Free'}</span>
-                                              <button
-                                                  onClick={() => {
-                                                      if (rec.isPremium) {
-                                                          if (onLaunchContent) {
-                                                              onLaunchContent({
-                                                                  id: `REC_PREM_${idx}_${rIdx}`,
-                                                                  title: rec.title,
-                                                                  type: 'PDF',
-                                                                  directResource: { url: rec.url, access: rec.access }
-                                                              });
-                                                          } else {
-                                                              window.open(rec.url, '_blank');
-                                                          }
-                                                      } else {
-                                                          if (rec.content) {
-                                                              setViewingNote(rec);
-                                                          } else if (onLaunchContent) {
-                                                              onLaunchContent({
-                                                                  id: `REC_FREE_${idx}_${rIdx}`,
-                                                                  title: rec.title,
-                                                                  type: 'PDF',
-                                                                  directResource: { url: rec.url, access: rec.access }
-                                                              });
-                                                          }
-                                                      }
-                                                  }}
-                                                  className="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold"
-                                              >
-                                                  {rec.isPremium ? 'View PDF' : 'Read'}
-                                              </button>
-                                          </div>
-                                      </div>
-                                  ))}
-                              </div>
-                          </div>
-                      );
-                  })}
-              </div>
-          </div>
-      );
+      // Recommendations removed
+      return null;
   };
 
   const renderProgressDelta = () => {
-      // Fetch past 3 results + current
-      const history = (user.mcqHistory || [])
-          .filter(h => h.chapterId === result.chapterId)
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Ascending date
-
-      // Find index of current result to slice properly (or just take last 4 if current is latest)
-      // Since 'result' might be from history, we find its position
-      const currentIndex = history.findIndex(h => h.id === result.id);
-
-      // If current result not in history yet (rare edge case), assume it's latest
-      const relevantHistory = currentIndex !== -1
-          ? history.slice(Math.max(0, currentIndex - 3), currentIndex + 1)
-          : [...history.slice(-3), result];
-
-      if (relevantHistory.length <= 1) return null; // No past history to compare
-
-      return (
-          <div className="bg-white rounded-2xl p-5 mb-6 border border-slate-200 shadow-sm">
-              <h4 className="font-black text-slate-800 text-sm mb-4 flex items-center gap-2">
-                  <TrendingUp size={16} className="text-blue-600" /> Progress Trend (Last 3 Tests + Current)
-              </h4>
-              <div className="flex items-end justify-between gap-2 h-24 px-2">
-                  {relevantHistory.map((h, i) => {
-                      const pct = Math.round((h.score / h.totalQuestions) * 100);
-                      const isCurrent = h.id === result.id;
-                      const barColor = isCurrent
-                          ? (pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-blue-500' : 'bg-red-500')
-                          : 'bg-slate-200';
-
-                      return (
-                          <div key={i} className="flex flex-col items-center flex-1 group relative">
-                              <div className="text-[10px] font-bold text-slate-500 mb-1 opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4">{pct}%</div>
-                              <div
-                                  className={`w-full max-w-[20px] rounded-t-sm transition-all duration-500 ${barColor}`}
-                                  style={{ height: `${Math.max(10, pct)}%` }}
-                              ></div>
-                              <div className={`text-[9px] font-bold mt-2 truncate max-w-full ${isCurrent ? 'text-blue-700' : 'text-slate-400'}`}>
-                                  {isCurrent ? 'Now' : `T-${relevantHistory.length - 1 - i}`}
-                              </div>
-                          </div>
-                      );
-                  })}
-              </div>
-              <div className="mt-4 flex justify-between items-center pt-3 border-t border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-400">Consistency is key!</span>
-                  <div className="flex gap-4">
-                      {relevantHistory.map((h, i) => {
-                          const pct = Math.round((h.score / h.totalQuestions) * 100);
-                          const isCurrent = h.id === result.id;
-                          if (!isCurrent) return null; // Only show current diff vs immediate prev
-
-                          const prev = relevantHistory[i - 1];
-                          if (!prev) return null;
-                          const prevPct = Math.round((prev.score / prev.totalQuestions) * 100);
-                          const diff = pct - prevPct;
-
-                          return (
-                              <span key={i} className={`text-xs font-black ${diff >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                  {diff >= 0 ? '+' : ''}{diff}% vs Last
-                              </span>
-                          );
-                      })}
-                  </div>
-              </div>
-          </div>
-      );
+      // Progress Trend removed
+      return null;
   };
 
   const renderTopicBreakdown = () => {
-
-      let topics = Object.keys(topicStats);
-      if (topics.length === 0 && result.topicAnalysis) {
-          topics = Object.keys(result.topicAnalysis);
-      }
-
-      if (topics.length === 0) return null;
-      return (
-          <div className="space-y-6">
-               {renderProgressDelta()}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                  <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2"><BarChart3 size={18} /> Topic Breakdown</h3>
-                  <div className="space-y-4">
-                      {topics.map((topic, i) => {
-                          const stats = topicStats[topic] || (result.topicAnalysis && result.topicAnalysis[topic] ? {
-                              correct: result.topicAnalysis[topic].correct,
-                              total: result.topicAnalysis[topic].total,
-                              percent: result.topicAnalysis[topic].percentage
-                          } : { correct: 0, total: 0, percent: 0 });
-                          return (
-                              <div key={i}>
-                                  <div className="flex justify-between items-end mb-1">
-                                      <span className="font-bold text-slate-700 text-xs uppercase">{topic}</span>
-                                      <span className="text-xs font-black">{stats.correct}/{stats.total} ({stats.percent}%)</span>
-                                  </div>
-                                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                      <div className={`h-full ${stats.percent >= 80 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${stats.percent}%` }}></div>
-                                  </div>
-                              </div>
-                          );
-                      })}
-                  </div>
-              </div>
-          </div>
-      );
+      // Topic Breakdown removed
+      return null;
   };
 
   const renderFullOMR = () => (
@@ -1240,27 +1022,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                             );
                         })()}
 
-                        {/* Mistakes Tab */}
-                        {(() => {
-                            const access = checkFeatureAccess('MS_MISTAKES', user, settings || {});
-                            if (!access.hasAccess) return null;
-                            return (
-                                <button onClick={() => setActiveTab('MISTAKES')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'MISTAKES' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
-                                    <XCircle size={14} className="inline mr-1 mb-0.5" /> Mistakes
-                                </button>
-                            );
-                        })()}
-
-                        {/* AI Insights Tab */}
-                        {(() => {
-                            const access = checkFeatureAccess('MS_AI_INSIGHTS', user, settings || {});
-                            if (!access.hasAccess) return null;
-                            return (
-                                <button onClick={() => setActiveTab('AI_ANALYSIS')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'AI_ANALYSIS' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
-                                    <BrainCircuit size={14} className="inline mr-1 mb-0.5" /> AI Insights
-                                </button>
-                            );
-                        })()}
 
                         {/* OMR Tab */}
                         {(() => {
@@ -1273,16 +1034,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                             );
                         })()}
 
-                        {/* Recommendations Tab */}
-                        {(() => {
-                            const access = checkFeatureAccess('MS_RECOMMEND', user, settings || {});
-                            if (!access.hasAccess) return null;
-                            return (
-                                <button onClick={() => setActiveTab('RECOMMEND')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${activeTab === 'RECOMMEND' ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-slate-500 hover:bg-slate-50'}`}>
-                                    <Lightbulb size={14} className="inline mr-1 mb-0.5" /> Recommend Notes
-                                </button>
-                            );
-                        })()}
                     </>
                 )}
             </div>
@@ -1356,26 +1107,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                 )}
 
 
-
-                {activeTab === 'AI_ANALYSIS' && isAnalysisUnlocked && (
-                    <div className="animate-in slide-in-from-bottom-4 h-full">
-                         {/* ULTRA AI ANALYSIS (Optional Upgrade) */}
-                        <div className="mb-8">
-                             {!ultraAnalysisResult ? (
-                                <div className="bg-white border border-dashed border-indigo-200 rounded-3xl p-6 text-center">
-                                    <BrainCircuit size={32} className="mx-auto mb-2 text-indigo-400" />
-                                    <h4 className="text-sm font-black text-slate-700 mb-1">Want Deeper AI Insights?</h4>
-                                    <p className="text-xs text-slate-500 mb-4">Get a personalized study plan and motivation.</p>
-                                    <button onClick={() => handleUltraAnalysis()} disabled={isLoadingUltra} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 mx-auto disabled:opacity-50">
-                                        {isLoadingUltra ? <span className="animate-spin">⏳</span> : <Sparkles size={14} />}
-                                        {isLoadingUltra ? 'Generating...' : `Generate AI Report (${settings?.mcqAnalysisCostUltra ?? 20} Coins)`}
-                                    </button>
-                                </div>
-                            ) : renderAnalysisContent()}
-                        </div>
-                    </div>
-                )}
-
                 {activeTab === 'OMR' && isAnalysisUnlocked && (
                     <div className="animate-in slide-in-from-bottom-4">
                          {renderTopicBreakdown()}
@@ -1408,9 +1139,6 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
                     </div>
                 )}
 
-                {activeTab === 'RECOMMEND' && isAnalysisUnlocked && (
-                    <div className="animate-in slide-in-from-bottom-4 h-full">{renderRecommendationsSection()}</div>
-                )}
             </div>
 
             {/* Footer Actions */}

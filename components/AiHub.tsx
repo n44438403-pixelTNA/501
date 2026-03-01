@@ -270,7 +270,10 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
                     <div className="bg-purple-100 text-purple-600 p-3 rounded-xl">
                         <BrainCircuit size={24} />
                     </div>
-
+                    <div className="flex-1 text-left">
+                        <h3 className="font-bold text-slate-800">Deep Performance Analysis</h3>
+                        <p className="text-xs text-slate-500">AI insights on your weak areas.</p>
+                    </div>
                     <div className="text-slate-300">
                         <Zap size={16} />
                     </div>

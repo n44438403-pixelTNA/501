@@ -21,12 +21,12 @@ export interface Feature {
 
 export const ALL_FEATURES: Feature[] = [
     {
-        id: 'ADMIN_RULES_PAGE',
-        name: 'App Rules & Manual',
-        description: 'Read the admin documentation and student rules',
+        id: 'ADMIN_INDEX',
+        name: 'Admin Settings Index',
+        description: 'Find where every power and setting is located',
         group: 'ADVANCED',
-        icon: 'BookOpen',
-        adminTab: 'APP_RULES',
+        icon: 'Map',
+        adminTab: 'ADMIN_INDEX',
         adminVisible: true
     },
     // --- CORE (Layer 1: Daily Core Actions - Max 6) ---
@@ -755,17 +755,7 @@ export const ALL_FEATURES: Feature[] = [
         icon: 'Trash2',
         color: 'red'
     },
-    {
-        id: 'ADMIN_DOCS',
-        label: 'Documentation',
-        group: 'ADVANCED',
-        surfaceLevel: 3,
-        adminVisible: true,
-        adminTab: 'DOCUMENTATION',
-        requiredPermission: 'MANAGE_SETTINGS',
-        icon: 'BookOpen',
-        color: 'teal'
-    },
+
     {
         id: 'ADMIN_NSTA_CONTROL',
         label: 'NSTA Control',

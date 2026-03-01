@@ -39,7 +39,7 @@ const getIconComponent = (iconName?: string) => {
     }
 };
 
-export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSaleActive, onOpenProfile, onOpenStore, onNavigate }) => {
+export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSaleActive, onOpenProfile, onOpenStore, onNavigate, activeTab }) => {
     const [isOpen, setIsOpen] = useState(false);
     // const [showPlanModal, setShowPlanModal] = useState(false); // Unused
     const [position, setPosition] = useState({ x: window.innerWidth - 80, y: window.innerHeight - 200 });

@@ -384,6 +384,14 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                             </div>
                         </div>
                     ))}
+
+
+                    {history.filter(h => new Date(h.date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length > visibleLimit && (
+                        <button onClick={() => setVisibleLimit(prev => prev + 10)} className="w-full text-center py-3 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors bg-white rounded-xl border border-dashed border-slate-300 mt-4">
+                            + Load More Tests
+                        </button>
+                    )}
+
                 </div>
             </div>
         </div>

@@ -1307,7 +1307,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                   onChange={(e) => setProfileData({...profileData, classLevel: e.target.value as any})}
                                   className="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50"
                               >
-                                  {['6','7','8','9','10','11','12'].map(c => <option key={c} value={c}>Class {c}</option>)}
+                                  {(settings?.allowedClasses || ['6','7','8','9','10','11','12','COMPETITION']).map(c => <option key={c} value={c}>{c === 'COMPETITION' ? 'Competition' : `Class ${c}`}</option>)}
                               </select>
                               <div className="flex items-center justify-between mt-1">
                                   <p className="text-[10px] text-slate-500">
@@ -1350,8 +1350,9 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                   onChange={(e) => setProfileData({...profileData, board: e.target.value as any})}
                                   className="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50"
                               >
-                                  <option value="CBSE">CBSE (English)</option>
-                                  <option value="BSEB">BSEB (Hindi)</option>
+                                  {(settings?.allowedBoards || ['CBSE', 'BSEB']).map(b => (
+                                      <option key={b} value={b}>{b} {b === 'CBSE' ? '(English)' : b === 'BSEB' ? '(Hindi)' : ''}</option>
+                                  ))}
                               </select>
                           </div>
 

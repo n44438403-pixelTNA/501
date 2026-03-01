@@ -752,12 +752,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
 
                         </>
                      )}
-                    <button
-                        onClick={() => setShowReport(true)}
-                        className="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm hover:bg-slate-50 flex items-center gap-2"
-                    >
-                        <Clock size={14} /> Monthly Report
-                    </button>
+
                 </div>
             </div>
 
@@ -793,14 +788,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                 >
                     <TrendingUp size={14} /> Topic Strength
                 </button>
-                {hubMode === 'PREMIUM' && (
-                    <button
-                        onClick={() => handleGenerateAiPlan()}
-                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-purple-600 hover:bg-purple-50`}
-                    >
-                        <BrainCircuit size={14} /> AI Plan
-                    </button>
-                )}
+
             </div>
 
             {/* SUB-TABS FOR TOPIC STRENGTH (Only visible when active) */}

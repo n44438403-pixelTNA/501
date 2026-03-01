@@ -84,21 +84,6 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
 
 
 
-            // 1. Swipe Up from Bottom Edge (Bottom 100px)
-            if (touchStartY > window.innerHeight - 100 && dy < -50 && Math.abs(dx) < 50) {
-                setIsOpen(true);
-            }
-        };
-
-        window.addEventListener('touchstart', handleGlobalTouchStart);
-        window.addEventListener('touchend', handleGlobalTouchEnd);
-
-        return () => {
-            window.removeEventListener('touchstart', handleGlobalTouchStart);
-            window.removeEventListener('touchend', handleGlobalTouchEnd);
-        };
-     []);
-
 
     const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
         isDraggingRef.current = false;

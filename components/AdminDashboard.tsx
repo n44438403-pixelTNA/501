@@ -16,6 +16,7 @@ import { CustomAlert } from './CustomDialogs';
 import { UniversalChat } from './UniversalChat';
 import { ChallengeCreator20 } from './admin/ChallengeCreator20';
 import { FeatureAccessPage } from './admin/FeatureAccessPage';
+import { RulesPage } from './RulesPage';
 import { AdminPowerManager } from './AdminPowerManager';
 import { SyllabusManager } from './SyllabusManager';
 import { FeatureGroupList } from './admin/FeatureGroupList';
@@ -5931,6 +5932,15 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                       </div>
 
                       {/* VERSION CONTROL */}
+
+                          <div className="bg-orange-50 p-4 rounded-xl border border-orange-200">
+                              <label className="text-xs font-bold uppercase text-orange-800 mb-2 block">App Version Control (Timer Launch)</label>
+                              <div className="space-y-3">
+
+                              </div>
+                          </div>
+                          
+
                           {/* CHAT MODE SELECTOR */}
                           <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
                               <label className="text-xs font-bold uppercase text-indigo-800 mb-2 block">Chat System Mode</label>
@@ -6799,40 +6809,6 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                           className="w-full p-2 border border-indigo-200 rounded-lg font-bold text-indigo-900"
                                       />
                                   </div>
-                              </div>
-                          </div>
-
-                          {/* PACKAGE MANAGER */}
-                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4">
-                              <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><ShoppingBag size={18} /> Store Packages Manager</h4>
-                              
-                              <div className="grid gap-3 mb-6">
-                                  {(!localSettings.packages || localSettings.packages.length === 0) && <p className="text-xs text-slate-400">No packages defined. Default list will be shown to users.</p>}
-                                  {localSettings.packages?.map(pkg => (
-                                      <div key={pkg.id} className="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                                          <div>
-                                              <p className="font-bold text-sm text-slate-800">{pkg.name}</p>
-                                              <p className="text-xs text-slate-500">₹{pkg.price} = {pkg.credits} Credits</p>
-                                          </div>
-                                          <button onClick={() => removePackage(pkg.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16} /></button>
-                                      </div>
-                                  ))}
-                              </div>
-
-                              <div className="flex gap-2 items-end">
-                                  <div className="flex-1">
-                                      <label className="text-[10px] font-bold uppercase text-slate-400">Name</label>
-                                      <input type="text" placeholder="Pro Pack" value={newPkgName} onChange={e => setNewPkgName(e.target.value)} className="w-full p-2 border rounded-lg text-sm" />
-                                  </div>
-                                  <div className="w-20">
-                                      <label className="text-[10px] font-bold uppercase text-slate-400">Price (₹)</label>
-                                      <input type="number" placeholder="99" value={newPkgPrice} onChange={e => setNewPkgPrice(e.target.value)} className="w-full p-2 border rounded-lg text-sm" />
-                                  </div>
-                                  <div className="w-20">
-                                      <label className="text-[10px] font-bold uppercase text-slate-400">Credits</label>
-                                      <input type="number" placeholder="50" value={newPkgCredits} onChange={e => setNewPkgCredits(e.target.value)} className="w-full p-2 border rounded-lg text-sm" />
-                                  </div>
-                                  <button onClick={addPackage} className="bg-emerald-600 text-white p-2 rounded-lg h-[38px] w-[38px] flex items-center justify-center hover:bg-emerald-700 shadow"><Plus size={20} /></button>
                               </div>
                           </div>
                        </>
@@ -9681,6 +9657,17 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
               }}
               onBack={() => setActiveTab('DASHBOARD')}
           />
+      )}
+
+      {/* --- APP RULES TAB --- */}
+      {activeTab === 'APP_RULES' && (
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 animate-in slide-in-from-right">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                  <button onClick={() => setActiveTab('DASHBOARD')} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200"><ArrowLeft size={20} /></button>
+                  <h3 className="text-xl font-black text-slate-800">App Rules & Manual</h3>
+              </div>
+              <RulesPage onBack={() => setActiveTab('DASHBOARD')} settings={localSettings} isAdmin={true} />
+          </div>
       )}
 
       {/* --- DOCUMENTATION TAB --- */}

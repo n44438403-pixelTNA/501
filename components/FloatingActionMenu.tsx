@@ -70,6 +70,9 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
     const dragStartRef = useRef({ x: 0, y: 0 });
     const buttonRef = useRef<HTMLDivElement>(null);
 
+    const [isVisible, setIsVisible] = useState(true);
+    const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
     // Initial Position Fix
     useEffect(() => {
         const handleResize = () => {
@@ -81,6 +84,36 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+
+    // Auto-hide and Swipe-up Logic
+    useEffect(() => {
+        const resetTimer = () => {
+            setIsVisible(true);
+            if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+            if (!isOpen) {
+                inactivityTimerRef.current = setTimeout(() => {
+                    setIsVisible(false);
+                }, 5000);
+            }
+        };
+
+        resetTimer(); // Initial call
+
+        let touchStartY = 0;
+        let touchStartX = 0;
+
+        const handleGlobalTouchStart = (e: TouchEvent) => {
+            resetTimer();
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+        };
+
+        const handleGlobalTouchEnd = (e: TouchEvent) => {
+            resetTimer();
+            if (!touchStartY) return;
+            const touchEndY = e.changedTouches[0]?.clientY || 0;
+            const touchEndX = e.changedTouches[0]?.clientX || 0;
 
     // --- GLOBAL GESTURE LISTENER (Swipe Up from Bottom) ---
     useEffect(() => {
@@ -96,23 +129,34 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             const touchEndY = e.changedTouches[0].clientY;
             const touchEndX = e.changedTouches[0].clientX;
 
+
             const dy = touchEndY - touchStartY;
             const dx = touchEndX - touchStartX;
 
             // 1. Swipe Up from Bottom Edge (Bottom 100px)
             if (touchStartY > window.innerHeight - 100 && dy < -50 && Math.abs(dx) < 50) {
                 setIsOpen(true);
+                setIsVisible(true);
             }
         };
 
-        window.addEventListener('touchstart', handleGlobalTouchStart);
-        window.addEventListener('touchend', handleGlobalTouchEnd);
+        window.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
+        window.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
+        window.addEventListener('mousemove', resetTimer);
+        window.addEventListener('scroll', resetTimer, { passive: true });
 
         return () => {
             window.removeEventListener('touchstart', handleGlobalTouchStart);
             window.removeEventListener('touchend', handleGlobalTouchEnd);
+            window.removeEventListener('mousemove', resetTimer);
+            window.removeEventListener('scroll', resetTimer);
+            if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
         };
+
+    }, [isOpen]);
+
      []);
+
 
     const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
         isDraggingRef.current = false;
@@ -156,7 +200,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             {/* MAIN FAB BUTTON (Draggable - Mobile Optimized) */}
             <div
                 ref={buttonRef}
-                className="fixed z-[9990] flex flex-col items-center gap-3 touch-none select-none"
+                className={`fixed z-[9990] flex flex-col items-center gap-3 touch-none select-none transition-opacity duration-500 ${isVisible || isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 style={{ left: position.x, top: position.y, transform: 'translate(0, 0)' }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}

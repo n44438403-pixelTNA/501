@@ -366,6 +366,7 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                         </div>
                     ))}
 
+
                     {!showMoreTests && history.length > 10 && (
                         <button
                             onClick={() => setShowMoreTests(true)}
@@ -374,6 +375,7 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                             More
                         </button>
                     )}
+
                 </div>
             </div>
         </div>

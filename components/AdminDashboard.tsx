@@ -6839,10 +6839,10 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                           <label className="text-xs font-bold text-pink-700 uppercase">Event Name</label>
                                           <input
                                               type="text"
-                                              value={localSettings.specialDiscountEvent.eventName}
+                                              value={localSettings.specialDiscountEvent?.eventName || ''}
                                               onChange={(e) => setLocalSettings({
                                                   ...localSettings,
-                                                  specialDiscountEvent: { ...localSettings.specialDiscountEvent!, eventName: e.target.value }
+                                                  specialDiscountEvent: { ...localSettings.specialDiscountEvent, eventName: e.target.value } as any
                                               })}
                                               className="w-full p-2 border border-pink-200 rounded-lg text-sm font-bold"
                                               placeholder="e.g. Diwali Dhamaka"
@@ -6854,8 +6854,8 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                               <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Standard Discount %</label>
                                               <input 
                                                   type="number" 
-                                                  value={localSettings.specialDiscountEvent.discountPercent} 
-                                                  onChange={e => setLocalSettings({...localSettings, specialDiscountEvent: { ...localSettings.specialDiscountEvent!, discountPercent: Number(e.target.value) }})}
+                                                  value={localSettings.specialDiscountEvent?.discountPercent || 0}
+                                                  onChange={e => setLocalSettings({...localSettings, specialDiscountEvent: { ...localSettings.specialDiscountEvent, discountPercent: Number(e.target.value) } as any})}
                                                   className="w-full p-2 border rounded-lg text-sm font-bold"
                                               />
                                           </div>
@@ -6864,8 +6864,8 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                               <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Renewal Extra % (Existing Users)</label>
                                               <input 
                                                   type="number" 
-                                                  value={localSettings.specialDiscountEvent.renewalDiscountPercent || 0} 
-                                                  onChange={e => setLocalSettings({...localSettings, specialDiscountEvent: { ...localSettings.specialDiscountEvent!, renewalDiscountPercent: Number(e.target.value) }})}
+                                                  value={localSettings.specialDiscountEvent?.renewalDiscountPercent || 0}
+                                                  onChange={e => setLocalSettings({...localSettings, specialDiscountEvent: { ...localSettings.specialDiscountEvent, renewalDiscountPercent: Number(e.target.value) } as any})}
                                                   className="w-full p-2 border rounded-lg text-sm font-bold"
                                               />
                                           </div>
@@ -6875,10 +6875,10 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                    <label className="flex items-center gap-2 text-xs font-bold text-slate-600">
                                        <input 
                                           type="checkbox" 
-                                          checked={localSettings.specialDiscountEvent.showToFreeUsers}
+                                          checked={localSettings.specialDiscountEvent?.showToFreeUsers || false}
                                           onChange={(e) => setLocalSettings({
                                               ...localSettings,
-                                              specialDiscountEvent: { ...localSettings.specialDiscountEvent!, showToFreeUsers: e.target.checked }
+                                              specialDiscountEvent: { ...localSettings.specialDiscountEvent, showToFreeUsers: e.target.checked } as any
                                           })}
                                           className="accent-pink-600"
                                        /> Show to Free Users
@@ -6886,10 +6886,10 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                    <label className="flex items-center gap-2 text-xs font-bold text-slate-600">
                                        <input 
                                           type="checkbox" 
-                                          checked={localSettings.specialDiscountEvent.showToPremiumUsers}
+                                          checked={localSettings.specialDiscountEvent?.showToPremiumUsers || false}
                                           onChange={(e) => setLocalSettings({
                                               ...localSettings,
-                                              specialDiscountEvent: { ...localSettings.specialDiscountEvent!, showToPremiumUsers: e.target.checked }
+                                              specialDiscountEvent: { ...localSettings.specialDiscountEvent, showToPremiumUsers: e.target.checked } as any
                                           })}
                                           className="accent-pink-600"
                                        /> Show to Premium Users
@@ -6905,10 +6905,10 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                                     const updated = {
                                       ...localSettings,
                                       specialDiscountEvent: {
-                                        ...localSettings.specialDiscountEvent!,
+                                        ...localSettings.specialDiscountEvent,
                                         startsAt,
                                         endsAt
-                                      }
+                                      } as any
                                     };
                                     setLocalSettings(updated);
                                     saveSystemSettings(updated);

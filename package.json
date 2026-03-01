@@ -24,7 +24,7 @@
     "lucide-react": "^0.564.0",
     "p-limit": "^7.2.0",
     "p-retry": "^7.1.1",
-    "pdfjs-dist": "^3.4.120",
+    "pdfjs-dist": "^3.11.174",
     "qrcode-terminal": "^0.12.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

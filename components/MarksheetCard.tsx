@@ -799,7 +799,20 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
   };
 
 
-  const renderMarksheetStyle1 = () => (
+  const renderMarksheetStyle1 = () => {
+      const totalQ = result.totalQuestions || 1;
+      const scorePercent = Math.round((result.score / totalQ) * 100);
+      const correct = result.correctCount || 0;
+      const skipped = result.omrData?.filter(d => d.selected === -1).length || 0;
+      const incorrect = totalQ - correct - skipped;
+      let tagColor = "bg-slate-100 text-slate-600";
+      switch(result.performanceTag) {
+          case 'EXCELLENT': tagColor = "bg-green-100 text-green-700"; break;
+          case 'GOOD': tagColor = "bg-blue-100 text-blue-700"; break;
+          case 'BAD': tagColor = "bg-orange-100 text-orange-700"; break;
+          case 'VERY_BAD': tagColor = "bg-red-100 text-red-700"; break;
+      }
+      return (
       <div id="marksheet-style-1" className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 relative overflow-hidden break-inside-avoid">
           {/* Header */}
           <div className="flex justify-between items-start border-b border-slate-100 pb-6 mb-6">
@@ -873,6 +886,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
           </div>
       </div>
   );
+  };
 
   const renderAnalysisContent = () => {
       // AI Performance Analysis removed

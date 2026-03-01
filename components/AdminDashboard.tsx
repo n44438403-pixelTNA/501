@@ -3861,48 +3861,6 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                       </div>
                   </div>
 
-                  {/* APP VERSION CONTROL */}
-                  <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
-                      <h4 className="font-bold text-red-900 text-lg mb-2 flex items-center gap-2">
-                          <Rocket size={20} /> App Version Control
-                      </h4>
-                      <p className="text-xs text-red-700 mb-4">
-                          Managing this incorrectly can lock users out of the app. Ensure users update within 7 days of a new version launch.
-                      </p>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                              <label className="text-xs font-bold text-red-800 uppercase block mb-1">Latest Version</label>
-                              <input 
-                                  type="text" 
-                                  value={localSettings.latestVersion || '1.0.0'} 
-                                  onChange={(e) => setLocalSettings({...localSettings, latestVersion: e.target.value})}
-                                  className="w-full p-3 border border-red-200 rounded-xl font-mono font-bold text-red-900"
-                                  placeholder="e.g. 1.0.5"
-                              />
-                          </div>
-                          <div>
-                              <label className="text-xs font-bold text-red-800 uppercase block mb-1">Launch Date</label>
-                              <input 
-                                  type="datetime-local" 
-                                  value={localSettings.launchDate || ''} 
-                                  onChange={(e) => setLocalSettings({...localSettings, launchDate: e.target.value})}
-                                  className="w-full p-3 border border-red-200 rounded-xl font-bold text-red-900"
-                              />
-                          </div>
-                      </div>
-                      
-                      <div className="mt-4">
-                          <label className="text-xs font-bold text-red-800 uppercase block mb-1">Update URL</label>
-                          <input 
-                              type="text" 
-                              value={localSettings.updateUrl || ''} 
-                              onChange={(e) => setLocalSettings({...localSettings, updateUrl: e.target.value})}
-                              className="w-full p-3 border border-red-200 rounded-xl text-red-900"
-                              placeholder="https://play.google.com/store/apps/details?id=..."
-                          />
-                      </div>
-                  </div>
               </div>
 
               {/* NEW BANNER CONFIG SECTION */}
@@ -5973,44 +5931,6 @@ Capital of India?       Mumbai  Delhi   Kolkata Chennai 2       Delhi is the cap
                       </div>
 
                       {/* VERSION CONTROL */}
-                          <div className="bg-orange-50 p-4 rounded-xl border border-orange-200">
-                              <label className="text-xs font-bold uppercase text-orange-800 mb-2 block">App Version Control (Timer Launch)</label>
-                              <div className="space-y-3">
-                                  <div>
-                                      <label className="text-[10px] font-bold uppercase text-slate-500">Latest Version (e.g. 1.0.1)</label>
-                                      <input 
-                                          type="text" 
-                                          value={localSettings.latestVersion || ''} 
-                                          onChange={e => setLocalSettings({...localSettings, latestVersion: e.target.value})} 
-                                          className="w-full p-2 border rounded-lg text-sm font-bold font-mono"
-                                          placeholder="1.0.1" 
-                                      />
-                                  </div>
-                                  <div>
-                                      <label className="text-[10px] font-bold uppercase text-slate-500">Update Link (APK/PlayStore)</label>
-                                      <input 
-                                          type="text" 
-                                          value={localSettings.updateUrl || ''} 
-                                          onChange={e => setLocalSettings({...localSettings, updateUrl: e.target.value})} 
-                                          className="w-full p-2 border rounded-lg text-sm text-blue-600"
-                                          placeholder="https://..." 
-                                      />
-                                  </div>
-                                  <div>
-                                      <label className="text-[10px] font-bold uppercase text-slate-500">Launch Date & Time (Timer Target)</label>
-                                      <input 
-                                          type="datetime-local" 
-                                          value={localSettings.launchDate || ''} 
-                                          onChange={e => setLocalSettings({...localSettings, launchDate: e.target.value})} 
-                                          className="w-full p-2 border rounded-lg text-sm font-bold"
-                                      />
-                                      <p className="text-[9px] text-orange-600 mt-1">
-                                          When this time is reached, the update popup will appear. 7 days later, old app locks.
-                                      </p>
-                                  </div>
-                              </div>
-                          </div>
-                          
                           {/* CHAT MODE SELECTOR */}
                           <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
                               <label className="text-xs font-bold uppercase text-indigo-800 mb-2 block">Chat System Mode</label>

@@ -2742,215 +2742,77 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                           <h4 className="font-black text-lg text-slate-800 flex items-center gap-2">
                               <Ticket size={20} className="text-pink-600"/> Discount Sale
                           </h4>
-                          {localSettings.specialDiscountEvent?.enabled && (
-                              <button
-                                  onClick={() => {
-                                      if(confirm("Stop this event immediately?")) {
-                                          setLocalSettings({
-                                              ...localSettings,
-                                              specialDiscountEvent: { ...localSettings.specialDiscountEvent, enabled: false }
-                                          });
-                                          handleSaveSettings({
-                                              ...localSettings,
-                                              specialDiscountEvent: { ...localSettings.specialDiscountEvent, enabled: false }
-                                          });
-                                      }
-                                  }}
-                                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-700 shadow"
-                              >
-                                  STOP EVENT
-                              </button>
-                          )}
-                      </div>
-                      <p className="text-xs text-slate-500 mb-4">
-                          Status: <span className={`font-bold ${localSettings.specialDiscountEvent?.enabled ? 'text-green-600' : 'text-slate-400'}`}>
-                              {localSettings.specialDiscountEvent?.enabled ? 'ACTIVE' : 'INACTIVE'}
-                          </span>
-                      </p>
-                      {localSettings.specialDiscountEvent?.enabled && (
-                          <div className="bg-white p-3 rounded-lg border text-xs">
-                              <p><b>Discount:</b> {localSettings.specialDiscountEvent.discountPercent}%</p>
-                              <p><b>Ends:</b> {new Date(localSettings.specialDiscountEvent.endsAt || '').toLocaleString()}</p>
-                          </div>
-                      )}
-                      {!localSettings.specialDiscountEvent?.enabled && (
-                          <button onClick={() => setActiveTab('CONFIG_REWARDS')} className="w-full mt-2 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-300">
-                              Configure & Start
-                          </button>
-                      )}
-                  </div>
+                                                      {localSettings.specialDiscountEvent?.enabled && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 bg-orange-50/50 p-4 rounded-xl border border-orange-100">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase">Starts At (Optional)</label>
+                                        <input type="datetime-local" value={localSettings.specialDiscountEvent?.startsAt ? new Date(new Date(localSettings.specialDiscountEvent.startsAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''} onChange={e => {
+                                            setLocalSettings(prev => ({
+                                                ...prev,
+                                                specialDiscountEvent: { ...prev.specialDiscountEvent!, startsAt: e.target.value ? new Date(e.target.value).toISOString() : undefined }
+                                            }));
+                                        }} className="w-full p-2 border rounded-lg mt-1 text-sm bg-white" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase">Ends At (Optional)</label>
+                                        <input type="datetime-local" value={localSettings.specialDiscountEvent?.endsAt ? new Date(new Date(localSettings.specialDiscountEvent.endsAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''} onChange={e => {
+                                            setLocalSettings(prev => ({
+                                                ...prev,
+                                                specialDiscountEvent: { ...prev.specialDiscountEvent!, endsAt: e.target.value ? new Date(e.target.value).toISOString() : undefined }
+                                            }));
+                                        }} className="w-full p-2 border rounded-lg mt-1 text-sm bg-white" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase">Discount Percent (%)</label>
+                                        <input type="number" value={localSettings.specialDiscountEvent?.discountPercent || 0} onChange={e => {
+                                            setLocalSettings(prev => ({
+                                                ...prev,
+                                                specialDiscountEvent: { ...prev.specialDiscountEvent!, discountPercent: Number(e.target.value) }
+                                            }));
+                                        }} className="w-full p-2 border rounded-lg mt-1 text-sm bg-white" />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
-                  {/* GLOBAL FREE MODE */}
-                  <div className={`p-6 rounded-2xl border-2 transition-all ${localSettings.isGlobalFreeMode ? 'bg-purple-50 border-purple-200' : 'bg-slate-50 border-slate-200'}`}>
-                      <div className="flex justify-between items-center mb-4">
-                          <h4 className="font-black text-lg text-slate-800 flex items-center gap-2">
-                              <Gift size={20} className="text-purple-600"/> Global Free Mode
-                          </h4>
-                          {localSettings.isGlobalFreeMode && (
-                              <button
-                                  onClick={() => {
-                                      if(confirm("Disable Free Mode? Content will be locked again.")) {
-                                          toggleSetting('isGlobalFreeMode');
-                                      }
-                                  }}
-                                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-700 shadow"
-                              >
-                                  STOP FREE MODE
-                              </button>
-                          )}
-                      </div>
-                      <p className="text-xs text-slate-500 mb-4">
-                          Status: <span className={`font-bold ${localSettings.isGlobalFreeMode ? 'text-purple-600' : 'text-slate-400'}`}>
-                              {localSettings.isGlobalFreeMode ? 'ACTIVE' : 'INACTIVE'}
-                          </span>
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                          When active, all premium content is unlocked for everyone.
-                      </p>
-                      {!localSettings.isGlobalFreeMode && (
-                          <button onClick={() => toggleSetting('isGlobalFreeMode')} className="w-full mt-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 shadow">
-                              Start Free Mode
-                          </button>
-                      )}
-                  </div>
+                        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 mt-4">
+                            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><Zap size={18} className="text-blue-500" /> Daily Login Bonus Settings</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Free User Bonus</label>
+                                    <input type="number" value={localSettings.loginBonusConfig?.freeBonus ?? 2} onChange={e => {
+                                        setLocalSettings(prev => ({
+                                            ...prev,
+                                            loginBonusConfig: { ...(prev.loginBonusConfig || { freeBonus: 2, basicBonus: 5, ultraBonus: 10, strictStreak: false }), freeBonus: Number(e.target.value) }
+                                        }));
+                                    }} className="w-full p-2 border rounded-lg mt-1 text-sm bg-white font-bold" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Basic User Bonus</label>
+                                    <input type="number" value={localSettings.loginBonusConfig?.basicBonus ?? 5} onChange={e => {
+                                        setLocalSettings(prev => ({
+                                            ...prev,
+                                            loginBonusConfig: { ...(prev.loginBonusConfig || { freeBonus: 2, basicBonus: 5, ultraBonus: 10, strictStreak: false }), basicBonus: Number(e.target.value) }
+                                        }));
+                                    }} className="w-full p-2 border rounded-lg mt-1 text-sm bg-white font-bold text-blue-600" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Ultra User Bonus</label>
+                                    <input type="number" value={localSettings.loginBonusConfig?.ultraBonus ?? 10} onChange={e => {
+                                        setLocalSettings(prev => ({
+                                            ...prev,
+                                            loginBonusConfig: { ...(prev.loginBonusConfig || { freeBonus: 2, basicBonus: 5, ultraBonus: 10, strictStreak: false }), ultraBonus: Number(e.target.value) }
+                                        }));
+                                    }} className="w-full p-2 border rounded-lg mt-1 text-sm bg-white font-bold text-purple-600" />
+                                </div>
+                            </div>
+                        </div>
 
-                  {/* CREDIT FREE EVENT */}
-                  <div className={`p-6 rounded-2xl border-2 transition-all ${localSettings.creditFreeEvent?.enabled ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-200'}`}>
-                      <div className="flex justify-between items-center mb-4">
-                          <h4 className="font-black text-lg text-slate-800 flex items-center gap-2">
-                              <Zap size={20} className="text-blue-600"/> Credit Free Event
-                          </h4>
-                          {localSettings.creditFreeEvent?.enabled && (
-                              <button
-                                  onClick={() => {
-                                      const updated = { ...localSettings, creditFreeEvent: { ...localSettings.creditFreeEvent, enabled: false } };
-                                      setLocalSettings(updated);
-                                      handleSaveSettings(updated);
-                                  }}
-                                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-700 shadow"
-                              >
-                                  STOP EVENT
-                              </button>
-                          )}
-                      </div>
-                      <p className="text-xs text-slate-500 mb-4">
-                          Status: <span className={`font-bold ${localSettings.creditFreeEvent?.enabled ? 'text-blue-600' : 'text-slate-400'}`}>
-                              {localSettings.creditFreeEvent?.enabled ? 'ACTIVE' : 'INACTIVE'}
-                          </span>
-                      </p>
-                      {!localSettings.creditFreeEvent?.enabled && (
-                          <button onClick={() => setActiveTab('CONFIG_PAYMENT')} className="w-full mt-2 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-300">
-                              Configure in Payment
-                          </button>
-                      )}
-                  </div>
-              </div>
-          </div>
-      )}
+                      {/* --- REVISION LOGIC CONFIGURATION --- */}
+                      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 mt-4">
+                          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><BrainCircuit size={18} className="text-purple-500" /> Revision Engine Config</h3>
 
-      {activeTab === 'CONFIG_SECURITY' && (
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 animate-in slide-in-from-right">
-              <div className="flex items-center gap-4 mb-6 border-b pb-4">
-                  <button onClick={() => setActiveTab('DASHBOARD')} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200"><ArrowLeft size={20} /></button>
-                  <h3 className="text-xl font-black text-slate-800">Security & Maintenance</h3>
-              </div>
-
-              <div className="space-y-6">
-                  {/* GLOBAL FREE MODE TOGGLE (NEW) */}
-                  <div className={`p-6 rounded-2xl border-2 transition-all ${localSettings.isGlobalFreeMode ? 'bg-purple-50 border-purple-200' : 'bg-slate-50 border-slate-200'}`}>
-                      <div className="flex justify-between items-center mb-4">
-                          <h4 className={`font-black text-lg flex items-center gap-2 ${localSettings.isGlobalFreeMode ? 'text-purple-800' : 'text-slate-800'}`}>
-                              <Gift size={24} className={localSettings.isGlobalFreeMode ? 'text-purple-600' : 'text-slate-400'} />
-                              Global Free Mode
-                          </h4>
-                          <button
-                              onClick={() => toggleSetting('isGlobalFreeMode')}
-                              className={`px-4 py-2 rounded-lg font-bold text-xs shadow-lg transition-transform active:scale-95 ${localSettings.isGlobalFreeMode ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-slate-300 text-slate-600 hover:bg-slate-400'}`}
-                          >
-                              {localSettings.isGlobalFreeMode ? 'ACTIVE (EVERYTHING FREE)' : 'INACTIVE (NORMAL PRICING)'}
-                          </button>
-                      </div>
-                      <p className="text-xs text-slate-500 font-medium mb-2">
-                          When active, <b>ALL</b> premium content (Notes, Videos, MCQs, Tests) becomes free for <b>ALL</b> users, regardless of their subscription status or credits.
-                      </p>
-                      {localSettings.isGlobalFreeMode && (
-                          <div className="bg-purple-100 text-purple-700 px-3 py-2 rounded-lg text-xs font-bold animate-pulse">
-                              ⚠️ Warning: This bypasses all revenue features!
-                          </div>
-                      )}
-                  </div>
-
-                  {/* MAINTENANCE MODE TOGGLE */}
-                  <div className={`p-6 rounded-2xl border-2 transition-all ${localSettings.maintenanceMode ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
-                      <div className="flex justify-between items-center mb-4">
-                          <h4 className={`font-black text-lg ${localSettings.maintenanceMode ? 'text-red-800' : 'text-green-800'}`}>Maintenance Mode</h4>
-                          <button
-                              onClick={() => toggleSetting('maintenanceMode')}
-                              className={`px-4 py-2 rounded-lg font-bold text-xs shadow-lg transition-transform active:scale-95 ${localSettings.maintenanceMode ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-green-600 text-white hover:bg-green-700'}`}
-                          >
-                              {localSettings.maintenanceMode ? 'ENABLED (APP LOCKED)' : 'DISABLED (APP LIVE)'}
-                          </button>
-                      </div>
-                      <p className="text-xs text-slate-500 font-medium mb-4">
-                          When enabled, only Admins can access the app. Students will see a maintenance screen.
-                      </p>
-
-                      {/* DYNAMIC CODE GENERATOR */}
-                      <div className="bg-white p-4 rounded-xl border border-slate-200">
-                          <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Session Bypass Code (Dynamic)</label>
-                          <div className="flex gap-2">
-                              <input
-                                  type="text"
-                                  value={localSettings.maintenanceBypassCode || ''}
-                                  readOnly
-                                  className="flex-1 p-2 bg-slate-100 border border-slate-200 rounded-lg font-mono text-center tracking-widest font-bold text-slate-800"
-                              />
-                              <button
-                                  onClick={() => {
-                                      const newCode = Math.floor(1000 + Math.random() * 9000).toString(); // 4 Digit Code
-                                      setLocalSettings({...localSettings, maintenanceBypassCode: newCode});
-                                      handleSaveSettings({...localSettings, maintenanceBypassCode: newCode}); // Auto Save
-                                  }}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs hover:bg-blue-700 shadow-md"
-                              >
-                                  <RefreshCw size={16} /> Randomize
-                              </button>
-                          </div>
-                          <p className="text-[10px] text-slate-400 mt-2">
-                              Share this code with specific users to allow them temporary access during maintenance.
-                              Only visible to Admin here.
-                          </p>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      )}
-
-      {/* --- POPUP CONFIG TAB --- */}
-      {activeTab === 'REVISION_LOGIC' && (
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 animate-in slide-in-from-right">
-              <div className="flex items-center gap-4 mb-6 border-b pb-4">
-                  <button onClick={() => setActiveTab('DASHBOARD')} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200"><ArrowLeft size={20} /></button>
-                  <h3 className="text-xl font-black text-indigo-800">Revision Logic Configuration</h3>
-                  <div className="ml-auto">
-                      <button
-                          onClick={() => handleSaveSettings()}
-                          disabled={isSettingsSaving}
-                          className={`bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:bg-indigo-700 flex items-center gap-2 ${isSettingsSaving ? 'opacity-70 cursor-wait' : ''}`}
-                      >
-                          {isSettingsSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                          {isSettingsSaving ? 'Saving...' : 'Save Config'}
-                      </button>
-                  </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* PERCENTAGE THRESHOLDS */}
-                  <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-200">
-                      <h4 className="font-bold text-indigo-900 mb-4 flex items-center gap-2">
-                          <Activity size={20} /> Score Thresholds
-                      </h4>
-                      <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           <div>
                               <label className="text-xs font-bold text-slate-500 uppercase">Strong Topic (Min %)</label>
                               <input
@@ -3027,6 +2889,7 @@ const AdminDashboardInner: React.FC<Props> = ({ onNavigate, settings, onUpdateSe
                               <p className="text-[10px] text-slate-400 mt-1">How many times user must score high to Master a topic</p>
                           </div>
                       </div>
+                  </div>
                   </div>
 
                   {/* TIME INTERVALS */}

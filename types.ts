@@ -211,6 +211,7 @@ export interface CreditPackage {
   name: string;
   credits: number;
   price: number;
+  dummyPrice?: number; // NEW: Strike-through dummy price
   color?: string; // Visual color for the card
 }
 
@@ -324,8 +325,7 @@ export interface LoginBonusConfig {
     freeBonus: number;
     basicBonus: number;
     ultraBonus: number;
-    strictStreak: boolean; // If true, breaking streak forfeits next day bonus or resets heavily
-  main
+    strictStreak: boolean;
 }
 
 export interface EventBannerConfig {

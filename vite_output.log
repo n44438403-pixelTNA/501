@@ -25,3 +25,14 @@
 7:28:43 AM [vite] (client) hmr update /components/MarksheetCard.tsx
 7:30:46 AM [vite] (client) hmr update /components/MarksheetCard.tsx
 7:55:54 AM [vite] (client) hmr update /components/MarksheetCard.tsx
+8:21:49 AM [vite] (client) hmr update /components/MarksheetCard.tsx
+8:25:25 AM [vite] (client) hmr update /components/StudentDashboard.tsx
+8:35:08 AM [vite] (client) hmr update /components/AdminDashboard.tsx
+8:38:28 AM [vite] (client) hmr update /components/AdminPowerManager.tsx
+8:39:12 AM [vite] (client) hmr update /components/Store.tsx
+8:46:30 AM [vite] (client) hmr update /components/AdminDashboard.tsx
+8:48:02 AM [vite] (client) hmr update /components/AdminDashboard.tsx
+8:52:17 AM [vite] (client) hmr update /components/StudentDashboard.tsx
+9:06:37 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/RevisionHub.tsx, /components/admin/NstaFeatureManager.tsx
+9:14:22 AM [vite] (client) hmr update /components/AdminDashboard.tsx
+9:17:13 AM [vite] (client) hmr update /components/AdminDashboard.tsx

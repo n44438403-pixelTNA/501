@@ -17,7 +17,7 @@ import { LessonActionModal } from './LessonActionModal';
 import { RedeemSection } from './RedeemSection';
 import { PrizeList } from './PrizeList';
 import { Store } from './Store';
-import { Layout, Gift, Sparkles, Megaphone, Lock, BookOpen, AlertCircle, Edit, Settings, Play, Pause, RotateCcw, MessageCircle, Gamepad2, Timer, CreditCard, Send, CheckCircle, Mail, X, Ban, Smartphone, Trophy, ShoppingBag, ArrowRight, Video, Youtube, Home, User as UserIcon, Book, BookOpenText, List, BarChart3, Award, Bell, Headphones, LifeBuoy, WifiOff, Zap, Star, Crown, History, ListChecks, Rocket, Ticket, TrendingUp, BrainCircuit, FileText, CheckSquare, Menu, LayoutGrid, Compass, User as UserIconOutline, MessageSquare, Bot, HelpCircle, Database, Activity, Download, Calendar } from 'lucide-react';
+import { Globe, Layout, Gift, Sparkles, Megaphone, Lock, BookOpen, AlertCircle, Edit, Settings, Play, Pause, RotateCcw, MessageCircle, Gamepad2, Timer, CreditCard, Send, CheckCircle, Mail, X, Ban, Smartphone, Trophy, ShoppingBag, ArrowRight, Video, Youtube, Home, User as UserIcon, Book, BookOpenText, List, BarChart3, Award, Bell, Headphones, LifeBuoy, WifiOff, Zap, Star, Crown, History, ListChecks, Rocket, Ticket, TrendingUp, BrainCircuit, FileText, CheckSquare, Menu, LayoutGrid, Compass, User as UserIconOutline, MessageSquare, Bot, HelpCircle, Database, Activity, Download, Calendar } from 'lucide-react';
 import { SubjectSelection } from './SubjectSelection';
 import { BannerCarousel } from './BannerCarousel';
 import { ChapterSelection } from './ChapterSelection'; // Imported for Video Flow
@@ -755,6 +755,16 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 <h2 className="text-lg font-black text-slate-800 leading-none">
                                     {settings?.appName || 'Student App'}
                                 </h2>
+                                <button
+                                    onClick={() => {
+                                        const newBoard = user.board === 'CBSE' ? 'BSEB' : 'CBSE';
+                                        handleUserUpdate({ ...user, board: newBoard });
+                                        showAlert(`Language switched to ${newBoard === 'CBSE' ? 'English' : 'Hindi'}`, 'SUCCESS');
+                                    }}
+                                    className="ml-2 flex items-center gap-1 bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg text-[9px] font-black border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                >
+                                    <Globe size={12} /> {user.board === 'CBSE' ? 'EN' : 'HI'}
+                                </button>
                             </div>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="text-[10px] font-black text-blue-600 truncate max-w-[100px]">{user.name}</span>
@@ -1650,7 +1660,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
         <div className="p-4 relative pb-20">
             {renderMainContent()}
 
-            {settings?.showFooter !== false && (
+            {settings?.showFooter !== false && activeTab !== 'REVISION' && (
                 <div className="mt-12 mb-4 text-center">
                     <p
                         className="text-[10px] font-black uppercase tracking-widest"

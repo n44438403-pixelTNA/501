@@ -961,7 +961,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
         />
 
         {/* HIDDEN PRINT CONTAINER */}
-        <div id="full-report-print-container" style={{ position: 'absolute', left: '-10000px', width: '800px' }}>
+        <div id="full-report-print-container" style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -1000, width: '800px' }}>
             {renderFullReport()}
         </div>
 

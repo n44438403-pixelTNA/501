@@ -262,22 +262,6 @@ export const AiHub: React.FC<Props> = ({ user, onTabChange, settings }) => {
                     </div>
                 </button>
 
-                {/* 3. DEEP ANALYSIS */}
-                <button
-                    onClick={() => onTabChange('DEEP_ANALYSIS')}
-                    className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all active:scale-[0.98]"
-                >
-                    <div className="bg-purple-100 text-purple-600 p-3 rounded-xl">
-                        <BrainCircuit size={24} />
-                    </div>
-                    <div className="flex-1 text-left">
-                        <h3 className="font-bold text-slate-800">Deep Performance Analysis</h3>
-                        <p className="text-xs text-slate-500">AI insights on your weak areas.</p>
-                    </div>
-                    <div className="text-slate-300">
-                        <Zap size={16} />
-                    </div>
-                </button>
             </div>
 
             {/* AI PLANNER MODAL */}

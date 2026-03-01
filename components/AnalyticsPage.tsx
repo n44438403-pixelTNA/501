@@ -23,7 +23,7 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
   const history = historyRaw.filter(h => {
       const d = new Date(h.date);
       const limit = new Date();
-      limit.setDate(limit.getDate() - 30);
+      limit.setDate(limit.getDate() - 7);
       return d >= limit;
   });
 
@@ -198,123 +198,6 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                 )}
             </div>
 
-            {/* PREMIUM ANALYSIS TREE (Topic -> Subtopic -> Questions) */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <BrainCircuit size={18} className="text-purple-600" /> Premium Analysis
-                    </h3>
-                    <span className="text-[9px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded">
-                        DEEP DIVE
-                    </span>
-                </div>
-
-                <div className="space-y-2">
-                    {Object.keys(topicTree).map(topic => (
-                        <div key={topic} className="border border-slate-100 rounded-xl overflow-hidden">
-                            <button
-                                onClick={() => setExpandedTopic(expandedTopic === topic ? null : topic)}
-                                className="w-full flex justify-between items-center p-3 bg-slate-50 hover:bg-slate-100 transition-colors"
-                            >
-                                <span className="font-bold text-sm text-slate-700">{topic}</span>
-                                <span className="text-slate-400 text-xs">{expandedTopic === topic ? '▲' : '▼'}</span>
-                            </button>
-
-                            {expandedTopic === topic && (
-                                <div className="p-3 bg-white space-y-3 animate-in slide-in-from-top-2">
-                                    {Object.keys(topicTree[topic]).map(subtopic => {
-                                        const results = topicTree[topic][subtopic];
-                                        // Sort by Date (Oldest First)
-                                        const sorted = results.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                                        const current = sorted[sorted.length - 1]; // Latest
-                                        const previous = sorted.length > 1 ? sorted[sorted.length - 2] : null; // Previous attempt
-
-                                        const currPct = current.totalQuestions > 0 ? Math.round((current.score/current.totalQuestions)*100) : 0;
-                                        const prevPct = previous && previous.totalQuestions > 0 ? Math.round((previous.score/previous.totalQuestions)*100) : 0;
-
-                                        const improvePercent = previous ? currPct - prevPct : 0;
-                                        const questions = getQuestionsForAttempt(current.id);
-
-                                        return (
-                                            <div key={subtopic} className="border-l-2 border-purple-200 pl-3 pb-4">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <p className="text-sm font-bold text-slate-800">{subtopic}</p>
-                                                        <p className="text-[10px] text-slate-500 font-bold">{results.length} Attempts • Latest: {new Date(current.date).toLocaleDateString()}</p>
-                                                    </div>
-
-                                                    {/* UPGRADE STATUS BADGE */}
-                                                    {previous ? (
-                                                        <div className="text-right">
-                                                            <div className="flex items-center justify-end gap-1">
-                                                                <span className="text-[10px] text-slate-400 line-through">{prevPct}%</span>
-                                                                <span className="text-xs text-slate-300">→</span>
-                                                                <span className={`text-sm font-black ${currPct >= prevPct ? 'text-green-600' : 'text-red-500'}`}>
-                                                                    {currPct}%
-                                                                </span>
-                                                            </div>
-                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${improvePercent > 0 ? 'bg-green-100 text-green-700' : improvePercent < 0 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
-                                                                {improvePercent > 0 ? `UPGRADE +${improvePercent}%` : improvePercent < 0 ? `DROP ${improvePercent}%` : 'NO CHANGE'}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-right">
-                                                            <span className="text-sm font-black text-blue-600">{currPct}%</span>
-                                                            <p className="text-[9px] text-slate-400">First Attempt</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* EXPANDED QUESTIONS LIST */}
-                                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                                    <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Questions in this Test</p>
-                                                    <div className="space-y-2">
-                                                        {questions.length === 0 ? (
-                                                            <p className="text-[10px] text-slate-400 italic">Questions data not available.</p>
-                                                        ) : (
-                                                            questions.map((q: any, qi: number) => {
-                                                                // Infer status if not explicit
-                                                                const isCorrect = q.userAnswer === q.correctAnswer; // Assuming data structure matches
-                                                                // If userAnswer is missing, try to find it in result? result only has scores.
-                                                                // We need to trust getQuestionsForAttempt returns data with answers merged or we can't show status.
-                                                                // Actually getQuestionsForAttempt returns mcqData.
-                                                                // We need to merge answers?
-                                                                // In McqView, we saved `userAnswers` inside `newHistoryItem`.
-                                                                // Let's assume `q` has it or we can't color code.
-                                                                // If not, we just list the question.
-
-                                                                // Check if we can find the answer in history item?
-                                                                // `getQuestionsForAttempt` pulls `mcqData`.
-                                                                // The `newHistoryItem` has `userAnswers`.
-                                                                // We need to modify `getQuestionsForAttempt` or `AnalyticsPage` to return answers too.
-                                                                // But for now, let's just list them.
-
-                                                                return (
-                                                                    <div key={qi} className="flex gap-2 items-start">
-                                                                        <span className="text-[10px] font-mono text-slate-400 mt-0.5">Q{qi+1}</span>
-                                                                        <p className="text-[11px] text-slate-700 leading-snug line-clamp-2">{q.question}</p>
-                                                                    </div>
-                                                                );
-                                                            })
-                                                        )}
-                                                    </div>
-                                                    <button
-                                                        onClick={() => handleOpenMarksheet(current)}
-                                                        className="w-full mt-3 py-2 bg-white border border-purple-200 text-purple-700 text-[10px] font-bold rounded-lg hover:bg-purple-50 transition-colors shadow-sm"
-                                                    >
-                                                        View Full Solution & Analysis
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
-
             {/* RECENT TESTS */}
             <div>
                 <h3 className="font-bold text-slate-800 mb-3 px-1 flex items-center gap-2">
@@ -322,7 +205,7 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                 </h3>
                 <div className="space-y-3">
                     {history.length === 0 && <p className="text-slate-400 text-sm text-center py-8 bg-white rounded-xl border border-dashed">No tests taken yet.</p>}
-                    {history.map((item) => (
+                    {(showMoreTests ? history : history.slice(0, 10)).map((item) => (
                         <div 
                             key={item.id} 
                             className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3 group"

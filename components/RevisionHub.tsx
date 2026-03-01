@@ -749,36 +749,23 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                 <div className="flex gap-2">
                      {activeFilter === 'TODAY' && hubMode === 'PREMIUM' && (
                         <>
-                            <button
-                                onClick={handleGenerateAiPlan}
-                                className="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm hover:bg-purple-200 flex items-center gap-2"
-                            >
-                                <Zap size={14} /> AI Plan
-                            </button>
+
                         </>
                      )}
-                    <button
-                        onClick={() => setShowReport(true)}
-                        className="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm hover:bg-slate-50 flex items-center gap-2"
-                    >
-                        <Clock size={14} /> Monthly Report
-                    </button>
+
                 </div>
             </div>
 
-            {/* DAILY BRIEFING */}
-             <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-5 rounded-2xl border border-blue-500/30 flex items-center gap-4 shadow-xl relative overflow-hidden z-10 mb-6">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                <div className="bg-blue-500/20 p-3 rounded-xl shadow-inner text-blue-400 z-10 backdrop-blur-sm border border-blue-400/20">
-                    <Bot size={28} className="animate-pulse" />
+            {/* DAILY BRIEFING */}            <div className="bg-white p-5 rounded-2xl border border-slate-200 flex items-center gap-4 shadow-sm relative overflow-hidden z-10 mb-6">
+                <div className="bg-blue-50 p-3 rounded-xl shadow-inner text-blue-600 z-10">
+                    <BrainCircuit size={28} />
                 </div>
                 <div className="z-10 flex-1">
-                    <p className="text-[10px] font-black text-blue-400 tracking-widest uppercase mb-1 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping"></span> System Online
+                    <p className="text-lg font-black text-slate-800 tracking-tight leading-snug">
+                        Hello, <span className="text-blue-600">{user.name}</span>! 👋
                     </p>
-                    <p className="text-sm text-slate-300 font-medium leading-snug">
-                        <span className="text-white text-lg">Hello, <span className="font-black text-blue-300 tracking-wider uppercase">{user.name}</span> ! 👋</span><br/>
-                        You have <span className="font-black text-blue-400">{pendingNotes.length} notes</span> to read and <span className="font-black text-purple-400">{pendingMcqs.length} MCQs</span> pending.
+                    <p className="text-sm text-slate-500 font-medium">
+                        You have <span className="font-black text-blue-600">{pendingNotes.length} notes</span> to read and <span className="font-black text-purple-600">{pendingMcqs.length} MCQs</span> pending.
                     </p>
                 </div>
             </div>
@@ -801,14 +788,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                 >
                     <TrendingUp size={14} /> Topic Strength
                 </button>
-                {hubMode === 'PREMIUM' && (
-                    <button
-                        onClick={() => handleGenerateAiPlan()}
-                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-purple-600 hover:bg-purple-50`}
-                    >
-                        <BrainCircuit size={14} /> AI Plan
-                    </button>
-                )}
+
             </div>
 
             {/* SUB-TABS FOR TOPIC STRENGTH (Only visible when active) */}
@@ -1248,8 +1228,10 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
                                                             </span>
                                                             {/* STATS ROW */}
                                                             {(t.totalQs || 0) > 0 && (
-                                                                <span className="text-[10px] text-slate-400 font-medium">
-                                                                    {t.totalCorrect || 0}/{t.totalQs} Correct • {percent}% • <span className="text-purple-600 font-bold">Cycle {t.cycleCount || 1}</span>
+                                                                <span className="text-[10px] text-slate-400 font-medium leading-relaxed block mt-1">
+                                                                    {t.totalCorrect || 0}/{t.totalQs} Correct • {percent}%<br/>
+                                                                    <span className="text-slate-500 font-bold">Lesson Cycle:</span> {t.cycleCount || 1} • <span className="text-purple-600 font-bold">Hub Cycle:</span> {t.cycleCount || 1}<br/>
+                                                                    <span className="text-xs text-orange-600 font-bold">Next MCQ: {t.mcqDueDate ? new Date(t.mcqDueDate).toLocaleDateString() : 'N/A'}</span> • <span className="text-xs text-slate-500">Last Attempt: {t.lastAttempt ? new Date(t.lastAttempt).toLocaleDateString() : 'N/A'}</span>
                                                                 </span>
                                                             )}
                                                             {/* NOTES INDICATOR */}
@@ -1416,9 +1398,7 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
             )}
 
             {/* FOOTER */}
-            <div className="text-center pt-8 pb-4">
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Developed by Nadim Anwar</p>
-            </div>
+
         </div>
     );
 };

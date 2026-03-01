@@ -757,36 +757,26 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                 </h2>
                             </div>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded">{user.displayId || user.id.slice(0,6)}</span>
+                                <span className="text-[10px] font-black text-blue-600 truncate max-w-[100px]">{user.name}</span>
                                 {user.role === 'ADMIN' && <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[9px] font-bold">ADMIN</span>}
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        {settings?.specialDiscountEvent?.enabled && (
+                            <button
+                                onClick={() => onTabChange('STORE')}
+                                className="bg-red-50 border border-red-200 text-red-600 px-2 py-1 rounded-lg flex items-center gap-1 text-[10px] font-black animate-pulse"
+                            >
+                                <Zap size={12} className="fill-red-600"/> SALE
+                            </button>
+                        )}
                         <button
                             onClick={() => onTabChange('STORE')}
-                            className="flex flex-col items-end group active:scale-95 transition-transform"
+                            className="bg-blue-50 border border-blue-200 text-blue-600 px-3 py-1 rounded-xl flex items-center gap-2 font-black text-xs hover:bg-blue-100 transition-colors"
                         >
-                            <span className="text-[10px] font-bold text-slate-400 uppercase group-hover:text-blue-600 transition-colors">Credits</span>
-                            <span className="font-black text-blue-600 flex items-center gap-1">
-                                <Crown size={14} className="fill-blue-600"/> {user.credits} <span className="bg-blue-100 text-blue-700 text-[8px] px-1 rounded ml-1 group-hover:bg-blue-600 group-hover:text-white transition-colors">ADD</span>
-                            </span>
+                            <Crown size={14} className="fill-blue-600"/> {user.credits} <span className="text-[10px] bg-blue-200 text-blue-800 px-1 rounded">ADD</span>
                         </button>
-                        <div className="flex flex-col items-end border-l pl-3 border-slate-100">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">Streak</span>
-                            <span className="font-black text-orange-500 flex items-center gap-1">
-                                <Zap size={14} className="fill-orange-500"/> {user.streak}
-                            </span>
-                        </div>
-                        {user.isPremium && user.subscriptionEndDate && (
-                            <div className="flex flex-col items-end border-l pl-3 border-slate-100">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">Plan</span>
-                                <span className="font-black text-purple-600 text-[10px]">
-                                    {user.subscriptionTier === 'LIFETIME' ? '∞' :
-                                     `${Math.max(0, Math.ceil((new Date(user.subscriptionEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} Days`}
-                                </span>
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -1317,7 +1307,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                   onChange={(e) => setProfileData({...profileData, classLevel: e.target.value as any})}
                                   className="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50"
                               >
-                                  {['6','7','8','9','10','11','12'].map(c => <option key={c} value={c}>Class {c}</option>)}
+                                  {(settings?.allowedClasses || ['6','7','8','9','10','11','12','COMPETITION']).map(c => <option key={c} value={c}>{c === 'COMPETITION' ? 'Competition' : `Class ${c}`}</option>)}
                               </select>
                               <div className="flex items-center justify-between mt-1">
                                   <p className="text-[10px] text-slate-500">
@@ -1360,8 +1350,9 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
                                   onChange={(e) => setProfileData({...profileData, board: e.target.value as any})}
                                   className="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50"
                               >
-                                  <option value="CBSE">CBSE (English)</option>
-                                  <option value="BSEB">BSEB (Hindi)</option>
+                                  {(settings?.allowedBoards || ['CBSE', 'BSEB']).map(b => (
+                                      <option key={b} value={b}>{b} {b === 'CBSE' ? '(English)' : b === 'BSEB' ? '(Hindi)' : ''}</option>
+                                  ))}
                               </select>
                           </div>
 
@@ -1677,6 +1668,7 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
         {/* FLOATING ACTION MENU */}
         {(activeTab === 'HOME' || activeTab === 'REVISION' || activeTab === 'AI_HUB' || activeTab === 'PROFILE' || activeTab === 'HISTORY' || (activeTab as string) === 'ANALYTICS') && (
             <FloatingActionMenu
+                activeTab={activeTab}
                 user={user}
                 settings={settings || {}}
                 isFlashSaleActive={settings?.specialDiscountEvent?.enabled}

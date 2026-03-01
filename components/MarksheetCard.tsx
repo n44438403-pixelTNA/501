@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // Sync check
 import type { MCQResult, User, SystemSettings } from '../types';
-
 import { X, Share2, ChevronLeft, ChevronRight, Download, FileSearch, Grid, CheckCircle, XCircle, Clock, Award, BrainCircuit, Play, StopCircle, BookOpen, Target, Zap, BarChart3, ListChecks, FileText, LayoutTemplate, TrendingUp, TrendingDown, Lightbulb, ExternalLink, RefreshCw, Lock, Sparkles, Volume2, ChevronDown, ChevronUp, AlertCircle, ArrowRight, BookOpenCheck, ArrowUp, Minus , BarChart} from 'lucide-react';
-import { X, Share2, ChevronLeft, ChevronRight, Download, FileSearch, Grid, CheckCircle, XCircle, Clock, Award, BrainCircuit, Play, StopCircle, BookOpen, Target, Zap, BarChart3, BarChart, ListChecks, FileText, LayoutTemplate, TrendingUp, TrendingDown, Lightbulb, ExternalLink, RefreshCw, Lock, Sparkles, Volume2, ChevronDown, ChevronUp, AlertCircle, ArrowRight, BookOpenCheck, ArrowUp, Minus } from 'lucide-react';
-
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { generateUltraAnalysis } from '../services/groq';
@@ -1188,54 +1185,9 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
 
                 {activeTab === 'SOLUTION' && isAnalysisUnlocked && (
                     <div className="animate-in slide-in-from-bottom-4">
-                        {/* NEW: Granular Analysis View (Default) */}
-                        <div className="mb-8">
-                            {renderGranularAnalysis()}
-                        </div>
-
-                        {questions && questions.length > 0 ? (
-                            <div className="space-y-6">
-                                {questions.map((q, idx) => {
-                                    const omrEntry = result.omrData?.find(d => d.qIndex === idx);
-                                    const userSelected = omrEntry ? omrEntry.selected : -1;
-                                    const isCorrect = userSelected === q.correctAnswer;
-                                    const isSkipped = userSelected === -1;
-                                    return (
-                                        <div key={idx} className={`bg-white rounded-2xl border ${isCorrect ? 'border-green-200' : isSkipped ? 'border-slate-200' : 'border-red-200'} shadow-sm overflow-hidden`}>
-                                            <div className={`p-4 ${isCorrect ? 'bg-green-50' : isSkipped ? 'bg-slate-50' : 'bg-red-50'} border-b ${isCorrect ? 'border-green-100' : isSkipped ? 'border-slate-100' : 'border-red-100'} flex gap-3`}>
-                                                <span className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${isCorrect ? 'bg-green-100 text-green-700' : isSkipped ? 'bg-slate-200 text-slate-600' : 'bg-red-100 text-red-600'}`}>{idx + 1}</span>
-                                                <div className="flex-1"><div className="text-sm font-bold text-slate-800 leading-snug" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.question) }} /></div>
-                                            </div>
-                                            {q.options && (
-                                                <div className="p-4 space-y-2">
-                                                    {q.options.map((opt: string, optIdx: number) => {
-                                                        const isSelected = userSelected === optIdx;
-                                                        const isAnswer = q.correctAnswer === optIdx;
-                                                        let cls = "border-slate-100 bg-white text-slate-600";
-                                                        if (isAnswer) cls = "border-green-300 bg-green-50 text-green-800 font-bold";
-                                                        else if (isSelected) cls = "border-red-300 bg-red-50 text-red-800 font-bold";
-                                                        return (
-                                                            <div key={optIdx} className={`p-3 rounded-xl border flex items-center gap-3 text-xs transition-colors ${cls}`}>
-                                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] border ${isAnswer ? 'border-green-400 bg-green-100 text-green-700' : isSelected ? 'border-red-400 bg-red-100 text-red-700' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>{String.fromCharCode(65 + optIdx)}</div>
-                                                                <div className="flex-1" dangerouslySetInnerHTML={{ __html: renderMathInHtml(opt) }} />
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                            {q.explanation && (
-                                                <div className="p-4 bg-blue-50 border-t border-blue-100">
-                                                    <div className="text-xs text-slate-700 leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.explanation) }} />
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : <p>No questions data.</p>}
+                        {renderDetailedSolutions()}
                     </div>
                 )}
-
 
                 {activeTab === 'OMR' && isAnalysisUnlocked && (
                     <div className="animate-in slide-in-from-bottom-4">
@@ -1306,9 +1258,7 @@ export const MarksheetCard: React.FC<Props> = ({ result, user, settings, onClose
             )}
             </div>
              
-             <div className="text-center py-2 bg-slate-50 border-t border-slate-100">
-                  <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Developed by Nadim Anwar</p>
-             </div>
+
         </div>
 
 

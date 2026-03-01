@@ -48,3 +48,8 @@
 10:50:17 AM [vite] (client) hmr update /components/AdminDashboard.tsx
 11:16:37 AM [vite] (client) hmr update /components/AdminDashboard.tsx
 11:22:19 AM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/FloatingActionMenu.tsx, /components/admin/FeatureAccessPage.tsx, /components/admin/FeatureGroupList.tsx
+12:00:12 PM [vite] (client) hmr update /components/AdminPowerManager.tsx
+12:05:24 PM [vite] (client) hmr update /components/StudentDashboard.tsx, /components/MarksheetCard.tsx, /components/PdfView.tsx, /components/McqView.tsx, /components/RevisionHub.tsx, /components/FloatingActionMenu.tsx, /components/admin/FeatureAccessPage.tsx, /components/admin/FeatureGroupList.tsx
+12:08:22 PM [vite] (client) hmr update /components/AdminDashboard.tsx
+12:20:13 PM [vite] (client) hmr update /components/MarksheetCard.tsx
+12:21:39 PM [vite] (client) hmr update /components/MarksheetCard.tsx

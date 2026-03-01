@@ -85,7 +85,6 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-
     // Auto-hide and Swipe-up Logic
     useEffect(() => {
         const resetTimer = () => {
@@ -114,22 +113,6 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             if (!touchStartY) return;
             const touchEndY = e.changedTouches[0]?.clientY || 0;
             const touchEndX = e.changedTouches[0]?.clientX || 0;
-
-    // --- GLOBAL GESTURE LISTENER (Swipe Up from Bottom) ---
-    useEffect(() => {
-        let touchStartY = 0;
-        let touchStartX = 0;
-
-        const handleGlobalTouchStart = (e: TouchEvent) => {
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-        };
-
-        const handleGlobalTouchEnd = (e: TouchEvent) => {
-            const touchEndY = e.changedTouches[0].clientY;
-            const touchEndX = e.changedTouches[0].clientX;
-
-
             const dy = touchEndY - touchStartY;
             const dx = touchEndX - touchStartX;
 
@@ -152,11 +135,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             window.removeEventListener('scroll', resetTimer);
             if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
         };
-
     }, [isOpen]);
-
-     []);
-
 
     const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
         isDraggingRef.current = false;
@@ -361,7 +340,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
                         {/* Footer / Tip */}
                         <div className="mt-6 text-center">
                             <p className="text-[10px] text-slate-400 font-medium">
-                                Swipe up from bottom anytime to open this menu
+                                Explore all premium features to supercharge your learning
                             </p>
                             <ChevronUp size={16} className="mx-auto text-slate-300 animate-bounce mt-1" />
                         </div>

@@ -780,15 +780,6 @@ export const PdfView: React.FC<Props> = ({
                                    key={tab.id}
                                    onClick={() => {
                                        if (isLocked) {
-                                           // User asked: free user cannot see premium content even if they have credits.
-                                           // Only premium users can use credits to see premium content.
-                                           const isPremiumPlan = user.subscriptionTier && user.subscriptionTier !== 'FREE';
-
-                                           if (!isPremiumPlan && tab.id !== 'QUICK') {
-                                               setAlertConfig({isOpen: true, message: `🔒 Premium Feature! You must have an active Subscription Plan to unlock ${tab.label}.`});
-                                               return;
-                                           }
-
                                            if (cost > 0) {
                                                setPendingPdf({ type: tab.id as any, price: cost, link: `UNLOCK_TAB_${tab.id}` });
                                            } else {

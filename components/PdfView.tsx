@@ -159,9 +159,30 @@ export const PdfView: React.FC<Props> = ({
       // 2. Session Unlock
       if (sessionUnlockedTabs.includes(tabId)) return { hasAccess: true, cost: 0, reason: 'SESSION_UNLOCKED' };
 
-      // 3. Feature Config Check
+      // 3. Strict Premium & Credit Rules (Requested)
+      if (tabId === 'QUICK') {
+          return { hasAccess: true, cost: 0, reason: 'FREE_FOR_ALL' };
+      }
+
+      // It's Concept (DEEP_DIVE), Retention (PREMIUM), or Extended (RESOURCES)
+      const isSubscribed = user.subscriptionTier && user.subscriptionTier !== 'FREE';
+      const isPremium = user.isPremium || isSubscribed;
+
+      if (!isPremium) {
+          // Free users are completely blocked from premium tabs
+          return { hasAccess: false, cost: 0, reason: 'TIER_RESTRICTED' };
+      }
+
+      // For Premium users, they still need to spend credits. We fetch the cost from config.
       const featureId = getFeatureIdForTab(tabId);
-      return checkFeatureAccess(featureId, user, settings || {});
+      const accessObj = checkFeatureAccess(featureId, user, settings || {});
+
+      // Force it to require credits, even if checkFeatureAccess says hasAccess=true and cost=0.
+      // We will fallback to a default cost if none is configured.
+      const actualCost = accessObj.cost > 0 ? accessObj.cost : 10; // Default 10 if not configured
+
+      // If they haven't unlocked it in this session (checked in step 2), it's "locked" pending payment.
+      return { hasAccess: false, cost: actualCost, reason: 'CREDITS_REQUIRED' };
   };
   
   const stopAllSpeech = () => {

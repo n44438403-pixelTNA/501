@@ -856,7 +856,7 @@ export const McqView: React.FC<Props> = ({
                        <Clock size={16} /> History & Unlocked
                    </h4>
                    <div className="space-y-2">
-                       {user.mcqHistory.filter(h => h.chapterId === chapter.id).map((attempt, idx) => (
+                       {(showMoreHistory ? user.mcqHistory.filter(h => h.chapterId === chapter.id) : user.mcqHistory.filter(h => h.chapterId === chapter.id).slice(0, 5)).map((attempt, idx) => (
                            <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
                                <div>
                                    <div className="flex items-center gap-2">

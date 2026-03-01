@@ -5,6 +5,7 @@ import { checkFeatureAccess } from '../utils/permissionUtils';
 import { Crown, User as UserIcon, ShoppingBag, X, Zap, Menu, ChevronUp, Book, CheckSquare, BrainCircuit, BarChart3, AlertCircle, PlayCircle, Sparkles, Wrench, Gamepad2, Trophy, Shield, Gift, Terminal, MessageSquare, FileText, Video, Headphones, Lock } from 'lucide-react';
 
 interface Props {
+    activeTab?: string;
     settings: SystemSettings;
     user: User;
     isFlashSaleActive?: boolean;
@@ -73,6 +74,18 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
     const [isVisible, setIsVisible] = useState(true);
     const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+
+    // Add effect to reset visibility when tab changes
+    useEffect(() => {
+        setIsVisible(true);
+        if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+        if (!isOpen) {
+            inactivityTimerRef.current = setTimeout(() => {
+                setIsVisible(false);
+            }, 5000);
+        }
+    }, [activeTab, isOpen]);
+
     // Initial Position Fix
     useEffect(() => {
         const handleResize = () => {
@@ -86,7 +99,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
     }, []);
 
 
-    // Auto-hide and Swipe-up Logic
+        // Auto-hide and Swipe-up Logic
     useEffect(() => {
         const resetTimer = () => {
             setIsVisible(true);
@@ -115,21 +128,6 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             const touchEndY = e.changedTouches[0]?.clientY || 0;
             const touchEndX = e.changedTouches[0]?.clientX || 0;
 
-    // --- GLOBAL GESTURE LISTENER (Swipe Up from Bottom) ---
-    useEffect(() => {
-        let touchStartY = 0;
-        let touchStartX = 0;
-
-        const handleGlobalTouchStart = (e: TouchEvent) => {
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-        };
-
-        const handleGlobalTouchEnd = (e: TouchEvent) => {
-            const touchEndY = e.changedTouches[0].clientY;
-            const touchEndX = e.changedTouches[0].clientX;
-
-
             const dy = touchEndY - touchStartY;
             const dx = touchEndX - touchStartX;
 
@@ -145,17 +143,20 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
         window.addEventListener('mousemove', resetTimer);
         window.addEventListener('scroll', resetTimer, { passive: true });
 
+        // Add history listening if needed? Actually we can't listen to history changes easily without react-router or similar.
+        // We will expose a method or rely on the parent to update key or prop, but we can also just reset timer on any click.
+        window.addEventListener('click', resetTimer);
+
         return () => {
             window.removeEventListener('touchstart', handleGlobalTouchStart);
             window.removeEventListener('touchend', handleGlobalTouchEnd);
             window.removeEventListener('mousemove', resetTimer);
             window.removeEventListener('scroll', resetTimer);
+            window.removeEventListener('click', resetTimer);
             if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
         };
 
     }, [isOpen]);
-
-     []);
 
 
     const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {

@@ -97,7 +97,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
             window.removeEventListener('touchstart', handleGlobalTouchStart);
             window.removeEventListener('touchend', handleGlobalTouchEnd);
         };
-    , []);
+     []);
 
 
     const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {

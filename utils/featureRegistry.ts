@@ -20,6 +20,15 @@ export interface Feature {
 }
 
 export const ALL_FEATURES: Feature[] = [
+    {
+        id: 'ADMIN_RULES_PAGE',
+        name: 'App Rules & Manual',
+        description: 'Read the admin documentation and student rules',
+        group: 'ADVANCED',
+        icon: 'BookOpen',
+        adminTab: 'APP_RULES',
+        adminVisible: true
+    },
     // --- CORE (Layer 1: Daily Core Actions - Max 6) ---
     {
         id: 'START_STUDY',

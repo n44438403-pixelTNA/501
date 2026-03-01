@@ -570,9 +570,9 @@ export const Store: React.FC<Props> = ({ user, settings }) => {
                               )}
                               <p className="text-white font-bold text-md mb-1">{pkg.credits + extraCredits}</p>
                               <p className="text-slate-500 text-[10px] uppercase font-bold">
-                                  {finalPrice < pkg.price ? (
+                                  {(finalPrice < pkg.price || pkg.dummyPrice) ? (
                                       <>
-                                          <span className="line-through mr-1 opacity-50">₹{pkg.price}</span>
+                                          <span className="line-through mr-1 opacity-50 text-red-400">₹{pkg.dummyPrice || pkg.price}</span>
                                           <span className="text-green-400">₹{finalPrice}</span>
                                       </>
                                   ) : `₹${pkg.price}`}

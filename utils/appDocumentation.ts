@@ -91,6 +91,10 @@ export const APP_DOCUMENTATION = {
     ],
     adminGuide: [
         {
+            step: "Admin Dashboard Sections",
+            instruction: "Overview of Admin Dashboard and how it works: \n- **Dashboard**: High-level overview of users, analytics, requests, and logs. \n- **Manage Users**: Search, edit, ban, or delete users. Add credits or change subscription tiers. \n- **Content Manager**: Add/Edit Subjects, Chapters, Notes (PDF), Videos, Audio, and MCQs. Includes an AI generator for quick content creation. \n- **Live Tests**: Create and manage scheduled Live Tests. \n- **Global Events**: Create Global Events like Free Premium Access, Discount Sales, and Credit-Free events. \n- **Watermark & Security**: Configure the global watermark and security settings to prevent piracy. \n- **Feature Access**: Manage feature limits, pricing (credits), and subscription access for all components across the app. \n- **App Soul**: Advanced control over core features and the Matrix Plan visibility. \n- **General Settings**: Update App Name, Theme Color, Banners, and Social Links. \n- **Subscription Editor**: (Located in Power Manager) Edit subscription plan pricing and features. \n- **Prize Rules**: Configure rules for student prizes. \n- **Demands**: View and fulfill content requests submitted by users. \n- **System Logs**: View detailed system activity and API usage."
+        },
+        {
             step: "Managing Users",
             instruction: "Go to 'Users' tab. Use search to find a student. Click 'Edit' to change details, 'Gift' to add credits, or 'Ban' to restrict access."
         },

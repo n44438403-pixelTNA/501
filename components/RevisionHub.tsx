@@ -320,6 +320,9 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
 
         const expandTopics = async () => {
             if (isMounted) setTopics(processedTopics);
+            // If there are too many topics (> 20), do not attempt to deep-expand all of them at once via network
+            // as it will freeze the app. We just show chapter level.
+            if (processedTopics.length > 20) return;
 
             // Parallel Processing for Speed
             const expandedResults = await Promise.all(processedTopics.map(async (topic) => {
@@ -335,12 +338,17 @@ const RevisionHubComponent: React.FC<Props> = ({ user, onTabChange, settings, on
 
                     let data: any = await storage.getItem(strictKey);
                     if (!data) {
-                        // Parallel fallback fetching
-                        const [cloudData, legacyData] = await Promise.all([
-                            getChapterData(strictKey).catch(() => null),
-                            getChapterData(topic.chapterId).catch(() => null)
-                        ]);
-                        data = cloudData || legacyData;
+                        // Fast fetch: Only fetch strictKey from cloud first to avoid double network hits.
+                        // We do not await legacy parallel unless strict fails to save massive network time.
+                        data = await getChapterData(strictKey).catch(() => null);
+                        if (!data) {
+                             data = await getChapterData(topic.chapterId).catch(() => null);
+                        }
+
+                        // Cache it immediately so next render is 0ms
+                        if (data) {
+                            storage.setItem(strictKey, data).catch(() => {});
+                        }
                     }
 
                     if (data) {

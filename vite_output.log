@@ -36,3 +36,4 @@
 9:06:37 AM [vite] (client) hmr update /App.tsx, /components/SubjectSelection.tsx, /components/StudentDashboard.tsx, /components/AdminDashboard.tsx, /components/StudentAiAssistant.tsx, /components/SyllabusManager.tsx, /components/admin/ChallengeCreator20.tsx, /components/RevisionHub.tsx, /components/admin/NstaFeatureManager.tsx
 9:14:22 AM [vite] (client) hmr update /components/AdminDashboard.tsx
 9:17:13 AM [vite] (client) hmr update /components/AdminDashboard.tsx
+9:38:07 AM [vite] (client) hmr update /components/RevisionHub.tsx

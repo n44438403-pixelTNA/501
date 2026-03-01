@@ -1647,13 +1647,11 @@ export const StudentDashboard: React.FC<Props> = ({ user, dailyStudySeconds, onS
         )}
 
         {/* MAIN CONTENT AREA */}
-        <div className="p-4 flex flex-col min-h-[calc(100vh-100px)]">
-            <div className="flex-1">
-                {renderMainContent()}
-            </div>
+        <div className="p-4 relative pb-20">
+            {renderMainContent()}
 
             {settings?.showFooter !== false && (
-                <div className="mt-auto pt-8 pb-4 text-center shrink-0">
+                <div className="mt-12 mb-4 text-center">
                     <p
                         className="text-[10px] font-black uppercase tracking-widest"
                         style={{ color: settings?.footerColor || '#cbd5e1' }}

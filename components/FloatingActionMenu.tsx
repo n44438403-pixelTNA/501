@@ -155,7 +155,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
 
     }, [isOpen]);
 
-     []);
+     
 
 
     const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {

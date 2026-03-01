@@ -352,46 +352,28 @@ export const AnalyticsPage: React.FC<Props> = ({ user, onBack, settings, onNavig
                                 </div>
                             </div>
                             
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenMarksheet(item);
-                                    }}
-                                    className="flex-1 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-900 transition-colors"
-                                >
-                                    <FileText size={14} /> Marksheet
-                                </button>
+                            <div className="flex justify-end mt-2">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleOpenMarksheet(item, 'ANALYSIS');
                                     }}
-                                    className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors"
+                                    className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
                                 >
-                                    <TrendingUp size={14} /> Free Analysis
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Open Smart Recommendations
-                                        handleOpenMarksheet(item, 'RECOMMEND');
-                                    }}
-                                    className="flex-1 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-md shadow-indigo-200"
-                                >
-                                    <BrainCircuit size={14} /> Recommend
+                                    <FileText size={14} /> Details
                                 </button>
                             </div>
                         </div>
                     ))}
 
-
-                    {history.filter(h => new Date(h.date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length > visibleLimit && (
-                        <button onClick={() => setVisibleLimit(prev => prev + 10)} className="w-full text-center py-3 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors bg-white rounded-xl border border-dashed border-slate-300 mt-4">
-                            + Load More Tests
+                    {!showMoreTests && history.length > 10 && (
+                        <button
+                            onClick={() => setShowMoreTests(true)}
+                            className="w-full py-3 bg-slate-50 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors mt-4 border border-dashed border-slate-300"
+                        >
+                            More
                         </button>
                     )}
-
                 </div>
             </div>
         </div>

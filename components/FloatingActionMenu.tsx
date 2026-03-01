@@ -86,7 +86,7 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
     }, []);
 
 
-    // Auto-hide and Swipe-up Logic
+    // Auto-hide Logic
     useEffect(() => {
         const resetTimer = () => {
             setIsVisible(true);
@@ -100,62 +100,20 @@ export const FloatingActionMenu: React.FC<Props> = ({ settings, user, isFlashSal
 
         resetTimer(); // Initial call
 
-        let touchStartY = 0;
-        let touchStartX = 0;
-
-        const handleGlobalTouchStart = (e: TouchEvent) => {
-            resetTimer();
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-        };
-
-        const handleGlobalTouchEnd = (e: TouchEvent) => {
-            resetTimer();
-            if (!touchStartY) return;
-            const touchEndY = e.changedTouches[0]?.clientY || 0;
-            const touchEndX = e.changedTouches[0]?.clientX || 0;
-
-    // --- GLOBAL GESTURE LISTENER (Swipe Up from Bottom) ---
-    useEffect(() => {
-        let touchStartY = 0;
-        let touchStartX = 0;
-
-        const handleGlobalTouchStart = (e: TouchEvent) => {
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-        };
-
-        const handleGlobalTouchEnd = (e: TouchEvent) => {
-            const touchEndY = e.changedTouches[0].clientY;
-            const touchEndX = e.changedTouches[0].clientX;
-
-
-            const dy = touchEndY - touchStartY;
-            const dx = touchEndX - touchStartX;
-
-            // 1. Swipe Up from Bottom Edge (Bottom 100px)
-            if (touchStartY > window.innerHeight - 100 && dy < -50 && Math.abs(dx) < 50) {
-                setIsOpen(true);
-                setIsVisible(true);
-            }
-        };
-
-        window.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
-        window.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
+        window.addEventListener('touchstart', resetTimer, { passive: true });
+        window.addEventListener('touchend', resetTimer, { passive: true });
         window.addEventListener('mousemove', resetTimer);
         window.addEventListener('scroll', resetTimer, { passive: true });
 
         return () => {
-            window.removeEventListener('touchstart', handleGlobalTouchStart);
-            window.removeEventListener('touchend', handleGlobalTouchEnd);
+            window.removeEventListener('touchstart', resetTimer);
+            window.removeEventListener('touchend', resetTimer);
             window.removeEventListener('mousemove', resetTimer);
             window.removeEventListener('scroll', resetTimer);
             if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
         };
-
     }, [isOpen]);
 
-     
 
 
     const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
